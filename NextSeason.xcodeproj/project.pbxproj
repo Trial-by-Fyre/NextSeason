@@ -209,6 +209,8 @@
 		E1AB9CFB303E38A30045498C /* 8-25-2026 Implement Small UI Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Implement Small UI Improvements.md"; sourceTree = "<group>"; };
 		E1AB9FC8303E3DA90045498C /* 8-25-2026 Discuss Watchlist Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Discuss Watchlist Improvements.md"; sourceTree = "<group>"; };
 		E1AB9FC9303E3DC70045498C /* 8-25-2026 Implement Watchlist Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Implement Watchlist Improvements.md"; sourceTree = "<group>"; };
+		E1BA91943052739F00C1572B /* 9-9-2026 Discuss Beta Crash Report.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-9-2026 Discuss Beta Crash Report.md"; sourceTree = "<group>"; };
+		E1BA9195305273F900C1572B /* 9-9-2026 Fix Crash.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-9-2026 Fix Crash.md"; sourceTree = "<group>"; };
 		E1BCCDC5304A65970049DE1D /* 9-3-2026 Final Full Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-3-2026 Final Full Review.md"; sourceTree = "<group>"; };
 		E1BCD132304A73520049DE1D /* Search-Results.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Search-Results.jpeg"; sourceTree = "<group>"; };
 		E1BCD133304A73520049DE1D /* Show-Detail.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Show-Detail.jpeg"; sourceTree = "<group>"; };
@@ -429,6 +431,8 @@
 				E1BCD4A3304A85D20049DE1D /* 9-3-2026 Clean Up List Spacing.md */,
 				E1BCD4A8304C7FF10049DE1D /* 9-5-2026 Identify Conditionals in Views and Review Changes.md */,
 				E1BCD4A9304C80470049DE1D /* 9-5-2026 Implement Fixes for Conditionals.md */,
+				E1BA91943052739F00C1572B /* 9-9-2026 Discuss Beta Crash Report.md */,
+				E1BA9195305273F900C1572B /* 9-9-2026 Fix Crash.md */,
 			);
 			path = "AI Transcripts";
 			sourceTree = "<group>";

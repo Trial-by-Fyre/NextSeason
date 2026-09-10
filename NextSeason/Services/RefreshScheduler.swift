@@ -18,6 +18,9 @@ import os
 /// 3. `scheduleNextRefresh()` — submit the next earliest-begin request.
 /// 4. When iOS launches the task → `handleAppRefresh` runs the handler, then
 ///    marks the task completed (or cancelled on expiration).
+///    The launch handler is delivered on the main queue (`using: .main`).
+///    `expirationHandler` may arrive on another queue and must hop to
+///    `@MainActor` before cancelling work or completing the `BGAppRefreshTask`.
 ///
 /// Background refresh is not guaranteed on interval; iOS may delay or skip runs.
 enum RefreshScheduler {
@@ -44,7 +47,9 @@ enum RefreshScheduler {
             forTaskWithIdentifier: taskIdentifier,
             using: .main
         ) { task in
-            // BGTaskScheduler delivers this closure on the main queue when `using: .main`.
+            // Launch handler: BGTaskScheduler delivers this closure on the
+            // main queue when `using: .main`. Hop explicitly so
+            // `handleAppRefresh` is not relying on that queue alone.
             Task { @MainActor in
                 handleAppRefresh(task)
             }
@@ -69,7 +74,7 @@ enum RefreshScheduler {
         // does not leave the app without a future schedule.
         scheduleNextRefresh()
 
-        let work = Task {
+        let work = Task { @MainActor in
             AppDiagnosticsLogger.logTaskStart("bg_app_refresh")
             await refreshHandler?()
             if Task.isCancelled {
@@ -81,10 +86,25 @@ enum RefreshScheduler {
             }
         }
 
-        // iOS can reclaim budget at any time; cancel work and fail the task.
+        // Expiration handler: BackgroundTasks may invoke this on a non-main
+        // queue. Logging is nonisolated; cancel + `setTaskCompleted` must hop.
         refreshTask.expirationHandler = {
             AppDiagnosticsLogger.logger(for: .tasks).notice("background_task_expired")
             AppDiagnosticsLogger.breadcrumb("background_task_expired")
+            handleExpiredAppRefresh(work: work, completion: completion)
+        }
+    }
+
+    /// Safe to call from `BGAppRefreshTask.expirationHandler`, which
+    /// BackgroundTasks may invoke on a non-main queue.
+    ///
+    /// Hops to the main actor before cancelling work or completing the BG task
+    /// so Swift 6 executor checking does not trap in `setTaskCompleted`.
+    nonisolated static func handleExpiredAppRefresh(
+        work: Task<Void, Never>,
+        completion: BackgroundRefreshCompletion
+    ) {
+        Task { @MainActor in
             work.cancel()
             completion.finish(success: false)
         }
@@ -120,15 +140,30 @@ enum RefreshScheduler {
 ///
 /// Needed because normal completion and the expiration handler can race; calling
 /// `setTaskCompleted` twice is undefined / logged as an error by the system.
-/// `@unchecked Sendable` remains because `BGAppRefreshTask` is not Sendable.
-private final class BackgroundRefreshCompletion: @unchecked Sendable {
+///
+/// `@MainActor` is required: the task is registered with `using: .main`, and
+/// `setTaskCompleted` must run on that executor. Callers that may be off-main
+/// (the expiration handler) must hop before `finish(success:)`.
+///
+/// The type is implicitly `Sendable` via main-actor isolation, so it can be
+/// captured by the `@Sendable` expiration handler without `@unchecked Sendable`.
+/// `BGAppRefreshTask` stays on this actor and is not shared across executors.
+@MainActor
+final class BackgroundRefreshCompletion {
     private let finished = Mutex(false)
-    private let refreshTask: BGAppRefreshTask
+    private let complete: @MainActor (Bool) -> Void
 
     init(refreshTask: BGAppRefreshTask) {
-        self.refreshTask = refreshTask
+        self.complete = { success in
+            refreshTask.setTaskCompleted(success: success)
+        }
     }
 
+    init(complete: @escaping @MainActor (Bool) -> Void) {
+        self.complete = complete
+    }
+
+    @MainActor
     func finish(success: Bool) {
         let shouldComplete = finished.withLock { finished in
             guard !finished else { return false }
@@ -136,6 +171,6 @@ private final class BackgroundRefreshCompletion: @unchecked Sendable {
             return true
         }
         guard shouldComplete else { return }
-        refreshTask.setTaskCompleted(success: success)
+        complete(success)
     }
 }

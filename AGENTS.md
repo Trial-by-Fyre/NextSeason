@@ -53,3 +53,21 @@ You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and relat
   which were used: `swiftui-pro` (SwiftUI views), `swiftdata-pro` (SwiftData /
   persistence), `swift-concurrency-pro` (async/await, actors), `swift-testing-pro`
   (tests).
+
+
+## Cloud Agent (Linux) environment
+
+Cloud Agents run on Linux, where the iOS app **cannot be built or run** —
+SwiftUI, SwiftData, StoreKit, and UIKit are Apple-only frameworks that require
+macOS + Xcode. The `Scripts/*.sh` device-profiling helpers (`xctrace`,
+`devicectl`) are likewise macOS-only.
+
+`.cursor/environment.json` (via `.cursor/install.sh`) provisions the Linux
+tooling that *is* usable on a Cloud Agent:
+
+- **Swift 6.2 toolchain** — run `swift format lint --configuration .swift-format
+  --recursive NextSeason NextSeasonShared NextSeasonTests NextSeasonUITests` to
+  lint sources, and `swiftc -parse` for syntax checks of platform-agnostic code.
+- **Python 3** (already in the base image) — the `Scripts/*.py` helpers are
+  standard-library only, e.g. regenerating the show-ID mapping DB with
+  `Scripts/generate-tvdb-tvmaze-show-id-mapping-db.py`.

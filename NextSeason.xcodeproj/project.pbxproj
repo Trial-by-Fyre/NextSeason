@@ -219,6 +219,7 @@
 		E1BCD4A3304A85D20049DE1D /* 9-3-2026 Clean Up List Spacing.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-3-2026 Clean Up List Spacing.md"; sourceTree = "<group>"; };
 		E1BCD4A8304C7FF10049DE1D /* 9-5-2026 Identify Conditionals in Views and Review Changes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-5-2026 Identify Conditionals in Views and Review Changes.md"; sourceTree = "<group>"; };
 		E1BCD4A9304C80470049DE1D /* 9-5-2026 Implement Fixes for Conditionals.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-5-2026 Implement Fixes for Conditionals.md"; sourceTree = "<group>"; };
+		E1C40B093063882B0006BBCD /* NextSeason TV - Trademark Research - 2026-09-22.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason TV - Trademark Research - 2026-09-22.md"; sourceTree = "<group>"; };
 		E1DA26BC2FDDD99700C37DAC /* safety.mdc */ = {isa = PBXFileReference; lastKnownFileType = text; name = safety.mdc; path = .cursor/rules/safety.mdc; sourceTree = "<group>"; };
 		E1DA26BD2FDDD99700C37DAC /* swiftui-project-style.mdc */ = {isa = PBXFileReference; lastKnownFileType = text; name = "swiftui-project-style.mdc"; path = ".cursor/rules/swiftui-project-style.mdc"; sourceTree = "<group>"; };
 		E1DA26C02FDDDE7400C37DAC /* ProjectKickoff.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProjectKickoff.md; sourceTree = "<group>"; };
@@ -363,6 +364,7 @@
 				E167D080301040BB007F7098 /* NextSeason - App Store Readiness Roadmap.md */,
 				E1AB8C4C3037BB410045498C /* NextSeason - Monetization Strategy Roadmap.md */,
 				E167D081301040BB007F7098 /* NextSeason - Product Evolution Roadmap.md */,
+				E1C40B093063882B0006BBCD /* NextSeason TV - Trademark Research - 2026-09-22.md */,
 				E102F0FD2FE5F2100076FCDD /* AI Transcripts */,
 			);
 			path = "Post-MVP";

@@ -46,26 +46,26 @@ The watchlist currently uses `List` with `Section`. Native pinned section header
 
 ## SwiftData Migration Strategy (Complete)
 
-- Add and test a SwiftData migration plan before changing persistent models.
-- Verify that upgrades preserve user data.
-- Project should be structured to support fixture-based migration testing in the future.
+- Established a SwiftData migration strategy for future persistent-model changes.
+- Verified that the current schema and persistence architecture support migration without discarding user data.
+- Documented the requirement to test migrations before shipping schema changes.
+- Structured the project to support fixture-based migration testing as schemas evolve.
 
 ## Persistence Recovery (Complete)
 
-Replace the startup `fatalError` with a user-facing recovery flow before release.
-
-- Log diagnostics before attempting recovery.
-- Explain the consequences before resetting local data.
-- Allow the user to export diagnostics before resetting.
-- Before resetting local data, if watchlist data can still be read, offer the user the option to export it.
-- Provide a clear **Reset Local Data** action when recovery is not possible.
+- Replaced the startup `fatalError` with a user-facing recovery flow.
+- Logs diagnostics before attempting recovery.
+- Explains the consequences before resetting local data.
+- Allows the user to export diagnostics before resetting.
+- If watchlist data can still be read, offers the user the option to export it before resetting.
+- Provides a clear **Reset Local Data** action when recovery is not possible.
 
 ## Crash-Loop Prevention (Complete)
 
-- Detect repeated launch failures where practical.
-- Offer a safe recovery path rather than repeatedly crashing.
-- Preserve useful diagnostics for troubleshooting.
-- Verify that recovery does not create a new launch loop.
+- Detects repeated launch failures while avoiding false positives from normal app termination.
+- Offers a safe recovery path rather than repeatedly crashing.
+- Preserves useful diagnostics for troubleshooting.
+- Recovery behavior has been tested to ensure it does not itself create a new launch loop.
 
 ## Accessibility Review (Complete)
 
@@ -77,35 +77,30 @@ Complete a final accessibility pass and address everything that can reasonably b
 - Verify controls remain usable with Button Shapes, Increase Contrast, Reduce Transparency, and Reduce Motion enabled.
 - Verify that state is not communicated by color alone.
 - Test empty, loading, error, and recovery states.
+- Added explicit accessibility labeling for the Watchlist search control so VoiceOver does not derive an incorrect label from the SF Symbol.
 
 ## Watchlist Export (Complete)
 
-Give users a way to export their watchlist so that their data is not locked into NextSeason.
-
-### Requirements
-
-- Add an **Export Watchlist** action in an appropriate location in the app.
-- Export the complete watchlist as a CSV file using the standard iOS share sheet.
-- Include enough information to identify each show independently of NextSeason, including:
-  - Show name
-  - TVMaze ID
-  - TVDB ID, when available
-- Consider including other useful human-readable information already stored by the app, such as show status or next-season information.
-- Export must include **all shows in the watchlist**, including shows above the free-tier limit after a Plus subscription has expired.
-- Export must be available to both free and Plus users and must not require an active subscription.
-- Ensure the resulting CSV can be opened successfully in common spreadsheet applications such as Numbers and Excel.
+- Exports the complete stored watchlist as a CSV file using the standard iOS share sheet.
+- Includes show name, TVMaze ID, and TVDB ID when available.
+- Export is available to both free and Plus users and does not require an active subscription.
+- Includes all stored shows, including shows above the free-tier limit after a Plus subscription has expired.
+- Produces a CSV intended to open successfully in common spreadsheet applications such as Numbers and Excel.
+- Is also available from the persistence-recovery flow when watchlist data can still be read.
 
 Import and restoration from an exported watchlist are not required for the initial App Store release; see the Product Evolution Roadmap.
 
-## StoreKit (Complete for testing)
+## StoreKit (Implementation Complete)
 
 See [`../Post-MVP/NextSeason - Monetization Strategy Roadmap`](../Post-MVP/NextSeason%20-%20Monetization%20Strategy%20Roadmap.md) for the proposed pricing and purchase structure.
 
-- Make and Implement a plan to charge users through the App Store.
-- Implement RequestReviewAction to arrive a few seconds after the first show notification (per version) has been delivered.
-- Implement a Tip Jar for the About page using consumable IAPs.
-- Add a link to the App Store's "write a review" page to the About page. 
-
+- Implemented StoreKit 2 purchasing and entitlement management for NextSeason Plus.
+- Supports annual subscription and lifetime purchase options.
+- Implements optional consumable tips through **Support NextSeason**.
+- Supports purchase restoration and beta-user grandfathering.
+- Requests an App Store review after the first production show notification, at most once per app version.
+- Provides a permanent **Write a Review** link in About.
+- Production products, pricing, legal links, and App Store configuration must be finalized and validated before release.
 
 # Documentation Readiness
 
@@ -119,7 +114,7 @@ See [`../Post-MVP/NextSeason - Monetization Strategy Roadmap`](../Post-MVP/NextS
 - Which product, design, and engineering decisions remained mine.
 - Links to representative transcripts, such as initial architecture, accessibility review, performance review, analytics, TestFlight preparation, and README review.
 
-## Documentation Review (Complete)
+## Documentation Review (Initial Review Complete)
 
 - Verify that documentation reflects the release candidate rather than an earlier MVP state.
 - Check all links among documentation files.
@@ -127,6 +122,7 @@ See [`../Post-MVP/NextSeason - Monetization Strategy Roadmap`](../Post-MVP/NextS
 - Update README screenshots to match the release candidate.
 - Verify that all repository links point to the public repository.
 - Remove internal-only notes, temporary instructions, and obsolete planning text.
+- Perform a final documentation sync against the release candidate immediately before submission, including README screenshots, monetization details, support/privacy URLs, and any implementation changes made since the main documentation review.
 
 # App Store Submission Checklist
 
@@ -134,53 +130,78 @@ These tasks are listed in approximately sequential order.
 
 ## Legal and Business
 
+### Complete
+
 - Receive the D-U-N-S Number for Trial by Fyre, LLC.
-- Convert the Apple Developer account to an Organization account.
-- Sign up for the Small Business Program.
-- Verify company information in App Store Connect.
-- Complete tax and banking information.
-- Confirm the support email address.
-- Confirm the support website.
+- Complete tax information.
+- Submit banking information.
+- Establish `support@getnextseason.com` as the support email address.
+- Establish email as the primary user-support channel.
+
+### In Progress — Awaiting Apple
+
+- Convert the Apple Developer account to an Organization account — required documents submitted; awaiting Apple verification.
+- Complete Small Business Program enrollment — enrollment submitted; awaiting Apple approval.
+- Confirm banking information has been verified by Apple — banking details submitted; awaiting verification.
+
+### Not Started / Remaining
+
+- Verify company information in App Store Connect after the Organization conversion.
+- Finish and publish `getnextseason.com` as the support website.
 - Publish and verify the Privacy Policy.
-- Decide whether user support will use a knowledge base, email, GitHub Issues, or another channel.
 
 ## App Store Assets and Metadata
 
+### Complete
+
+- Decide whether to create an App Preview video — **No App Preview for v1.0.**
+
+### In Progress
+
+- App Store search/ASO research, including competitor searches and natural-language discovery terms.
+
+Starting queries:
+
+- tv show next season
+- tv show upcoming season
+- upcoming tv seasons
+- new season reminder
+- track tv show new seasons
+- when is the next season
+- when does my show come back
+
+### Not Started / Remaining
+
 - Export and validate the final production app icon.
 - Capture App Store screenshots for every required device size.
-- Decide whether to create an App Preview video.
 - Write the App Store description.
 - Write promotional text.
+- Choose the App Store subtitle.
 - Choose keywords.
 - Select primary and secondary categories.
 - Prepare copyright information.
-
-### App Store search/ASO research
-
-Test natural-language searches a prospective user would use to find NextSeason, including “tv show next season,” “tv show upcoming season,” “new season reminder,” and related variations. Use the results to choose the App Store subtitle and keyword field.
-
-Starting queries:
-* tv show next season
-* tv show upcoming season
-* upcoming tv seasons
-* new season reminder
-* track tv show new seasons
-* when is the next season
-* when does my show come back
+- Complete ASO research and use the results to finalize the subtitle and keyword field.
 
 ## Privacy and Compliance
 
+### Not Started / Remaining
+
 - Complete the App Privacy questionnaire and Privacy Nutrition Label.
-- Verify that all privacy answers remain accurate for the release build.
-- Confirm encryption questionnaire answers.
+- Verify that the App Privacy answers accurately describe the release build.
+- Confirm export-compliance/encryption questionnaire answers.
 - Review required legal acknowledgements and third-party licenses.
-- Verify that all external services and data sources are disclosed where required.
+- Verify that external services and data sources are disclosed where required.
+- Cross-check the published Privacy Policy against the App Privacy answers and actual release-build behavior.
 
 ## Final Quality Pass
 
+### Not Started / Remaining
+
 - Complete a full regression test.
-- Test on the current public iOS release.
-- Test on the latest iOS beta, when practical.
+- Test on iOS 27 (current public release).
+- Test on iOS 26.
+- Test on iOS 18 (minimum supported OS).
+- Verify behavior and UI across both pre-Liquid-Glass and Liquid-Glass system designs.
 - Verify upgrade from earlier TestFlight builds.
 - Verify a clean installation.
 - Verify notification permission flows.
@@ -197,33 +218,69 @@ Starting queries:
 
 ## TestFlight Release Candidate
 
-- Create the release-candidate build.
-- Invite final external testers.
-- Address remaining beta feedback.
+### In Progress
+
+- The current TestFlight build is the **provisional v1.0 release candidate**; no code changes have been made since it was distributed.
+- Existing external testers continue to receive and install TestFlight updates.
+- Continue evaluating any remaining beta feedback.
+
+### Remaining Before Submission
+
+- If no further code changes are required, designate the current TestFlight build as the final v1.0 release candidate.
+- If code changes are made, create a new release-candidate build and revalidate the affected areas.
 - Remove, hide, or appropriately gate developer-only diagnostics.
-- Confirm which diagnostics remain intentionally available to users.
-- Increment version and build numbers for release.
-- Confirm the release candidate matches the screenshots and App Store description.
-- Once the release candidate is accepted as the final v1.0 build, create and push a v1.0 Git tag to preserve the exact code and documentation shipped to the App Store.
+- Confirm which diagnostics intentionally remain available to users.
+- Complete the Final Quality Pass against the final build.
+- Confirm the final build matches the App Store screenshots and description.
+- Set or confirm final v1.0 version and build numbers.
+- Treat the accepted release-candidate build as the intended App Store binary; code changes after final validation require a new build and appropriate revalidation.
+- Create and push a `v1.0` Git tag preserving the exact code and documentation shipped to the App Store.
 
 ## App Store Connect
 
-- Create the production app version.
-- Upload and select the release-candidate build.
-- Complete “What’s New” release notes.
-- Upload screenshots and other assets.
-- Complete pricing and availability.
+### In Progress
+
+- Configure NextSeason's App Store Connect record and associated agreements.
+- Configure production In-App Purchases for Plus and the tip jar as the Organization-account setup permits.
+- Complete pricing and availability configuration as the necessary agreements and banking verification become active.
+
+### Remaining
+
+- Create/configure the v1.0 App Store version.
+- Select the final release-candidate build.
+- Upload final screenshots and other required assets.
+- Add the final description, subtitle, promotional text, keywords, categories, support URL, and Privacy Policy URL.
 - Select countries and regions.
-- Configure the age rating.
-- Complete App Review information.
-- Provide review notes explaining any behavior that may not be obvious.
-- Provide a demo account only if one becomes necessary.
-- Submit the app for review.
+- Configure and verify the age rating.
+- Complete App Review contact information.
+- Write App Review notes explaining anything reviewers need to know, particularly the free/Plus behavior and purchases.
+- Provide a demo account only if App Review actually needs one; NextSeason does not otherwise require an account.
+- Complete final pricing and availability checks for the app and IAPs.
+- Verify that all agreements, tax, and banking requirements show as active.
+- Perform a final App Store Connect review as if seeing the listing for the first time, checking URLs, spelling, screenshots, pricing, territories, privacy information, and review notes.
+- Submit the final build and metadata for App Review.
+- Monitor App Review status and respond promptly to reviewer questions.
 
 ## Launch
 
-- Decide between automatic release and manual release after approval.
-- Publish launch announcements on LinkedIn, GitHub, and the project website.
-- Monitor App Review status and respond promptly to reviewer questions.
-- Monitor crash reports, reviews, and support messages after launch.
-- Prioritize launch-related fixes before beginning major new features.
+### Decisions to Make Before Submission
+
+- Decide between automatic release and manual release after App Review approval.
+- Decide on the exact launch-announcement channels and timing.
+
+### Launch
+
+- Publish the production website at `getnextseason.com`.
+- Verify the live App Store listing, screenshots, pricing, purchases, support URL, and Privacy Policy URL.
+- Publish launch announcements through the selected channels, potentially including the project website, GitHub, Substack, and appropriate social accounts.
+- Update the Trial by Fyre website to feature NextSeason as a released product.
+- Celebrate. 🥂
+
+### Immediate Post-Launch
+
+- Monitor crash reports and App Store Connect diagnostics.
+- Monitor App Store reviews and `support@getnextseason.com`.
+- Respond promptly to serious launch issues and App Review follow-up, if any.
+- Verify that purchases and entitlements behave correctly in production.
+- Verify that background refresh and production notifications are behaving as expected.
+- Prioritize launch-related fixes before beginning major new feature development.

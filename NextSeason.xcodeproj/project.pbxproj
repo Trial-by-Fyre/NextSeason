@@ -220,6 +220,7 @@
 		E1BCD4A8304C7FF10049DE1D /* 9-5-2026 Identify Conditionals in Views and Review Changes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-5-2026 Identify Conditionals in Views and Review Changes.md"; sourceTree = "<group>"; };
 		E1BCD4A9304C80470049DE1D /* 9-5-2026 Implement Fixes for Conditionals.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-5-2026 Implement Fixes for Conditionals.md"; sourceTree = "<group>"; };
 		E1C40B093063882B0006BBCD /* NextSeason TV - Trademark Research - 2026-09-22.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason TV - Trademark Research - 2026-09-22.md"; sourceTree = "<group>"; };
+		E1C40B0A306391F20006BBCD /* 9-22-2026 Discussion of Updating App Store Readiness Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-22-2026 Discussion of Updating App Store Readiness Roadmap.md"; sourceTree = "<group>"; };
 		E1DA26BC2FDDD99700C37DAC /* safety.mdc */ = {isa = PBXFileReference; lastKnownFileType = text; name = safety.mdc; path = .cursor/rules/safety.mdc; sourceTree = "<group>"; };
 		E1DA26BD2FDDD99700C37DAC /* swiftui-project-style.mdc */ = {isa = PBXFileReference; lastKnownFileType = text; name = "swiftui-project-style.mdc"; path = ".cursor/rules/swiftui-project-style.mdc"; sourceTree = "<group>"; };
 		E1DA26C02FDDDE7400C37DAC /* ProjectKickoff.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProjectKickoff.md; sourceTree = "<group>"; };
@@ -435,6 +436,7 @@
 				E1BCD4A9304C80470049DE1D /* 9-5-2026 Implement Fixes for Conditionals.md */,
 				E1BA91943052739F00C1572B /* 9-9-2026 Discuss Beta Crash Report.md */,
 				E1BA9195305273F900C1572B /* 9-9-2026 Fix Crash.md */,
+				E1C40B0A306391F20006BBCD /* 9-22-2026 Discussion of Updating App Store Readiness Roadmap.md */,
 			);
 			path = "AI Transcripts";
 			sourceTree = "<group>";

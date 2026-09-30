@@ -155,6 +155,7 @@
 		E167FE83301D42A3007F7098 /* 7-31-2026 Remove soak test code.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-31-2026 Remove soak test code.md"; sourceTree = "<group>"; };
 		E17E04942FDE291A00708D7A /* MVPDefinition.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MVPDefinition.md; sourceTree = "<group>"; };
 		E17E04952FDE291A00708D7A /* ProblemStatement.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProblemStatement.md; sourceTree = "<group>"; };
+		E17FC65E306DBFD100156F29 /* WORKING_WITH_AI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = WORKING_WITH_AI.md; sourceTree = "<group>"; };
 		E197008E2FF72BFF00D34A28 /* 7-2-2026 Diagnostics Work with Cursor.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-2-2026 Diagnostics Work with Cursor.md"; sourceTree = "<group>"; };
 		E197EC972FF06ED800D34A28 /* 6-27-2026 Fix UI Test Failure.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-27-2026 Fix UI Test Failure.md"; sourceTree = "<group>"; };
 		E197EF202FF31C0B00D34A28 /* 6-28-2026 Instruments Report Stage 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-28-2026 Instruments Report Stage 1.md"; sourceTree = "<group>"; };
@@ -366,6 +367,7 @@
 				E1AB8C4C3037BB410045498C /* NextSeason - Monetization Strategy Roadmap.md */,
 				E167D081301040BB007F7098 /* NextSeason - Product Evolution Roadmap.md */,
 				E1C40B093063882B0006BBCD /* NextSeason TV - Trademark Research - 2026-09-22.md */,
+				E17FC65E306DBFD100156F29 /* WORKING_WITH_AI.md */,
 				E102F0FD2FE5F2100076FCDD /* AI Transcripts */,
 			);
 			path = "Post-MVP";

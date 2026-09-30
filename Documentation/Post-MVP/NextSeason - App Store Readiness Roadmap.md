@@ -131,11 +131,11 @@ the initial App Store release; see the Product Evolution Roadmap.
 
 See
 [`../Post-MVP/NextSeason - Monetization Strategy Roadmap`](../Post-MVP/NextSeason%20-%20Monetization%20Strategy%20Roadmap.md)
-for the proposed pricing and purchase structure.
+for the launch pricing and purchase structure.
 
 -   Implemented StoreKit 2 purchasing and entitlement management for
     NextSeason Plus.
--   Supports annual subscription and lifetime purchase options.
+-   Supports monthly ($1.99/month) and annual ($9.99/year) subscriptions, with annual presented as Best Value.
 -   Implements optional consumable tips through **Support NextSeason**.
 -   Supports purchase restoration and beta-user grandfathering.
 -   Requests an App Store review after the first production show
@@ -216,7 +216,7 @@ These tasks are listed in approximately sequential order.
 
 ### In Progress / Remaining
 
--   Add final Plus pricing when established.
+-   Use the launch Plus pricing: $1.99/month and $9.99/year.
 -   When the pre-order listing becomes available, link the existing
     **Pre-order on the App Store** badge to it.
 -   At launch, replace the pre-order badge with Apple's **Download on
@@ -307,10 +307,10 @@ Starting queries:
     CSV in Numbers or another common spreadsheet application.
 -   Verify date-sensitive behavior after changing the system time zone.
 -   Verify notification presentation with unusually long show titles.
--   Verify production StoreKit behavior for the annual Plus
-    subscription, lifetime Plus purchase, and each tip product.
+-   Verify production StoreKit behavior for the monthly and annual Plus
+    subscriptions, and each tip product.
 -   Verify Restore Purchases behavior.
--   Verify Family Sharing configuration if it will be enabled for Plus.
+-   Verify Family Sharing is off for both Plus subscriptions.
 -   Verify behavior when Plus expires, including preservation of shows
     above the free-tier limit.
 -   Verify prices displayed by the app come from StoreKit and match App

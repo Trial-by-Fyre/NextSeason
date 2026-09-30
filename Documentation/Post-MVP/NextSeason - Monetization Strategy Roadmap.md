@@ -8,7 +8,7 @@ The goal is to create a simple and sustainable revenue model that fits the app's
 
 The monetization experience should be similarly simple. It should avoid unnecessary tiers, advertising, artificial feature restrictions, and frequent prompts to spend money.
 
-The initial monetization structure has been implemented using StoreKit 2. Production pricing has not yet been determined.
+The initial monetization structure has been implemented using StoreKit 2. Launch pricing is $1.99/month or $9.99/year for NextSeason Plus.
 
 ## Guiding Principles
 
@@ -20,7 +20,7 @@ The monetization model should:
 - Avoid adding features or complexity merely to justify a subscription.
 - Avoid advertising and the privacy, maintenance, and user-experience costs associated with ad networks.
 - Avoid repeatedly interrupting or pressuring users to make purchases.
-- Provide an option for users who strongly prefer not to maintain another subscription.
+- Offer monthly billing flexibility and a better-value annual option.
 - Avoid taking functionality away from users merely because a paid entitlement expires.
 
 ## Free Tier
@@ -57,7 +57,7 @@ A single paid entitlement:
 - Keeps purchasing and entitlement behavior simple.
 - Fits the overall philosophy of keeping NextSeason focused and uncomplicated.
 
-NextSeason Plus can currently be obtained through either an annual subscription or a lifetime purchase.
+NextSeason Plus can currently be obtained through either a monthly or an annual auto-renewing subscription.
 
 ## Annual Subscription
 
@@ -76,19 +76,15 @@ The subscription supports the continuing service involved in maintaining NextSea
 
 A subscription does **not** imply that NextSeason must continually add new features. The ongoing value is the continuing tracking service itself.
 
-A monthly subscription is not part of the initial product structure. It can be reconsidered later if user feedback indicates that it would be valuable.
+## Monthly Subscription
 
-## Lifetime Purchase
+NextSeason Plus Monthly is an auto-renewing monthly subscription that provides the same unlimited watchlist while active, with monthly billing flexibility.
 
-NextSeason Plus Lifetime is a non-consumable one-time purchase that permanently unlocks an unlimited watchlist.
-
-The lifetime option is intended for users who strongly prefer a one-time purchase over an ongoing subscription.
-
-Production pricing should maintain a sensible relationship between the annual and lifetime options so that the lifetime purchase does not undermine the sustainability of the annual subscription.
+Both subscriptions belong to the **NextSeason Plus** subscription group and provide the same level of service. Family Sharing is off.
 
 ## Subscription Expiration
 
-If an annual Plus subscription expires, NextSeason does not remove shows or stop tracking shows already on the user's watchlist.
+If a monthly or annual Plus subscription expires, NextSeason does not remove shows or stop tracking shows already on the user's watchlist.
 
 If the watchlist contains more than the free limit when Plus expires:
 
@@ -99,8 +95,6 @@ If the watchlist contains more than the free limit when Plus expires:
 - The user can regain the ability to add shows by renewing Plus or reducing the watchlist below the free limit.
 
 This avoids unexpectedly taking away functionality or data the user already had while still enforcing the free-tier limit for future additions.
-
-A lifetime purchase does not expire.
 
 ## Existing Beta Users
 
@@ -149,14 +143,14 @@ NextSeason uses native **StoreKit 2** for purchases and entitlement management.
 The purchasing system supports:
 
 - An annual auto-renewing NextSeason Plus subscription.
-- A lifetime non-consumable NextSeason Plus purchase.
+- A monthly auto-renewing NextSeason Plus subscription.
 - Consumable tips.
 - Purchase restoration.
 - Entitlement refresh at launch and when the app becomes active.
 - StoreKit transaction updates.
 - Beta-user grandfathering.
 
-Both an active annual subscription and a lifetime purchase provide the same NextSeason Plus entitlement: an unlimited watchlist.
+Both an active monthly subscription and an active annual subscription provide the same NextSeason Plus entitlement: an unlimited watchlist.
 
 Tips never grant Plus functionality.
 
@@ -176,7 +170,7 @@ The Plus purchase screen:
 
 - Explains the three-show free limit and unlimited Plus watchlist.
 - Displays pricing supplied by StoreKit rather than hard-coded prices.
-- Offers the annual and lifetime purchase options.
+- Offers Monthly and Annual, with Annual first and labeled Best Value.
 - Provides Restore Purchases.
 - Includes the required subscription disclosure.
 - Provides links to the Terms of Use and Privacy Policy.
@@ -201,36 +195,32 @@ Review requests are not tied to purchases, subscription status, launch counts, o
 
 ## Pricing
 
-Production prices for NextSeason Plus and optional tips are **TBD**.
+NextSeason Plus launch prices are **$1.99/month** and **$9.99/year**. Annual is the preferred, better-value option.
 
-The prices currently present in the StoreKit configuration are development and testing values and should not be treated as final pricing decisions.
+| Subscription | App Store Connect product ID | US launch price |
+| --- | --- | --- |
+| Monthly | `com.trialbyfyre.nextseason.plus.monthly` | $1.99/month |
+| Annual | `com.trialbyfyre.nextseason.plus.annual` | $9.99/year |
 
-Production pricing should be decided before App Store submission after considering:
+The app displays StoreKit's localized product prices. The local StoreKit configuration and preview/stub Plus prices match the launch decision; tip prices remain provisional.
 
-- Comparable App Store products.
-- Expected customer behavior.
-- Apple's commission structure, including Small Business Program eligibility.
-- The relationship between annual and lifetime pricing.
-- Expected ongoing operating and maintenance costs.
-- The value of keeping the purchasing decision simple.
+Both products have been created in App Store Connect in the **NextSeason Plus** group. Before release, verify their prices, durations, equivalent subscription service level, availability, metadata, review status, and that Family Sharing is off. Local StoreKit configuration does not update App Store Connect.
 
 ## Initial Product Structure
 
 | Offering | Watchlist | Payment |
 | --- | --- | --- |
 | NextSeason Free | Up to 3 shows | Free, no expiration |
-| NextSeason Plus Annual | Unlimited | Annual auto-renewing subscription |
-| NextSeason Plus Lifetime | Unlimited | One-time purchase |
+| NextSeason Plus Annual | Unlimited | $9.99/year auto-renewing subscription |
+| NextSeason Plus Monthly | Unlimited | $1.99/month auto-renewing subscription |
 | Support NextSeason | No additional functionality | Optional consumable tips |
 | Grandfathered Beta Access | Unlimited | No purchase required |
-
-A monthly subscription is not part of the initial product structure.
 
 ## Status
 
 **Implemented for pre-release testing.**
 
-The StoreKit 2 purchasing architecture, free-tier limit, annual and lifetime Plus options, beta grandfathering, optional tips, purchase restoration, and review-request behavior are implemented.
+The StoreKit 2 purchasing architecture, free-tier limit, monthly and annual Plus options, beta grandfathering, optional tips, purchase restoration, and review-request behavior are implemented.
 
 Before App Store release, production products, pricing, legal links, App Store configuration, and purchase behavior must be finalized and validated in the production App Store environment.
 

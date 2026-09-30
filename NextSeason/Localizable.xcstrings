@@ -74,6 +74,9 @@
         }
       }
     },
+    "%@ per month" : {
+
+    },
     "%@ per year" : {
 
     },
@@ -130,7 +133,7 @@
         }
       }
     },
-    "Annual" : {
+    "Annual — Best Value" : {
 
     },
     "App" : {
@@ -953,9 +956,6 @@
         }
       }
     },
-    "Lifetime" : {
-
-    },
     "Load More Results" : {
 
     },
@@ -1061,6 +1061,9 @@
         }
       }
     },
+    "Monthly" : {
+
+    },
     "NextSeason" : {
       "localizations" : {
         "en" : {
@@ -1128,10 +1131,10 @@
     "NextSeason Plus Annual" : {
 
     },
-    "NextSeason Plus Annual is an auto-renewing subscription. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time. The Lifetime membership is a one-time purchase that permanently unlocks an unlimited watchlist." : {
+    "NextSeason Plus Monthly and Annual are auto-renewing subscriptions. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time." : {
 
     },
-    "NextSeason Plus Lifetime" : {
+    "NextSeason Plus Monthly" : {
 
     },
     "NextSeason Plus removes the watchlist limit." : {
@@ -2236,10 +2239,10 @@
     "Unlimited" : {
 
     },
-    "Unlimited watchlist for one year, renews annually." : {
+    "Unlimited watchlist for one month, renews monthly." : {
 
     },
-    "Unlimited watchlist, one-time purchase." : {
+    "Unlimited watchlist for one year, renews annually." : {
 
     },
     "Unlock NextSeason Plus" : {

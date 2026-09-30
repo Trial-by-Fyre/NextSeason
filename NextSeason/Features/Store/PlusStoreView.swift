@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-/// Paywall / upgrade sheet: annual subscription, lifetime purchase, and restore.
+/// Paywall / upgrade sheet: monthly and annual subscriptions, and restore.
 ///
 /// Loads products on first appear, shows a blocking overlay while products
 /// or a purchase are in flight, and dismisses automatically once the watchlist
@@ -56,7 +56,7 @@ struct PlusStoreView: View {
                 Text(purchases.lastErrorMessage ?? "")
             }
             .task {
-                if purchases.annualProduct == nil && purchases.lifetimeProduct == nil {
+                if purchases.annualProduct == nil && purchases.monthlyProduct == nil {
                     await purchases.loadProducts()
                 }
             }
@@ -87,7 +87,7 @@ struct PlusStoreView: View {
         VStack(spacing: AppSpacing.row) {
             if let annual = purchases.annualProduct {
                 purchaseButton(
-                    title: String(localized: "Annual"),
+                    title: String(localized: "Annual — Best Value"),
                     subtitle: String(
                         localized: "\(annual.displayPrice) per year"
                     ),
@@ -97,13 +97,13 @@ struct PlusStoreView: View {
                 }
             }
 
-            if let lifetime = purchases.lifetimeProduct {
+            if let monthly = purchases.monthlyProduct {
                 purchaseButton(
-                    title: String(localized: "Lifetime"),
-                    subtitle: lifetime.displayPrice,
-                    identifier: AccessibilityID.Store.plusLifetime
+                    title: String(localized: "Monthly"),
+                    subtitle: String(localized: "\(monthly.displayPrice) per month"),
+                    identifier: AccessibilityID.Store.plusMonthly
                 ) {
-                    await purchase(lifetime)
+                    await purchase(monthly)
                 }
             }
 
@@ -154,7 +154,7 @@ struct PlusStoreView: View {
     private var subscriptionDisclosure: String {
         String(
             localized:
-                "NextSeason Plus Annual is an auto-renewing subscription. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time. The Lifetime membership is a one-time purchase that permanently unlocks an unlimited watchlist."
+                "NextSeason Plus Monthly and Annual are auto-renewing subscriptions. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time."
         )
     }
 

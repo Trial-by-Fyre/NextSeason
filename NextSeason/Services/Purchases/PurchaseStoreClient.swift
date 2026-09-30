@@ -19,7 +19,7 @@ protocol PurchaseStoreClient: AnyObject {
         productID: String,
         onVerified: @escaping @MainActor (StoreTransaction) async -> Void
     ) async throws -> PurchaseOutcome
-    /// True when an active, non-revoked annual or lifetime entitlement exists.
+    /// True when an active, non-revoked monthly or annual subscription entitlement exists.
     func hasActivePlusEntitlement() async -> Bool
     /// Triggers App Store sync (Restore Purchases); caller re-reads entitlements.
     func restorePurchases() async throws

@@ -78,7 +78,7 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
             lastPurchasedTransaction = transaction
             if let id = StoreProductID(rawValue: productID) {
                 switch id {
-                case .plusAnnual, .plusLifetime:
+                case .plusAnnual, .plusMonthly:
                     isStoreEntitled = true
                 case .tipTrailer, .tipPilot, .tipHitShow:
                     break

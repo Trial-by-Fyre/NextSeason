@@ -26,8 +26,8 @@ nonisolated enum StoreCatalogAvailability: Equatable, Sendable {
 
 /// Observable purchasing and Plus entitlement state for the SwiftUI environment.
 ///
-/// Unlimited watchlist access comes from an active annual subscription, a
-/// lifetime purchase, or one-time beta grandfathering. Tips never grant Plus.
+/// Unlimited watchlist access comes from an active monthly or annual subscription,
+/// or one-time beta grandfathering. Tips never grant Plus.
 @Observable
 @MainActor
 final class PurchaseService {
@@ -35,8 +35,8 @@ final class PurchaseService {
     private(set) var storeEntitlement: StoreEntitlementState
     /// Annual subscription product from the last successful `loadProducts()`.
     private(set) var annualProduct: StoreProduct?
-    /// Lifetime purchase product from the last successful `loadProducts()`.
-    private(set) var lifetimeProduct: StoreProduct?
+    /// Monthly subscription product from the last successful `loadProducts()`.
+    private(set) var monthlyProduct: StoreProduct?
     /// Consumable tip products, sorted trailer → pilot → hit show.
     private(set) var tipProducts: [StoreProduct] = []
     /// True while `Product.products(for:)` is in flight.
@@ -58,7 +58,7 @@ final class PurchaseService {
     /// Prevents duplicate thank-you toasts when StoreKit redelivers the same tip.
     private var processedTransactionIDs: Set<UInt64> = []
 
-    /// True when StoreKit has reported an active Plus subscription or lifetime purchase.
+    /// True when StoreKit has reported an active Plus subscription.
     var isStoreEntitled: Bool {
         if case .resolved(let isEntitled) = storeEntitlement {
             return isEntitled
@@ -84,7 +84,7 @@ final class PurchaseService {
         entitlementStore.isGrandfathered
     }
 
-    /// Plus annual/lifetime catalog for `PlusStoreView`.
+    /// Plus annual/monthly catalog for `PlusStoreView`.
     ///
     /// Loading wins while a fetch is in flight (or has never completed) so the
     /// paywall can overlay a spinner without treating a reload as unavailable.
@@ -92,7 +92,7 @@ final class PurchaseService {
         if isLoadingProducts || !hasCompletedProductLoad {
             return .loading
         }
-        if annualProduct != nil || lifetimeProduct != nil {
+        if annualProduct != nil || monthlyProduct != nil {
             return .available
         }
         return .unavailable
@@ -195,7 +195,7 @@ final class PurchaseService {
         do {
             let products = try await store.loadProducts(ids: StoreProductID.allIDs)
             annualProduct = products.first { $0.kind == .plusAnnual }
-            lifetimeProduct = products.first { $0.kind == .plusLifetime }
+            monthlyProduct = products.first { $0.kind == .plusMonthly }
             tipProducts =
                 products
                 .filter { $0.kind == .tip }
@@ -203,7 +203,7 @@ final class PurchaseService {
                     tipSortIndex(lhs.productID) < tipSortIndex(rhs.productID)
                 }
             hasCompletedProductLoad = true
-            if annualProduct == nil && lifetimeProduct == nil {
+            if annualProduct == nil && monthlyProduct == nil {
                 AppDiagnosticsLogger.breadcrumb("purchase_products_empty")
             }
         } catch is CancellationError {
@@ -297,7 +297,7 @@ final class PurchaseService {
     private func handleVerifiedTransaction(_ transaction: StoreTransaction) async {
         let isNew = processedTransactionIDs.insert(transaction.id).inserted
         switch transaction.kind {
-        case .plusAnnual, .plusLifetime:
+        case .plusAnnual, .plusMonthly:
             await refreshEntitlements()
         case .tip:
             if isNew {

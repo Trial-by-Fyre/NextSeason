@@ -49,14 +49,13 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
         }
     }
 
-    /// Scans current entitlements for an active Plus subscription or lifetime
-    /// purchase. Ignores revoked transactions and consumable tips.
+    /// Scans current entitlements for an active Plus subscription. Ignores revoked transactions and consumable tips.
     func hasActivePlusEntitlement() async -> Bool {
         for await result in Transaction.currentEntitlements {
             guard let transaction = try? checkVerified(result) else { continue }
             guard transaction.revocationDate == nil else { continue }
             switch StoreProductID(rawValue: transaction.productID) {
-            case .plusAnnual, .plusLifetime:
+            case .plusAnnual, .plusMonthly:
                 return true
             case .tipTrailer, .tipPilot, .tipHitShow, .none:
                 continue

@@ -24,20 +24,22 @@ struct PurchaseServiceTests {
         #expect(purchases.isGrandfathered)
         #expect(purchases.isUnlimitedWatchlist)
         #expect(purchases.annualProduct != nil)
-        #expect(purchases.lifetimeProduct != nil)
+        #expect(purchases.monthlyProduct != nil)
         #expect(purchases.tipProducts.count == 3)
         #expect(purchases.plusCatalogAvailability == .available)
         #expect(purchases.tipCatalogAvailability == .available)
     }
 
-    @Test("Purchasing annual Plus unlocks the unlimited watchlist")
-    func purchasingAnnualUnlocksPlus() async throws {
+    @Test(
+        "Purchasing either Plus subscription unlocks the unlimited watchlist",
+        arguments: [StoreProductID.plusMonthly, .plusAnnual])
+    func purchasingSubscriptionUnlocksPlus(_ productID: StoreProductID) async throws {
         let purchases = PurchaseService.stub()
         await purchases.start(watchlistCount: 0)
         #expect(purchases.isUnlimitedWatchlist == false)
 
-        let annual = try #require(purchases.annualProduct)
-        let outcome = await purchases.purchase(annual)
+        let product = StoreProduct(productID)
+        let outcome = await purchases.purchase(product)
 
         #expect(outcome == .success)
         #expect(purchases.isStoreEntitled)
@@ -60,8 +62,8 @@ struct PurchaseServiceTests {
 
     @Test("Product IDs match the agreed catalog")
     func productIDsMatchCatalog() {
-        #expect(StoreProductID.plusAnnual.rawValue == "com.TrialByFyre.NextSeason.plus.annual")
-        #expect(StoreProductID.plusLifetime.rawValue == "com.TrialByFyre.NextSeason.plus.lifetime")
+        #expect(StoreProductID.plusAnnual.rawValue == "com.trialbyfyre.nextseason.plus.annual")
+        #expect(StoreProductID.plusMonthly.rawValue == "com.trialbyfyre.nextseason.plus.monthly")
         #expect(StoreProductID.tipTrailer.rawValue == "com.TrialByFyre.NextSeason.tip.small")
         #expect(StoreProductID.tipPilot.rawValue == "com.TrialByFyre.NextSeason.tip.medium")
         #expect(StoreProductID.tipHitShow.rawValue == "com.TrialByFyre.NextSeason.tip.large")
@@ -168,7 +170,7 @@ struct PurchaseServiceTests {
         #expect(purchases.hasCompletedProductLoad)
         #expect(purchases.lastErrorMessage != nil)
         #expect(purchases.annualProduct == nil)
-        #expect(purchases.lifetimeProduct == nil)
+        #expect(purchases.monthlyProduct == nil)
         #expect(purchases.tipProducts.isEmpty)
         #expect(purchases.plusCatalogAvailability == .unavailable)
         #expect(purchases.tipCatalogAvailability == .unavailable)
@@ -181,16 +183,18 @@ struct PurchaseServiceTests {
         #expect(purchases.tipProducts.count == 3)
     }
 
-    @Test("Partial catalog keeps loaded Plus products when tips are missing")
-    func partialCatalogPlusWithoutTips() async {
+    @Test(
+        "Either subscription keeps Plus available when the other products are missing",
+        arguments: [StoreProductID.plusMonthly, .plusAnnual])
+    func partialCatalogPlusWithoutTips(_ productID: StoreProductID) async {
         let store = StubPurchaseStoreClient(
-            products: [StoreProduct(.plusAnnual), StoreProduct(.plusLifetime)]
+            products: [StoreProduct(productID)]
         )
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
         await purchases.start(watchlistCount: 0)
 
-        #expect(purchases.annualProduct != nil)
-        #expect(purchases.lifetimeProduct != nil)
+        #expect(
+            (purchases.annualProduct ?? purchases.monthlyProduct)?.productID == productID.rawValue)
         #expect(purchases.tipProducts.isEmpty)
         #expect(purchases.hasCompletedProductLoad)
         #expect(purchases.lastErrorMessage == nil)
@@ -209,7 +213,7 @@ struct PurchaseServiceTests {
         await purchases.start(watchlistCount: 0)
 
         #expect(purchases.annualProduct == nil)
-        #expect(purchases.lifetimeProduct == nil)
+        #expect(purchases.monthlyProduct == nil)
         #expect(purchases.tipProducts.count == 3)
         #expect(purchases.hasCompletedProductLoad)
         #expect(purchases.plusCatalogAvailability == .unavailable)
@@ -394,8 +398,10 @@ struct PurchaseServiceTests {
         #expect(purchases.isStoreEntitled)
     }
 
-    @Test("Verified Plus purchases are incorporated before the transaction is finished")
-    func processesPlusPurchaseBeforeFinish() async throws {
+    @Test(
+        "Verified Plus purchases are incorporated before the transaction is finished",
+        arguments: [StoreProductID.plusMonthly, .plusAnnual])
+    func processesPlusPurchaseBeforeFinish(_ productID: StoreProductID) async throws {
         let store = StubPurchaseStoreClient()
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
         await purchases.start(watchlistCount: 0)
@@ -405,8 +411,8 @@ struct PurchaseServiceTests {
             entitledWhenFinished = purchases.isStoreEntitled
         }
 
-        let annual = try #require(purchases.annualProduct)
-        #expect(await purchases.purchase(annual) == .success)
+        let product = StoreProduct(productID)
+        #expect(await purchases.purchase(product) == .success)
         #expect(entitledWhenFinished)
         #expect(store.finishedTransactionIDs.isEmpty == false)
     }

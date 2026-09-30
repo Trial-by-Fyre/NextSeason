@@ -10,8 +10,8 @@ import Foundation
 /// These IDs must match App Store Connect (and the local `.storekit` file)
 /// exactly. Prices are loaded from StoreKit at runtime.
 nonisolated enum StoreProductID: String, CaseIterable, Sendable {
-    case plusAnnual = "com.TrialByFyre.NextSeason.plus.annual"
-    case plusLifetime = "com.TrialByFyre.NextSeason.plus.lifetime"
+    case plusAnnual = "com.trialbyfyre.nextseason.plus.annual"
+    case plusMonthly = "com.trialbyfyre.nextseason.plus.monthly"
     case tipTrailer = "com.TrialByFyre.NextSeason.tip.small"
     case tipPilot = "com.TrialByFyre.NextSeason.tip.medium"
     case tipHitShow = "com.TrialByFyre.NextSeason.tip.large"
@@ -22,7 +22,7 @@ nonisolated enum StoreProductID: String, CaseIterable, Sendable {
     var kind: StoreProductKind {
         switch self {
         case .plusAnnual: .plusAnnual
-        case .plusLifetime: .plusLifetime
+        case .plusMonthly: .plusMonthly
         case .tipTrailer, .tipPilot, .tipHitShow: .tip
         }
     }
@@ -32,8 +32,8 @@ nonisolated enum StoreProductID: String, CaseIterable, Sendable {
         switch self {
         case .plusAnnual:
             String(localized: "NextSeason Plus Annual")
-        case .plusLifetime:
-            String(localized: "NextSeason Plus Lifetime")
+        case .plusMonthly:
+            String(localized: "NextSeason Plus Monthly")
         case .tipTrailer:
             String(localized: "Trailer")
         case .tipPilot:
@@ -43,11 +43,11 @@ nonisolated enum StoreProductID: String, CaseIterable, Sendable {
         }
     }
 
-    /// Provisional US prices for previews and stubs only — never shown as live prices.
+    /// US launch prices for Plus and provisional tip prices for previews and stubs only — never shown as live prices.
     var fallbackPriceText: String {
         switch self {
-        case .plusAnnual: "$10.00"
-        case .plusLifetime: "$20.00"
+        case .plusAnnual: "$9.99"
+        case .plusMonthly: "$1.99"
         case .tipTrailer: "$1.00"
         case .tipPilot: "$3.00"
         case .tipHitShow: "$5.00"
@@ -59,8 +59,8 @@ nonisolated enum StoreProductID: String, CaseIterable, Sendable {
         switch self {
         case .plusAnnual:
             String(localized: "Unlimited watchlist for one year, renews annually.")
-        case .plusLifetime:
-            String(localized: "Unlimited watchlist, one-time purchase.")
+        case .plusMonthly:
+            String(localized: "Unlimited watchlist for one month, renews monthly.")
         case .tipTrailer, .tipPilot, .tipHitShow:
             String(localized: "Optional support for NextSeason. Does not unlock features.")
         }
@@ -70,7 +70,7 @@ nonisolated enum StoreProductID: String, CaseIterable, Sendable {
 /// Product category for partitioning loaded StoreKit products and entitlements.
 nonisolated enum StoreProductKind: Equatable, Sendable {
     case plusAnnual
-    case plusLifetime
+    case plusMonthly
     case tip
 }
 

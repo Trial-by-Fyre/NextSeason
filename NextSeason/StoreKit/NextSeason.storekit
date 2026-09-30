@@ -5,21 +5,6 @@
   ],
   "products" : [
     {
-      "displayPrice" : "20.00",
-      "familyShareable" : false,
-      "internalID" : "B1D84E27",
-      "localizations" : [
-        {
-          "description" : "Unlimited watchlist, one-time purchase.",
-          "displayName" : "NextSeason Plus Lifetime",
-          "locale" : "en_US"
-        }
-      ],
-      "productID" : "com.TrialByFyre.NextSeason.plus.lifetime",
-      "referenceName" : "Plus Lifetime",
-      "type" : "NonConsumable"
-    },
-    {
       "displayPrice" : "1.00",
       "familyShareable" : false,
       "internalID" : "C92F0A14",
@@ -83,7 +68,7 @@
           "codeOffers" : [
 
           ],
-          "displayPrice" : "10.00",
+          "displayPrice" : "9.99",
           "familyShareable" : false,
           "groupNumber" : 1,
           "internalID" : "A0C15E88",
@@ -95,9 +80,34 @@
               "locale" : "en_US"
             }
           ],
-          "productID" : "com.TrialByFyre.NextSeason.plus.annual",
+          "productID" : "com.trialbyfyre.nextseason.plus.annual",
           "recurringSubscriptionPeriod" : "P1Y",
           "referenceName" : "Plus Annual",
+          "subscriptionGroupID" : "F6B29D40",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "B1D84E27",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited watchlist for one month, renews monthly.",
+              "displayName" : "NextSeason Plus Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.trialbyfyre.nextseason.plus.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Plus Monthly",
           "subscriptionGroupID" : "F6B29D40",
           "type" : "RecurringSubscription"
         }

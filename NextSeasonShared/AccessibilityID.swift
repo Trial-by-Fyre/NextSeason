@@ -72,7 +72,7 @@ enum AccessibilityID {
     enum Store {
         static let plusUnlock = "store.plusUnlock"
         static let plusAnnual = "store.plusAnnual"
-        static let plusLifetime = "store.plusLifetime"
+        static let plusMonthly = "store.plusMonthly"
         static let restore = "store.restore"
         static let tipTrailer = "store.tipTrailer"
         static let tipPilot = "store.tipPilot"

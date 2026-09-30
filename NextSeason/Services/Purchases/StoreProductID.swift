@@ -118,5 +118,5 @@ nonisolated enum StoreLegalLinks {
         string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/"
     )
 
-    static let privacyPolicy: URL? = nil
+    static let privacyPolicy: URL? = URL(string: "https://getnextseason.com/privacy.html")
 }

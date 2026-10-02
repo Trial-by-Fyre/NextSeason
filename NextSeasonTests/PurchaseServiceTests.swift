@@ -46,11 +46,13 @@ struct PurchaseServiceTests {
         #expect(purchases.isUnlimitedWatchlist)
     }
 
-    @Test("Tips succeed without granting Plus")
-    func tipsDoNotGrantPlus() async throws {
+    @Test(
+        "Tips succeed without granting Plus",
+        arguments: [StoreProductID.tipTrailer, .tipPilot, .tipHitShow])
+    func tipsDoNotGrantPlus(_ productID: StoreProductID) async throws {
         let purchases = PurchaseService.stub()
         await purchases.start(watchlistCount: 0)
-        let tip = try #require(purchases.tipProducts.first)
+        let tip = try #require(purchases.tipProducts.first { $0.productID == productID.rawValue })
 
         let outcome = await purchases.purchase(tip)
 
@@ -64,9 +66,9 @@ struct PurchaseServiceTests {
     func productIDsMatchCatalog() {
         #expect(StoreProductID.plusAnnual.rawValue == "com.trialbyfyre.nextseason.plus.annual")
         #expect(StoreProductID.plusMonthly.rawValue == "com.trialbyfyre.nextseason.plus.monthly")
-        #expect(StoreProductID.tipTrailer.rawValue == "com.TrialByFyre.NextSeason.tip.small")
-        #expect(StoreProductID.tipPilot.rawValue == "com.TrialByFyre.NextSeason.tip.medium")
-        #expect(StoreProductID.tipHitShow.rawValue == "com.TrialByFyre.NextSeason.tip.large")
+        #expect(StoreProductID.tipTrailer.rawValue == "com.trialbyfyre.nextseason.tip.trailer")
+        #expect(StoreProductID.tipPilot.rawValue == "com.trialbyfyre.nextseason.tip.pilot")
+        #expect(StoreProductID.tipHitShow.rawValue == "com.trialbyfyre.nextseason.tip.hitshow")
     }
 
     @Test("Initial entitlement resolution stays loading until StoreKit answers")

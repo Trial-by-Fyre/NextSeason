@@ -12,9 +12,9 @@ import Foundation
 nonisolated enum StoreProductID: String, CaseIterable, Sendable {
     case plusAnnual = "com.trialbyfyre.nextseason.plus.annual"
     case plusMonthly = "com.trialbyfyre.nextseason.plus.monthly"
-    case tipTrailer = "com.TrialByFyre.NextSeason.tip.small"
-    case tipPilot = "com.TrialByFyre.NextSeason.tip.medium"
-    case tipHitShow = "com.TrialByFyre.NextSeason.tip.large"
+    case tipTrailer = "com.trialbyfyre.nextseason.tip.trailer"
+    case tipPilot = "com.trialbyfyre.nextseason.tip.pilot"
+    case tipHitShow = "com.trialbyfyre.nextseason.tip.hitshow"
 
     /// Stable ordering for `Product.products(for:)`.
     static var allIDs: [String] { allCases.map(\.rawValue) }
@@ -43,14 +43,14 @@ nonisolated enum StoreProductID: String, CaseIterable, Sendable {
         }
     }
 
-    /// US launch prices for Plus and provisional tip prices for previews and stubs only — never shown as live prices.
+    /// US prices for previews and stubs only — never shown as live prices.
     var fallbackPriceText: String {
         switch self {
         case .plusAnnual: "$9.99"
         case .plusMonthly: "$1.99"
-        case .tipTrailer: "$1.00"
-        case .tipPilot: "$3.00"
-        case .tipHitShow: "$5.00"
+        case .tipTrailer: "$0.99"
+        case .tipPilot: "$2.99"
+        case .tipHitShow: "$4.99"
         }
     }
 

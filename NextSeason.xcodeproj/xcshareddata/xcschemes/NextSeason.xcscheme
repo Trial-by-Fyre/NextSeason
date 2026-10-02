@@ -107,9 +107,6 @@
             ReferencedContainer = "container:NextSeason.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
-      <StoreKitConfigurationFileReference
-         identifier = "../../NextSeason/StoreKit/NextSeason.storekit">
-      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Profile"

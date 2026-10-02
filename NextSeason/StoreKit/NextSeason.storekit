@@ -5,7 +5,7 @@
   ],
   "products" : [
     {
-      "displayPrice" : "1.00",
+      "displayPrice" : "0.99",
       "familyShareable" : false,
       "internalID" : "C92F0A14",
       "localizations" : [
@@ -15,12 +15,12 @@
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.TrialByFyre.NextSeason.tip.small",
+      "productID" : "com.trialbyfyre.nextseason.tip.trailer",
       "referenceName" : "Trailer",
       "type" : "Consumable"
     },
     {
-      "displayPrice" : "3.00",
+      "displayPrice" : "2.99",
       "familyShareable" : false,
       "internalID" : "D4E61B08",
       "localizations" : [
@@ -30,12 +30,12 @@
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.TrialByFyre.NextSeason.tip.medium",
+      "productID" : "com.trialbyfyre.nextseason.tip.pilot",
       "referenceName" : "Pilot",
       "type" : "Consumable"
     },
     {
-      "displayPrice" : "5.00",
+      "displayPrice" : "4.99",
       "familyShareable" : false,
       "internalID" : "E8A73C55",
       "localizations" : [
@@ -45,7 +45,7 @@
           "locale" : "en_US"
         }
       ],
-      "productID" : "com.TrialByFyre.NextSeason.tip.large",
+      "productID" : "com.trialbyfyre.nextseason.tip.hitshow",
       "referenceName" : "Hit Show",
       "type" : "Consumable"
     }

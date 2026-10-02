@@ -263,7 +263,7 @@ Starting queries:
 
 ## Privacy and Compliance
 
-### Not Started / Remaining
+### Complete
 
 -   Determine whether Aptabase analytics require explicit user consent
     under Apple's current rules and implement any required consent or
@@ -272,12 +272,15 @@ Starting queries:
 -   Complete the App Privacy questionnaire and Privacy Nutrition Label.
 -   Verify that the App Privacy answers accurately describe the release
     build.
+-   Cross-check the published Privacy Policy against the App Privacy
+    answers, Aptabase configuration, and actual release-build behavior.
+
+### Not Started / Remaining
+
 -   Confirm export-compliance/encryption questionnaire answers.
 -   Review required legal acknowledgements and third-party licenses.
 -   Verify that external services and data sources are disclosed where
     required.
--   Cross-check the published Privacy Policy against the App Privacy
-    answers, Aptabase configuration, and actual release-build behavior.
 
 ## Final Quality Pass
 

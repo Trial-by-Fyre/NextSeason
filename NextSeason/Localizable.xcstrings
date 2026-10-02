@@ -991,6 +991,9 @@
     "Metadata provided by TheTVDB. Please consider adding missing information or subscribing." : {
 
     },
+    "Monthly" : {
+
+    },
     "Never" : {
       "localizations" : {
         "en" : {
@@ -1061,9 +1064,6 @@
         }
       }
     },
-    "Monthly" : {
-
-    },
     "NextSeason" : {
       "localizations" : {
         "en" : {
@@ -1131,10 +1131,10 @@
     "NextSeason Plus Annual" : {
 
     },
-    "NextSeason Plus Monthly and Annual are auto-renewing subscriptions. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time." : {
+    "NextSeason Plus Monthly" : {
 
     },
-    "NextSeason Plus Monthly" : {
+    "NextSeason Plus Monthly and Annual are auto-renewing subscriptions. Payment is charged to your Apple Account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time." : {
 
     },
     "NextSeason Plus removes the watchlist limit." : {
@@ -2101,7 +2101,7 @@
         }
       }
     },
-    "Tips are optional and do not unlock features. Thank you for helping keep NextSeason running for years to come." : {
+    "Tips are optional and do not unlock features. Thank you for supporting NextSeason." : {
 
     },
     "To Be Determined" : {

@@ -45,7 +45,7 @@ struct TipJarSection: View {
             Text("Support NextSeason")
         } footer: {
             Text(
-                "Tips are optional and do not unlock features. Thank you for helping keep NextSeason running for years to come."
+                "Tips are optional and do not unlock features. Thank you for supporting NextSeason."
             )
         }
         .task {

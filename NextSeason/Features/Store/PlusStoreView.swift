@@ -154,7 +154,7 @@ struct PlusStoreView: View {
     private var subscriptionDisclosure: String {
         String(
             localized:
-                "NextSeason Plus Monthly and Annual are auto-renewing subscriptions. Payment is charged to your Apple ID account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time."
+                "NextSeason Plus Monthly and Annual are auto-renewing subscriptions. Payment is charged to your Apple Account at confirmation of purchase. The subscription renews automatically unless you cancel at least 24 hours before the end of the current period. You can manage or cancel any time."
         )
     }
 

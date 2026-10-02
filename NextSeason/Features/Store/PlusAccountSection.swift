@@ -27,7 +27,7 @@ struct PlusAccountSection: View {
                 Button {
                     isShowingPlusStore = true
                 } label: {
-                    Label("Unlock NextSeason Plus", systemImage: "sparkles")
+                    Label("Unlock NextSeason Plus", systemImage: "lock.open")
                 }
                 .accessibilityIdentifier(AccessibilityID.Store.plusUnlock)
             }

@@ -213,10 +213,10 @@ These tasks are listed in approximately sequential order.
     and the `www` redirect.
 -   Add Apple's official **Pre-order on the App Store** badge to the
     website.
+-   Use the launch Plus pricing: $1.99/month and $9.99/year.
 
 ### In Progress / Remaining
 
--   Use the launch Plus pricing: $1.99/month and $9.99/year.
 -   When the pre-order listing becomes available, link the existing
     **Pre-order on the App Store** badge to it.
 -   At launch, replace the pre-order badge with Apple's **Download on

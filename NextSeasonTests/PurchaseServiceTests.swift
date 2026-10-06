@@ -12,8 +12,8 @@ import Testing
 /// cases using `StubPurchaseStoreClient` (in-memory StoreKit double from the app target).
 @MainActor
 struct PurchaseServiceTests {
-    @Test("Start applies grandfathering and loads stub products")
-    func startGrandfathersAndLoadsProducts() async {
+    @Test("Production start does not grant complimentary Plus and loads products")
+    func productionStartDoesNotGrantAndLoadsProducts() async {
         let suiteName = "PurchaseServiceTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
@@ -21,8 +21,8 @@ struct PurchaseServiceTests {
         let purchases = PurchaseService.stub(userDefaults: defaults)
         await purchases.start(watchlistCount: 5)
 
-        #expect(purchases.isGrandfathered)
-        #expect(purchases.isUnlimitedWatchlist)
+        #expect(purchases.isComplimentary == false)
+        #expect(purchases.isUnlimitedWatchlist == false)
         #expect(purchases.annualProduct != nil)
         #expect(purchases.monthlyProduct != nil)
         #expect(purchases.tipProducts.count == 3)
@@ -449,7 +449,8 @@ struct PurchaseServiceTests {
         defaults.removePersistentDomain(forName: suiteName)
         return PurchaseService(
             store: store,
-            entitlementStore: PlusEntitlementStore(userDefaults: defaults),
+            entitlementStore: PlusEntitlementStore(
+                userDefaults: defaults, persistence: MemoryComplimentaryPlusPersistence()),
             initialStoreEntitlement: initial
         )
     }

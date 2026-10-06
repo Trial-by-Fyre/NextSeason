@@ -1,51 +1,43 @@
-//
-//  PlusEntitlementStore.swift
-//  NextSeason
-//
-
+// Permanent complimentary Plus is independent of StoreKit purchases.
 import Foundation
+import Observation
 
-/// Persists the one-time beta grandfathering decision in UserDefaults.
-///
-/// Testers who already had more than three shows when StoreKit shipped keep an
-/// unlimited watchlist. The flag is sticky: later removals do not revoke it.
 @MainActor
+@Observable
 final class PlusEntitlementStore {
-    /// UserDefaults flag: grandfathering was evaluated on first StoreKit launch.
-    static let evaluatedKey = "plusGrandfatheringEvaluated"
-    /// UserDefaults flag: user exceeded the free cap before the limit shipped.
     static let grandfatheredKey = "plusGrandfathered"
+    static let complimentaryKey = "plusComplimentaryPermanent"
 
     private let userDefaults: UserDefaults
+    private let persistence: any ComplimentaryPlusPersistence
+    private(set) var isComplimentary = false
 
-    init(userDefaults: UserDefaults = .standard) {
+    init(
+        userDefaults: UserDefaults = .standard,
+        persistence: any ComplimentaryPlusPersistence = KeychainComplimentaryPlusPersistence()
+    ) {
         self.userDefaults = userDefaults
+        self.persistence = persistence
+        reconcile()
     }
 
-    /// Whether the one-time grandfathering check has already run.
-    var hasEvaluatedGrandfathering: Bool {
-        userDefaults.bool(forKey: Self.evaluatedKey)
-    }
-
-    /// Whether the user keeps an unlimited watchlist from beta grandfathering.
-    var isGrandfathered: Bool {
-        userDefaults.bool(forKey: Self.grandfatheredKey)
-    }
-
-    /// Records grandfathering on the first StoreKit-aware launch only.
-    func evaluateGrandfatheringIfNeeded(watchlistCount: Int, freeLimit: Int) {
-        guard !hasEvaluatedGrandfathering else { return }
-        userDefaults.set(true, forKey: Self.evaluatedKey)
-        if watchlistCount > freeLimit {
-            userDefaults.set(true, forKey: Self.grandfatheredKey)
+    /// Only adds access. Failed/temporarily unavailable Keychain reads never revoke it.
+    /// Repeated reconciliation also retries failed writes and discovers delayed iCloud sync.
+    func reconcile() {
+        isComplimentary =
+            isComplimentary
+            || userDefaults.bool(forKey: Self.complimentaryKey)
+            || userDefaults.bool(forKey: Self.grandfatheredKey)
+            || persistence.hasEntitlement()
+        guard isComplimentary else { return }
+        userDefaults.set(true, forKey: Self.complimentaryKey)
+        if !persistence.saveEntitlement() {
+            AppDiagnosticsLogger.breadcrumb("complimentary_plus_persistence_failed")
         }
     }
 
-    #if DEBUG
-        /// Clears grandfathering flags in this store's defaults suite between tests.
-        func resetForTesting() {
-            userDefaults.removeObject(forKey: Self.evaluatedKey)
-            userDefaults.removeObject(forKey: Self.grandfatheredKey)
-        }
-    #endif
+    func grantComplimentaryPlus() {
+        isComplimentary = true
+        reconcile()
+    }
 }

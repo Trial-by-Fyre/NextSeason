@@ -1,0 +1,5 @@
+// Used only by the final complimentary beta archive scheme.
+// Delete this configuration and its scheme after distributing that beta.
+#include "Base.xcconfig"
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) COMPLIMENTARY_PLUS_BETA_GRANT NEXTSEASON_BETA_COMPLIMENTARY_CONFIGURATION

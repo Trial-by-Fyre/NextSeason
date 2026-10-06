@@ -5,7 +5,7 @@
 
 import Foundation
 
-/// StoreKit Plus entitlement, distinct from local grandfathering.
+/// StoreKit Plus entitlement, distinct from permanent complimentary access.
 ///
 /// `loading` means `Transaction.currentEntitlements` has not been read yet.
 /// It is not the same as free: callers that need a real answer wait until
@@ -27,7 +27,7 @@ nonisolated enum StoreCatalogAvailability: Equatable, Sendable {
 /// Observable purchasing and Plus entitlement state for the SwiftUI environment.
 ///
 /// Unlimited watchlist access comes from an active monthly or annual subscription,
-/// or one-time beta grandfathering. Tips never grant Plus.
+/// or permanent complimentary Plus. Tips never grant Plus.
 @Observable
 @MainActor
 final class PurchaseService {
@@ -53,6 +53,7 @@ final class PurchaseService {
 
     private let store: any PurchaseStoreClient
     private let entitlementStore: PlusEntitlementStore
+    private let complimentaryGrantEligibility: @MainActor () async -> Bool
     private var didStartObserving = false
     private var entitlementWaiters: [CheckedContinuation<Void, Never>] = []
     /// Prevents duplicate thank-you toasts when StoreKit redelivers the same tip.
@@ -74,14 +75,14 @@ final class PurchaseService {
         return false
     }
 
-    /// True when StoreKit Plus is active or the user was grandfathered.
+    /// True when StoreKit Plus is active or the user has complimentary Plus.
     var isUnlimitedWatchlist: Bool {
-        isStoreEntitled || entitlementStore.isGrandfathered
+        isStoreEntitled || entitlementStore.isComplimentary
     }
 
-    /// Sticky beta flag: unlimited watchlist without an active StoreKit purchase.
-    var isGrandfathered: Bool {
-        entitlementStore.isGrandfathered
+    /// Permanent complimentary access: unlimited watchlist without an active StoreKit purchase.
+    var isComplimentary: Bool {
+        entitlementStore.isComplimentary
     }
 
     /// Plus annual/monthly catalog for `PlusStoreView`.
@@ -115,8 +116,10 @@ final class PurchaseService {
     init(
         store: any PurchaseStoreClient,
         entitlementStore: PlusEntitlementStore = PlusEntitlementStore(),
-        initialStoreEntitlement: StoreEntitlementState = .loading
+        initialStoreEntitlement: StoreEntitlementState = .loading,
+        complimentaryGrantEligibility: @escaping @MainActor () async -> Bool = { false }
     ) {
+        self.complimentaryGrantEligibility = complimentaryGrantEligibility
         self.store = store
         self.entitlementStore = entitlementStore
         self.storeEntitlement = initialStoreEntitlement
@@ -128,22 +131,30 @@ final class PurchaseService {
 
     /// Production StoreKit-backed service.
     convenience init() {
-        self.init(store: StoreKitPurchaseStoreClient())
+        self.init(
+            store: StoreKitPurchaseStoreClient(),
+            complimentaryGrantEligibility: { await TemporaryBetaPlusGrant.isEligible() }
+        )
     }
 
-    /// Loads products, applies one-time grandfathering, and starts listening
+    /// Loads products, resolves complimentary access, and starts listening
     /// for StoreKit transaction updates.
     ///
     /// `Transaction.updates` is observed before the first entitlement read so
     /// unfinished or delayed transactions are not missed during startup.
     func start(watchlistCount: Int) async {
         startObservingTransactionsIfNeeded()
-        entitlementStore.evaluateGrandfatheringIfNeeded(
-            watchlistCount: watchlistCount,
-            freeLimit: WatchlistLimitPolicy.freeShowLimit
-        )
+        await refreshComplimentaryEntitlement()
         await refreshEntitlements()
         await loadProducts()
+    }
+
+    private func refreshComplimentaryEntitlement() async {
+        entitlementStore.reconcile()
+        if !entitlementStore.isComplimentary, await complimentaryGrantEligibility() {
+            entitlementStore.grantComplimentaryPlus()
+        }
+        if entitlementStore.isComplimentary { resumeEntitlementWaiters() }
     }
 
     /// Re-reads StoreKit entitlements when the scene becomes active.
@@ -153,6 +164,7 @@ final class PurchaseService {
     /// still in flight so launch does not issue two entitlement queries
     /// back-to-back.
     func handleSceneBecameActive() async {
+        await refreshComplimentaryEntitlement()
         guard hasResolvedStoreEntitlement else { return }
         await refreshEntitlements()
     }
@@ -164,11 +176,11 @@ final class PurchaseService {
     /// return immediately.
     func waitForInitialEntitlementResolution() async {
         if case .resolved = storeEntitlement { return }
-        if entitlementStore.isGrandfathered { return }
+        if entitlementStore.isComplimentary { return }
         await withCheckedContinuation { continuation in
             if case .resolved = storeEntitlement {
                 continuation.resume()
-            } else if entitlementStore.isGrandfathered {
+            } else if entitlementStore.isComplimentary {
                 continuation.resume()
             } else {
                 entitlementWaiters.append(continuation)
@@ -177,7 +189,7 @@ final class PurchaseService {
     }
 
     /// Whether another show may be added after entitlement resolution.
-    /// Grandfathered and Plus users are always allowed; free users hit the cap.
+    /// Complimentary and paid Plus users are always allowed; free users hit the cap.
     func canAddToWatchlist(currentCount: Int) async -> Bool {
         await waitForInitialEntitlementResolution()
         return WatchlistLimitPolicy.canAddShow(
@@ -349,7 +361,8 @@ extension PurchaseService {
                 isStoreEntitled: isStoreEntitled,
                 purchaseOutcome: purchaseOutcome
             ),
-            entitlementStore: PlusEntitlementStore(userDefaults: defaults),
+            entitlementStore: PlusEntitlementStore(
+                userDefaults: defaults, persistence: PreviewComplimentaryPlusPersistence()),
             initialStoreEntitlement: .resolved(isEntitled: isStoreEntitled)
         )
     }
@@ -358,4 +371,10 @@ extension PurchaseService {
     static var preview: PurchaseService {
         stub()
     }
+}
+
+@MainActor
+private struct PreviewComplimentaryPlusPersistence: ComplimentaryPlusPersistence {
+    func hasEntitlement() -> Bool { false }
+    func saveEntitlement() -> Bool { true }
 }

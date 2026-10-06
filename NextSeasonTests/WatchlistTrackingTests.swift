@@ -11,7 +11,7 @@ import UserNotifications
 @testable import NextSeason
 
 /// Shared watchlist toggle/add paths: undo removal, detail fetch for search stubs, Plus
-/// paywall, grandfathering, and StoreKit entitlement loading races.
+/// paywall, complimentary access, and StoreKit entitlement loading races.
 @MainActor
 struct WatchlistTrackingTests {
     private var sampleShow: Show {
@@ -369,7 +369,8 @@ struct WatchlistTrackingTests {
         defaults.removePersistentDomain(forName: suiteName)
         let purchases = PurchaseService(
             store: store,
-            entitlementStore: PlusEntitlementStore(userDefaults: defaults),
+            entitlementStore: PlusEntitlementStore(
+                userDefaults: defaults, persistence: MemoryComplimentaryPlusPersistence()),
             initialStoreEntitlement: .loading
         )
 
@@ -410,8 +411,8 @@ struct WatchlistTrackingTests {
         let suiteName = "WatchlistTrackingTests.lapse.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
-        let entitlementStore = PlusEntitlementStore(userDefaults: defaults)
-        entitlementStore.evaluateGrandfatheringIfNeeded(watchlistCount: 0, freeLimit: 3)
+        let entitlementStore = PlusEntitlementStore(
+            userDefaults: defaults, persistence: MemoryComplimentaryPlusPersistence())
         let purchases = PurchaseService(
             store: store,
             entitlementStore: entitlementStore,
@@ -441,7 +442,7 @@ struct WatchlistTrackingTests {
         #expect(outcome == .paywallRequired)
         #expect(try await repository.trackedShowIDs().count == 4)
         #expect(try await repository.contains(showID: sampleShow.id) == false)
-        #expect(purchases.isGrandfathered == false)
+        #expect(purchases.isComplimentary == false)
     }
 
     /// Yields until delayed StoreKit entitlement resolution is suspended (see PurchaseServiceTests).

@@ -24,8 +24,8 @@ struct SearchViewModelTests {
 
     /// Configurable TVMaze stub for lookup/show resolution in search detail flows.
     private struct MockTVMazeService: TVMazeService {
-        var lookupHandler: @Sendable (Int) async throws -> Show = { _ in .preview }
-        var showHandler: @Sendable (Int) async throws -> Show = { _ in .preview }
+        var lookupHandler: @Sendable (Int) async throws -> Show = { _ in await .preview }
+        var showHandler: @Sendable (Int) async throws -> Show = { _ in await .preview }
 
         func searchShows(matching query: String) async throws -> [Show] { [] }
 
@@ -58,7 +58,7 @@ struct SearchViewModelTests {
     /// TVMaze stub that counts TheTVDB lookup attempts (should stay zero for mapped search).
     private struct CountingTVMazeService: TVMazeService {
         let counter: LookupCounter
-        var showHandler: @Sendable (Int) async throws -> Show = { _ in .preview }
+        var showHandler: @Sendable (Int) async throws -> Show = { _ in await .preview }
 
         func searchShows(matching query: String) async throws -> [Show] { [] }
 

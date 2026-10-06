@@ -19,6 +19,11 @@ final class MemoryComplimentaryPlusPersistence: ComplimentaryPlusPersistence {
 }
 
 @MainActor
+final class MutableComplimentaryPlusEligibility {
+    var isEligible = false
+}
+
+@MainActor
 struct PlusEntitlementStoreTests {
     private func defaults() -> UserDefaults {
         UserDefaults(suiteName: "ComplimentaryPlusTests.\(UUID().uuidString)")!
@@ -159,16 +164,16 @@ struct PlusEntitlementStoreTests {
 
     @Test("Temporary eligibility failure retries on activation")
     func retryEligibility() async {
-        var eligible = false
+        let eligibility = MutableComplimentaryPlusEligibility()
         let purchases = PurchaseService(
             store: StubPurchaseStoreClient(),
             entitlementStore: PlusEntitlementStore(
                 userDefaults: defaults(), persistence: MemoryComplimentaryPlusPersistence()),
-            complimentaryGrantEligibility: { eligible }
+            complimentaryGrantEligibility: { eligibility.isEligible }
         )
         await purchases.start(watchlistCount: 0)
         #expect(purchases.isComplimentary == false)
-        eligible = true
+        eligibility.isEligible = true
         await purchases.handleSceneBecameActive()
         #expect(purchases.isComplimentary)
     }

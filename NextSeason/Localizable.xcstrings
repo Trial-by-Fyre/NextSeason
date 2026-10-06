@@ -2414,10 +2414,10 @@
     "You have NextSeason Plus." : {
 
     },
-    "Your local watchlist was reset successfully, but NextSeason still couldn't initialize its local data store. The previous watchlist can no longer be restored. You can export diagnostics for troubleshooting." : {
+    "You have permanent complimentary NextSeason Plus. Thank you for beta testing." : {
 
     },
-    "Your watchlist is unlimited because you were tracking more than %lld shows before this limit was added." : {
+    "Your local watchlist was reset successfully, but NextSeason still couldn't initialize its local data store. The previous watchlist can no longer be restored. You can export diagnostics for troubleshooting." : {
 
     }
   },

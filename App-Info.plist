@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AptabaseAppKey</key>
+	<string>${APTABASE_APP_KEY}</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.TrialByFyre.NextSeason.watchlist-refresh</string>
@@ -16,8 +18,6 @@
 	</dict>
 	<key>NSUserNotificationsUsageDescription</key>
 	<string>NextSeason notifies you when a tracked show gets a next season date or starts airing.</string>
-	<key>AptabaseAppKey</key>
-	<string>${APTABASE_APP_KEY}</string>
 	<key>TVDBApiKey</key>
 	<string>${TVDB_API_KEY}</string>
 	<key>UIBackgroundModes</key>

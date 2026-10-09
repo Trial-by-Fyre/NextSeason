@@ -60,7 +60,7 @@ final class BetaBuildAvailability {
                 return String(localized: "Xcode")
             case .none:
                 return String(localized: "Production")
-            @unknown default:
+            default:
                 return String(localized: "Unknown")
             }
         #endif

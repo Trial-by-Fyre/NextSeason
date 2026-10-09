@@ -41,6 +41,9 @@ struct DiagnosticsView: View {
     @State private var simulatedUpdateRunner: DiagnosticsSimulatedUpdateRunner?
     @State private var betaBuildAvailability = BetaBuildAvailability.shared
     @State private var isShowingDocumentation = false
+    #if DEBUG
+        @State private var isShowingPlusStore = false
+    #endif
 
     private var betaValidationAvailable: Bool {
         betaBuildAvailability.isAvailable
@@ -57,6 +60,18 @@ struct DiagnosticsView: View {
                 if betaValidationAvailable {
                     betaValidationSection
                 }
+
+                #if DEBUG
+                    Section {
+                        Button("Show Plus Paywall", systemImage: "cart") {
+                            isShowingPlusStore = true
+                        }
+                    } header: {
+                        Text("Screenshot Tools")
+                    } footer: {
+                        Text("Opens the Plus paywall without changing your unlimited access.")
+                    }
+                #endif
 
                 // Unexpected-termination flags + breadcrumbs for crash-like triage.
                 Section {
@@ -179,6 +194,12 @@ struct DiagnosticsView: View {
             .sheet(isPresented: $isShowingDocumentation) {
                 DiagnosticsDocumentationView()
             }
+            #if DEBUG
+                // Present the real store directly even when complimentary access hides the upgrade CTA.
+                .sheet(isPresented: $isShowingPlusStore) {
+                    PlusStoreView()
+                }
+            #endif
             .task {
                 await refreshReport()
             }
@@ -393,14 +414,19 @@ struct DiagnosticsView: View {
         isForceRefreshing = false
     }
 
-    /// Schedules a delayed local notification from the first real watchlist show
-    /// (delivery path only — does not run refresh / status detection).
+    /// Schedules a fictional premiere announcement, preferring Lupin for screenshots.
+    /// Uses a real tracked identity for tap routing without changing its saved status.
     private func sendTestNotification() async {
         guard !isSendingTestNotification else { return }
         isSendingTestNotification = true
         await notificationStatus.refresh(using: notificationService)
 
-        guard let tracked = await watchlistTestShow() else {
+        let trackedShows = (try? await repository.all()) ?? []
+        guard
+            let tracked = trackedShows.first(where: {
+                $0.name.caseInsensitiveCompare("Lupin") == .orderedSame
+            }) ?? trackedShows.first
+        else {
             recordMissingWatchlistTestShow()
             isSendingTestNotification = false
             return

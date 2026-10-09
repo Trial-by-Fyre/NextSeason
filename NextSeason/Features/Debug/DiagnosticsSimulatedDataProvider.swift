@@ -12,13 +12,17 @@ nonisolated enum DiagnosticsSimulatedData {
     static let showID = 777_777
     static let showName = "Beta diagnostics / simulated"
 
-    /// Builds notification content from a tracked watchlist show, matching the
-    /// legacy debug test notification behavior.
+    /// Uses the production formatter with a fictional premiere-date announcement.
+    /// This sample is only delivered by Diagnostics; it never changes watchlist data.
     static func notificationContent(from tracked: TrackedShow) -> SeasonNotificationContent {
-        SeasonNotificationContent(
+        // Local noon keeps the screenshot date stable in the production local-date formatter.
+        let premiere = Calendar.current.date(
+            from: DateComponents(year: 2026, month: 10, day: 22, hour: 12)
+        )!
+        return SeasonNotificationContent(
             showID: tracked.id,
             showName: tracked.name,
-            status: tracked.nextSeason
+            status: .scheduled(season: 4, premiere: premiere)
         )
     }
 

@@ -36,6 +36,7 @@ struct DiagnosticsView: View {
     @State private var reportText = ""
     @State private var isForceRefreshing = false
     @State private var isSendingTestNotification = false
+    @State private var isShowingEmptyWatchlistAlert = false
     @State private var isSchedulingDelayedPipelineNotification = false
     @State private var isRunningSimulation = false
     @State private var simulatedUpdateRunner: DiagnosticsSimulatedUpdateRunner?
@@ -190,6 +191,13 @@ struct DiagnosticsView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done", action: dismiss.callAsFunction)
                 }
+            }
+            .alert("Add a Show First", isPresented: $isShowingEmptyWatchlistAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(
+                    "Add at least one show to your watchlist, then return to Diagnostics to send a test notification."
+                )
             }
             .sheet(isPresented: $isShowingDocumentation) {
                 DiagnosticsDocumentationView()
@@ -392,6 +400,7 @@ struct DiagnosticsView: View {
     }
 
     private func recordMissingWatchlistTestShow() {
+        isShowingEmptyWatchlistAlert = true
         betaRefreshDiagnostics?.recordSimulatedScenarioSummary(
             String(localized: "Track a show on the watchlist to send a test notification.")
         )

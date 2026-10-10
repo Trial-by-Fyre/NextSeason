@@ -113,6 +113,12 @@
         }
       }
     },
+    "Add a Show First" : {
+
+    },
+    "Add at least one show to your watchlist, then return to Diagnostics to send a test notification." : {
+
+    },
     "Adds or removes this show from your watchlist" : {
       "localizations" : {
         "en" : {

@@ -313,7 +313,7 @@ struct PurchaseServiceTests {
             store.recordedCalls.firstIndex(of: .observeTransactionUpdates)
         )
         let entitlementIndex = try #require(
-            store.recordedCalls.firstIndex(of: .hasActivePlusEntitlement)
+            store.recordedCalls.firstIndex(of: .plusEntitlementCheck)
         )
         #expect(observeIndex < entitlementIndex)
         #expect(purchases.storeEntitlement == .loading)
@@ -392,7 +392,7 @@ struct PurchaseServiceTests {
         #expect(store.entitlementWaiterCount == 1)
         #expect(purchases.storeEntitlement == .loading)
         #expect(
-            store.recordedCalls.filter { $0 == .hasActivePlusEntitlement }.count == 1
+            store.recordedCalls.filter { $0 == .plusEntitlementCheck }.count == 1
         )
 
         store.releaseEntitlementResolution()

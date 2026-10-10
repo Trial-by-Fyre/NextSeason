@@ -241,6 +241,10 @@ private final class SimulatedWatchlistRepository: WatchlistRepository {
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {
         shows[tracked.id] = tracked
     }
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+        for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
 }
 
 extension DiagnosticsSimulatedDataProvider.Phase {

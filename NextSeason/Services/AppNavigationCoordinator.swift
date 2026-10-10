@@ -147,20 +147,41 @@ final class AppNavigationCoordinator {
     /// `pendingShowID` arrives while the app is already running.
     ///
     /// Prefer Watchlist when the show is still tracked (deferred push so the
-    /// tab's `NavigationStack` is mounted). Otherwise fall back to Search and
+    /// tab's `NavigationStack` is mounted). A paused show opens the Watchlist
+    /// root without detail. Otherwise (not saved) fall back to Search and
     /// push immediately, honoring `pendingNavigationAnimated` for launch vs
     /// in-app taps.
+    ///
+    /// - Parameters:
+    ///   - repository: Saved-show lookup that decides Watchlist vs. Search.
+    ///   - tvMaze: Loads the show for the Search fallback when it isn't saved.
+    ///   - analytics: Records the notification open and lookup failures.
+    ///   - prepare: Awaited before the saved-show lookup. Production passes
+    ///     `WatchlistAccessReconciler.reconcileWhenAccessKnown`, so a cold
+    ///     launch from an old notification decides using reconciled pause state
+    ///     (a show that just lost Plus is paused before it could open detail).
     func resolvePendingNavigation(
         repository: any WatchlistRepository,
         tvMaze: any TVMazeService,
-        analytics: any AnalyticsTracking
+        analytics: any AnalyticsTracking,
+        prepare: @MainActor () async -> Void = {}
     ) async {
         guard let showID = pendingShowID else { return }
         // Consume the queue up front so a concurrent resolve cannot process twice.
         pendingShowID = nil
+        await prepare()
 
         do {
             if let tracked = try await repository.trackedShow(showID: showID) {
+                // A paused show (Plus lapsed) must not open detail — not even via
+                // the Search fallback below. Land on the Watchlist root, where
+                // the show appears in the Paused section.
+                if tracked.isPaused {
+                    selectedTab = .watchlist
+                    watchlistPath = NavigationPath()
+                    analytics.track(.appOpenedFromNotification(showID: showID))
+                    return
+                }
                 // Defer the path append until WatchlistView appears — pushing in
                 // the same update as the tab switch can drop the navigation.
                 selectedTab = .watchlist

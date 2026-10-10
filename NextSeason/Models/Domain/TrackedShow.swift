@@ -31,6 +31,9 @@ nonisolated struct TrackedShow: Identifiable, Sendable, Hashable {
     /// True when TVMaze no longer returns this show (merged/deleted).
     var isStale: Bool
     var dateAdded: Date
+    /// True when a lapsed Plus subscription left this show beyond the free limit.
+    /// Paused shows stay saved but are not refreshed, notified, or opened.
+    var isPaused: Bool
 
     init(
         id: Int,
@@ -45,7 +48,8 @@ nonisolated struct TrackedShow: Identifiable, Sendable, Hashable {
         lastNotifiedSignature: String? = nil,
         pendingChangeSignature: String? = nil,
         isStale: Bool = false,
-        dateAdded: Date
+        dateAdded: Date,
+        isPaused: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -60,6 +64,16 @@ nonisolated struct TrackedShow: Identifiable, Sendable, Hashable {
         self.pendingChangeSignature = pendingChangeSignature
         self.isStale = isStale
         self.dateAdded = dateAdded
+        self.isPaused = isPaused
+    }
+
+    /// Fresh data for reactivating a paused row from a newly loaded show. Keeps
+    /// the original `dateAdded` (free-tier ordering) and last-notified signature
+    /// (no repeat alert for a state already announced); clears pause and debounce.
+    init(reactivating existing: TrackedShow, from show: Show, at: Date = .now) {
+        self.init(from: show, at: at)
+        dateAdded = existing.dateAdded
+        lastNotifiedSignature = existing.lastNotifiedSignature
     }
 
     /// Builds a tracked row from a fully-loaded show at save time.

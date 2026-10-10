@@ -87,6 +87,8 @@ struct ShowDetailViewModelTests {
         func remove(showID: Int) async throws {}
 
         func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
+
+        func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
     }
 
     /// Fails the removal lookup, while `contains` still reports the show as
@@ -108,11 +110,16 @@ struct ShowDetailViewModelTests {
 
         func contains(showID: Int) async throws -> Bool { showID == self.showID }
 
+        /// Still persisted and active (star state reads the active query).
+        func activeShowIDs() async throws -> Set<Int> { [showID] }
+
         func add(_ show: Show) async throws {}
 
         func remove(showID: Int) async throws {}
 
         func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
+
+        func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
     }
 
     /// Repository whose `add` always fails so the detail view keeps loaded content.
@@ -132,6 +139,8 @@ struct ShowDetailViewModelTests {
         func remove(showID: Int) async throws {}
 
         func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
+
+        func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
     }
 
     @Test("Stale tracked state reconciles when removal lookup finds nothing")

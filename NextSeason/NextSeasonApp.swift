@@ -35,7 +35,8 @@ struct NextSeasonApp: App {
                     onForegroundShowIDMappingRefresh: {
                         await composition.refreshShowIDMappingIfNeeded()
                     },
-                    reviewPromptCoordinator: composition.reviewPromptCoordinator
+                    reviewPromptCoordinator: composition.reviewPromptCoordinator,
+                    accessReconciler: composition.watchlistAccessReconciler
                 )
                 .environment(\.watchlistRepository, composition.watchlistRepository)
                 .environment(\.showIDMapping, composition.showIDMapping)
@@ -45,6 +46,7 @@ struct NextSeasonApp: App {
                 .environment(\.analytics, composition.analyticsService)
                 .environment(\.betaRefreshDiagnostics, composition.betaRefreshDiagnostics)
                 .environment(composition.purchaseService)
+                .environment(composition.watchlistAccessReconciler)
                 .modelContainer(composition.modelContainer)
                 .task {
                     let count =
@@ -95,6 +97,8 @@ private struct AppRootView: View {
     let onForegroundShowIDMappingRefresh: @MainActor () async -> Void
     /// Per-version App Store review request after the user receives a production season notification.
     let reviewPromptCoordinator: ReviewPromptCoordinator
+    /// Pauses / resumes saved shows when confirmed Plus access changes.
+    let accessReconciler: WatchlistAccessReconciler
 
     var body: some View {
         ContentView(
@@ -126,6 +130,29 @@ private struct AppRootView: View {
             }
         } message: {
             Text(removalCoordinator.removalErrorMessage ?? "")
+        }
+        // Runs at launch and whenever confirmed access changes (StoreKit answer,
+        // purchase, restore, lapse, Simulate Free Tier). `nil` (unknown) is a no-op.
+        .task(id: purchaseService.confirmedWatchlistAccess) {
+            await accessReconciler.reconcile()
+        }
+        .onChange(of: accessReconciler.changeGeneration) {
+            navigationCoordinator.notifyWatchlistDataChanged()
+        }
+        .alert(
+            "Some Shows Are Paused",
+            isPresented: Binding(
+                get: { accessReconciler.shouldPresentPausedAlert },
+                set: { if !$0 { accessReconciler.acknowledgePausedAlert() } }
+            )
+        ) {
+            Button("OK", role: .cancel) {
+                accessReconciler.acknowledgePausedAlert()
+            }
+        } message: {
+            Text(
+                "NextSeason Plus is no longer active. Your first \(WatchlistLimitPolicy.freeShowLimit) shows are still being tracked. The rest are saved on your Watchlist but paused. Renew Plus to reactivate them."
+            )
         }
         .onChange(of: scenePhase) { previousPhase, phase in
             guard !UITestingConfiguration.isEnabled else { return }

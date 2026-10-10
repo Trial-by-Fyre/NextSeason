@@ -4,10 +4,25 @@ In a developer build or TestFlight, open About → Diagnostics → Subscription 
 and turn on **Simulate Free Tier**. The switch and an active notice show its state.
 About also labels the watchlist capacity as simulated.
 
-While enabled, adding a show uses the normal free-tier watchlist limit even with paid or
-complimentary Unlimited. A watchlist already over the limit remains intact;
-remove shows only if you want to test adding below the cap. Export and existing
-show access are unchanged. No simulation code writes watchlist or entitlement storage.
+While enabled, the app behaves exactly as if Plus had lapsed. Simulation feeds
+the same `WatchlistAccessReconciler` used for real StoreKit changes, through
+`PurchaseService.confirmedWatchlistAccess`, so there is no simulation-only
+downgrade code:
+
+- If more than three shows are active, the three oldest (by date added) stay
+  active and the rest are **paused**. They move to the **Paused — Plus Required**
+  section, can't be opened, aren't refreshed or notified, and can still be
+  removed. The one-time "Some Shows Are Paused" alert appears.
+- Adding a show uses the normal free-tier limit, counting active shows only.
+  Adding a paused show into a free slot reactivates it.
+- Nothing is deleted. Export still includes every saved show.
+
+Turning simulation off restores actual access. If actual Plus (StoreKit or
+complimentary) is valid, every paused show resumes immediately and is then
+silently refreshed. Restarting the app ends simulation too, and the first
+reconcile after StoreKit confirms Plus resumes the shows. Simulation writes only
+the pause flags on saved rows (and the pending-alert flag). It never writes
+entitlement storage.
 
 Try adding a show beyond the free-tier limit to open the Plus paywall. A successful monthly or annual
 purchase started during the current simulation ends it once its verified customer
@@ -21,8 +36,9 @@ simulation. Transaction reason comes from StoreKit's verified payload, rather th
 inferring a purchase from a new transaction ID. Toggling simulation clears pending
 tracking; a completion from an earlier simulation cannot turn off a new session.
 
-Turn the switch off to restore actual access immediately. Restarting the app
-also ends simulation; the override is deliberately session-only.
+Turn the switch off to restore actual access immediately (resuming paused shows
+when actual Plus is valid). Restarting the app also ends simulation; the
+override is deliberately session-only.
 
 ## Production boundary
 
@@ -36,4 +52,5 @@ Release ignores the developer-only test availability injection.
 
 The service preserves actual StoreKit and complimentary access independently;
 only effective watchlist access changes. Swift Testing coverage lives in
-`NextSeasonTests/FreeTierSimulationTests.swift`.
+`NextSeasonTests/FreeTierSimulationTests.swift` and, for pausing and resuming,
+`NextSeasonTests/SubscriptionDowngradeTests.swift`.

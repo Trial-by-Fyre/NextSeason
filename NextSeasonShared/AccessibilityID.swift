@@ -10,6 +10,8 @@ import Foundation
 /// Launch argument that switches the app to stubbed network data for XCUITest.
 enum UITestingLaunchArgument {
     static let uiTesting = "-UITesting"
+    /// With `uiTesting`: launch with one paused show and Free access.
+    static let seedPausedShow = "-UITestingSeedPausedShow"
 }
 
 /// Sentinel search queries recognized by the stubbed service during UI testing.
@@ -66,6 +68,7 @@ enum AccessibilityID {
         static let trackButton = "watchlist.track"
         static let undoButton = "watchlist.undo"
         static let confirmButton = "watchlist.confirm"
+        static let pausedSection = "watchlist.pausedSection"
     }
 
     /// NextSeason Plus paywall and tip-jar controls.

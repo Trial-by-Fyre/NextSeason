@@ -33,6 +33,9 @@ enum WatchlistTracking {
     ///
     /// Search hits omit seasons / next episode. When those are missing, this loads the
     /// full `/shows/:id` payload so stored `nextSeason` matches show detail.
+    ///
+    /// Only active shows count toward the free cap. Adding a show that is saved but
+    /// paused reactivates that row (via `repository.add`) when a slot is free.
     static func add(
         _ show: Show,
         source: WatchlistActionSource,
@@ -43,7 +46,7 @@ enum WatchlistTracking {
         prompt: WatchlistNotificationPromptState,
         purchases: PurchaseService
     ) async throws -> ToggleOutcome {
-        let currentCount = try await repository.trackedShowIDs().count
+        let currentCount = try await repository.activeShowIDs().count
         guard await purchases.canAddToWatchlist(currentCount: currentCount) else {
             return .paywallRequired
         }

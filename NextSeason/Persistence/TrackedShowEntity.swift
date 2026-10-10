@@ -19,6 +19,10 @@ import SwiftData
 /// Frozen V1 persistence contract (`NextSeasonSchemaV1.TrackedShowEntity`).
 /// Changing stored properties requires `NextSeasonSchemaV2`, not an in-place edit.
 ///
+/// Pre-release exception: `isPaused` was added in place before public release.
+/// Beta testers reinstall with a fresh database, so no migration exists for it.
+/// From the first App Store release onward, the V2 rule above applies.
+///
 /// The class name stays `TrackedShowEntity` so `Schema.entityName(for:)` remains
 /// the same string used by unversioned TestFlight stores.
 extension NextSeasonSchemaV1 {
@@ -38,6 +42,10 @@ extension NextSeasonSchemaV1 {
         var pendingChangeSignature: String?
         var isStale: Bool
         var dateAdded: Date
+        /// Plus-lapse pause flag. Written only by the repository's `setPaused` and
+        /// reactivating `add`, never by `apply(_:)`, so a refresh that loaded the
+        /// row before it was paused cannot un-pause it when it writes back.
+        var isPaused: Bool = false
 
         init(tracked: TrackedShow) throws {
             self.tvMazeID = tracked.id
@@ -53,10 +61,11 @@ extension NextSeasonSchemaV1 {
             self.pendingChangeSignature = tracked.pendingChangeSignature
             self.isStale = tracked.isStale
             self.dateAdded = tracked.dateAdded
+            self.isPaused = tracked.isPaused
         }
 
-        /// Updates mutable fields after a refresh. Does not change `tvMazeID` or
-        /// `dateAdded` (identity and “when the user saved this show”).
+        /// Updates mutable fields after a refresh. Does not change `tvMazeID`,
+        /// `dateAdded` (identity and “when the user saved this show”), or `isPaused`.
         func apply(_ tracked: TrackedShow) throws {
             name = tracked.name
             posterMediumURL = tracked.posterMediumURL
@@ -87,7 +96,8 @@ extension NextSeasonSchemaV1 {
                 lastNotifiedSignature: lastNotifiedSignature,
                 pendingChangeSignature: pendingChangeSignature,
                 isStale: isStale,
-                dateAdded: dateAdded
+                dateAdded: dateAdded,
+                isPaused: isPaused
             )
         }
     }

@@ -8,6 +8,10 @@ import Foundation
 /// Resolves UI-facing "tracked" state from persistence plus any pending
 /// undoable removal. Search, detail, and other surfaces should use this so
 /// "currently tracked" does not depend on which screen recomputed it.
+///
+/// "Persisted" here means *active*: a paused show (Plus lapsed) is saved but not
+/// tracked, so its star is empty and tapping it goes through the add path,
+/// which reactivates the saved row or presents the paywall.
 enum WatchlistTrackingState {
     /// True when the show is persisted and not currently pending undoable removal.
     static func isTracked(
@@ -36,7 +40,7 @@ enum WatchlistTrackingState {
         repository: any WatchlistRepository,
         removalCoordinator: WatchlistPendingRemoval?
     ) async throws -> Bool {
-        let isPersisted = try await repository.contains(showID: showID)
+        let isPersisted = try await repository.activeShowIDs().contains(showID)
         return isTracked(
             showID: showID,
             isPersisted: isPersisted,
@@ -50,7 +54,7 @@ enum WatchlistTrackingState {
         repository: any WatchlistRepository,
         removalCoordinator: WatchlistPendingRemoval?
     ) async throws -> Set<Int> {
-        let persisted = try await repository.trackedShowIDs()
+        let persisted = try await repository.activeShowIDs()
         return trackedIDs(
             persistedIDs: persisted,
             pendingRemovalID: removalCoordinator?.pendingRemoval?.id

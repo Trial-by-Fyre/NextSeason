@@ -17,6 +17,12 @@ enum UITestingConfiguration {
         ProcessInfo.processInfo.arguments.contains(launchArgument)
     }
 
+    /// Starts with one paused show and Free access (paused-row UI test).
+    static var seedsPausedShow: Bool {
+        isEnabled
+            && ProcessInfo.processInfo.arguments.contains(UITestingLaunchArgument.seedPausedShow)
+    }
+
     /// Sentinel search queries — see `UITestingSearchQuery` in NextSeasonShared.
     typealias SearchQuery = UITestingSearchQuery
 }

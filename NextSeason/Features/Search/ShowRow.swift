@@ -15,6 +15,9 @@ struct ShowRowLabel: View {
     var detailLine: String?
     /// Watchlist-only footer kept separate so genre lines don't collide.
     var footer: String?
+    /// Watchlist paused style (Plus lapsed): grayscale poster, lock icon, and
+    /// secondary-colored title. Text stays fully opaque to keep contrast.
+    var isPaused: Bool = false
 
     init(
         name: String,
@@ -22,12 +25,14 @@ struct ShowRowLabel: View {
         posterURL: URL?,
         isStale: Bool = false,
         detailLine: String? = nil,
-        footer: String? = nil
+        footer: String? = nil,
+        isPaused: Bool = false
     ) {
         self.name = name
         self.subtitle = subtitle
         self.posterURL = posterURL
         self.isStale = isStale
+        self.isPaused = isPaused
         self.detailLine = detailLine
         self.footer = footer
     }
@@ -53,6 +58,17 @@ struct ShowRowLabel: View {
     }
 
     init(tracked: TrackedShow) {
+        // Paused rows omit season/premiere info and the "Updated" time: both may
+        // be stale because paused shows are not refreshed.
+        if tracked.isPaused {
+            self.init(
+                name: tracked.name,
+                subtitle: String(localized: "Paused"),
+                posterURL: tracked.posterMediumURL,
+                isPaused: true
+            )
+            return
+        }
         let updated = tracked.lastCheckedAt.formatted(date: .abbreviated, time: .shortened)
         self.init(
             name: tracked.name,
@@ -66,13 +82,24 @@ struct ShowRowLabel: View {
     var body: some View {
         HStack(spacing: AppSpacing.row) {
             poster
+                .grayscale(isPaused ? 1 : 0)
+                .opacity(isPaused ? 0.5 : 1)
             VStack(alignment: .leading, spacing: 4) {
-                Text(name)
-                    .font(.headline)
-                    .appAccentText()
-                Text(subtitle)
-                    .font(.subheadline)
-                    .appSecondaryText()
+                if isPaused {
+                    Text(name)
+                        .font(.headline)
+                        .appSecondaryText()
+                    Label(subtitle, systemImage: "lock.fill")
+                        .font(.subheadline)
+                        .appSecondaryText()
+                } else {
+                    Text(name)
+                        .font(.headline)
+                        .appAccentText()
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .appSecondaryText()
+                }
                 if isStale {
                     Text("No longer on TVMaze")
                         .font(.caption)
@@ -96,6 +123,9 @@ struct ShowRowLabel: View {
 
     private var accessibilityLabel: String {
         var parts = [name, subtitle]
+        if isPaused {
+            parts.append(String(localized: "NextSeason Plus required"))
+        }
         if isStale {
             parts.append(String(localized: "No longer on TVMaze"))
         }

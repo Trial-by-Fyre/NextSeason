@@ -50,14 +50,45 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         return try context.fetchCount(descriptor) > 0
     }
 
-    /// Idempotent: a second add of the same show ID is a no-op.
+    func activeShowIDs() async throws -> Set<Int> {
+        let descriptor = FetchDescriptor<TrackedShowEntity>(
+            predicate: #Predicate { $0.isPaused == false }
+        )
+        return Set(try context.fetch(descriptor).map(\.tvMazeID))
+    }
+
+    /// Idempotent for active rows. A paused row is reactivated in place with
+    /// fresh show data, keeping its original `dateAdded`.
     func add(_ show: Show) async throws {
         AppDiagnosticsLogger.logger(for: .persistence)
             .notice("watchlist_write_add show_id=\(show.id, privacy: .public)")
         AppDiagnosticsLogger.breadcrumb("watchlist_add:\(show.id)")
-        guard try await contains(showID: show.id) == false else { return }
+        if let existing = try entity(for: show.id) {
+            guard existing.isPaused else { return }
+            try existing.apply(TrackedShow(reactivating: try existing.toDomain(), from: show))
+            existing.isPaused = false
+            try context.save()
+            return
+        }
         let tracked = TrackedShow(from: show)
         context.insert(try TrackedShowEntity(tracked: tracked))
+        try context.save()
+    }
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+        guard !showIDs.isEmpty else { return }
+        AppDiagnosticsLogger.logger(for: .persistence)
+            .notice(
+                "watchlist_write_paused paused=\(isPaused, privacy: .public) count=\(showIDs.count, privacy: .public)"
+            )
+        AppDiagnosticsLogger.breadcrumb("watchlist_set_paused:\(isPaused):\(showIDs.count)")
+        let ids = Array(showIDs)
+        let descriptor = FetchDescriptor<TrackedShowEntity>(
+            predicate: #Predicate { ids.contains($0.tvMazeID) }
+        )
+        for entity in try context.fetch(descriptor) {
+            entity.isPaused = isPaused
+        }
         try context.save()
     }
 

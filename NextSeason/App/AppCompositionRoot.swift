@@ -46,6 +46,8 @@ struct AppCompositionRoot {
     let purchaseService: PurchaseService
     /// Per-version review request after the first show notification.
     let reviewPromptCoordinator: ReviewPromptCoordinator
+    /// Pauses / resumes saved shows to match confirmed Plus access.
+    let watchlistAccessReconciler: WatchlistAccessReconciler
 
     init() throws {
         analyticsService = AnalyticsService()
@@ -63,11 +65,21 @@ struct AppCompositionRoot {
             modelContainer = try NextSeasonModelContainer.make(
                 configuration: ModelConfiguration(isStoredInMemoryOnly: true)
             )
-            repository = InMemoryWatchlistRepository()
             // Severance preview ids used by UI tests / PreviewTheTVDBService.
             showIDMapping = InMemoryShowIDMapping(map: [371980: 44933])
             showIDMappingRefresh = nil
-            purchaseService = .stub(isStoreEntitled: true)
+            // Never inherit a downgrade alert flag from an earlier simulator run.
+            UserDefaults.standard.removeObject(
+                forKey: WatchlistAccessReconciler.pausedAlertPendingKey)
+            if let pausedShow = Self.uiTestPausedShowSeed() {
+                // Paused-row UI test: Free access so reconciliation keeps the
+                // seeded show paused (and shows no alert, since nothing newly pauses).
+                repository = InMemoryWatchlistRepository(seed: [pausedShow])
+                purchaseService = .stub(isStoreEntitled: false)
+            } else {
+                repository = InMemoryWatchlistRepository()
+                purchaseService = .stub(isStoreEntitled: true)
+            }
         } else {
             modelContainer = try NextSeasonModelContainer.make()
             repository = SwiftDataWatchlistRepository(context: ModelContext(modelContainer))
@@ -105,6 +117,31 @@ struct AppCompositionRoot {
             analytics: analyticsService
         )
         reviewPromptCoordinator = ReviewPromptCoordinator()
+        let purchases = purchaseService
+        let refresh = refreshService
+        watchlistAccessReconciler = WatchlistAccessReconciler(
+            repository: repository,
+            access: { purchases.confirmedWatchlistAccess },
+            waitForAccess: { await purchases.waitForInitialEntitlementResolution() },
+            // Silent: resumed shows may hold months-old status; replace it
+            // without alerting about changes that happened while paused.
+            refreshAfterResume: {
+                await refresh.refreshAll(force: true, deliverNotifications: false)
+            }
+        )
+    }
+
+    /// A paused preview show when UI tests pass `-UITestingSeedPausedShow`.
+    /// Always `nil` outside DEBUG builds.
+    private static func uiTestPausedShowSeed() -> TrackedShow? {
+        #if DEBUG
+            guard UITestingConfiguration.seedsPausedShow else { return nil }
+            var paused = TrackedShow(from: .preview)
+            paused.isPaused = true
+            return paused
+        #else
+            return nil
+        #endif
     }
 
     /// Production-only launch wiring: MetricKit, notification routing,
@@ -138,9 +175,15 @@ struct AppCompositionRoot {
     private func configureBackgroundRefresh() {
         RefreshScheduler.registerBackgroundTask()
         let refreshServiceForBackground = refreshService
+        let purchasesForBackground = purchaseService
+        let reconcilerForBackground = watchlistAccessReconciler
         AppDiagnosticsLogger.breadcrumb("refresh_scheduler_configure")
         RefreshScheduler.configure(diagnostics: betaRefreshDiagnostics) {
             AppDiagnosticsLogger.logTaskStart("background_watchlist_refresh")
+            // A background launch may not have read entitlements yet. Apply a
+            // confirmed lapse first so paused shows are not refreshed or notified.
+            await purchasesForBackground.refreshEntitlements()
+            await reconcilerForBackground.reconcile()
             await refreshServiceForBackground.refreshAll(recordDiagnostics: true)
             AppDiagnosticsLogger.logTaskComplete("background_watchlist_refresh")
         }

@@ -421,6 +421,10 @@ private final class UndoDuringRemoveRepository: WatchlistRepository {
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {
         shows[tracked.id] = tracked
     }
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+        for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
 }
 
 /// Stores shows normally but throws from `remove`.
@@ -455,6 +459,10 @@ private final class FailingRemoveRepository: WatchlistRepository {
 
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {
         shows[tracked.id] = tracked
+    }
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+        for id in showIDs { shows[id]?.isPaused = isPaused }
     }
 }
 
@@ -494,6 +502,10 @@ private final class CancellationCheckingRemoveRepository: WatchlistRepository {
 
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {
         shows[tracked.id] = tracked
+    }
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+        for id in showIDs { shows[id]?.isPaused = isPaused }
     }
 }
 
@@ -552,5 +564,9 @@ private final class GatedCancellationAwareRemoveRepository: WatchlistRepository 
 
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {
         shows[tracked.id] = tracked
+    }
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+        for id in showIDs { shows[id]?.isPaused = isPaused }
     }
 }

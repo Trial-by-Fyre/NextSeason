@@ -1177,6 +1177,9 @@
     "NextSeason Plus Annual" : {
 
     },
+    "NextSeason Plus is no longer active. Your first %lld shows are still being tracked. The rest are saved on your Watchlist but paused. Renew Plus to reactivate them." : {
+
+    },
     "NextSeason Plus Monthly" : {
 
     },
@@ -1184,6 +1187,9 @@
 
     },
     "NextSeason Plus removes the watchlist limit." : {
+
+    },
+    "NextSeason Plus required" : {
 
     },
     "No" : {
@@ -1529,6 +1535,12 @@
 
     },
     "Optional support for NextSeason. Does not unlock features." : {
+
+    },
+    "Paused" : {
+
+    },
+    "Paused — Plus Required" : {
 
     },
     "Pending debounce for %@" : {
@@ -1963,6 +1975,9 @@
         }
       }
     },
+    "Some Shows Are Paused" : {
+
+    },
     "Something Went Wrong" : {
       "localizations" : {
         "en" : {
@@ -2135,6 +2150,9 @@
           }
         }
       }
+    },
+    "These shows are saved but aren't being tracked. Renew Plus to reactivate them." : {
+
     },
     "TheTVDB" : {
 

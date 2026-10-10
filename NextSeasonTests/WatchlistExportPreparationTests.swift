@@ -118,4 +118,6 @@ private final class GatedWatchlistExportRepository: WatchlistRepository {
     func remove(showID: Int) async throws {}
 
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
 }

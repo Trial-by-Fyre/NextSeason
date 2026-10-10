@@ -17,7 +17,7 @@ struct WatchlistRefreshOutcome: Sendable, Equatable {
 /// worth alerting (PD-008 debounce / dedupe).
 ///
 /// Pipeline for each refresh:
-/// 1. Load tracked shows from the repository.
+/// 1. Load tracked shows from the repository, excluding paused shows.
 /// 2. Unless `force`, ask TVMaze which show IDs changed since the oldest check
 ///    (`/updates/shows`), then skip shows that neither changed on the server nor
 ///    need a calendar/status recheck.
@@ -105,7 +105,9 @@ final class WatchlistRefreshService {
 
         let trackedShows: [TrackedShow]
         do {
-            trackedShows = try await repository.all()
+            // Paused shows (Plus lapsed, beyond the free limit) are never fetched
+            // or notified; they also don't widen the updates window below.
+            trackedShows = try await repository.all().filter { !$0.isPaused }
         } catch {
             if error is CancellationError {
                 AppDiagnosticsLogger.logTaskCancel("watchlist_refresh")

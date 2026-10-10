@@ -10,9 +10,14 @@ import Foundation
 /// `loading` means `Transaction.currentEntitlements` has not been read yet.
 /// It is not the same as free: callers that need a real answer wait until
 /// the state is `resolved`.
+///
+/// `unverified` means the first read found a Plus entitlement StoreKit could not
+/// verify. Adds treat it as free (no unverified access), but it is not a
+/// confirmed lapse, so saved shows are never paused because of it.
 nonisolated enum StoreEntitlementState: Equatable, Sendable {
     case loading
     case resolved(isEntitled: Bool)
+    case unverified
 }
 
 /// Product-catalog presentation for Plus and tip UIs.
@@ -102,8 +107,22 @@ final class PurchaseService {
     /// UI that gates on free vs Plus should wait for this (or use
     /// `waitForInitialEntitlementResolution()` for adds).
     var hasResolvedStoreEntitlement: Bool {
-        if case .resolved = storeEntitlement { return true }
-        return false
+        storeEntitlement != .loading
+    }
+
+    /// Effective Unlimited access only when it is actually known; `nil` while
+    /// StoreKit is loading or could not verify a Plus entitlement.
+    ///
+    /// Drives pausing and resuming saved shows (`WatchlistAccessReconciler`), so a
+    /// failed or pending check never pauses anything. Simulation and complimentary
+    /// access are definitive on their own, so they answer even while loading.
+    var confirmedWatchlistAccess: Bool? {
+        if isSimulatingFreeTier { return false }
+        if entitlementStore.isComplimentary { return true }
+        switch storeEntitlement {
+        case .resolved(let isEntitled): return isEntitled
+        case .loading, .unverified: return nil
+        }
     }
 
     /// Effective access for watchlist limits and paywall presentation. Simulation
@@ -219,10 +238,10 @@ final class PurchaseService {
     /// free-tier decision does not depend on StoreKit's answer.
     func waitForInitialEntitlementResolution() async {
         if isSimulatingFreeTier { return }
-        if case .resolved = storeEntitlement { return }
+        if hasResolvedStoreEntitlement { return }
         if entitlementStore.isComplimentary { return }
         await withCheckedContinuation { continuation in
-            if case .resolved = storeEntitlement {
+            if hasResolvedStoreEntitlement {
                 continuation.resume()
             } else if entitlementStore.isComplimentary {
                 continuation.resume()
@@ -355,10 +374,22 @@ final class PurchaseService {
     }
 
     /// Re-reads `Transaction.currentEntitlements` and updates `storeEntitlement`.
+    ///
+    /// Only a verified answer changes a confirmed state. A verification failure
+    /// keeps the last confirmed answer (so it cannot revoke Plus or pause shows),
+    /// and on first read becomes `.unverified`.
     func refreshEntitlements() async {
-        let entitled = await store.hasActivePlusEntitlement()
+        let check = await store.plusEntitlementCheck()
         if Task.isCancelled { return }
-        storeEntitlement = .resolved(isEntitled: entitled)
+        switch check {
+        case .active:
+            storeEntitlement = .resolved(isEntitled: true)
+        case .inactive:
+            storeEntitlement = .resolved(isEntitled: false)
+        case .unverified:
+            if case .resolved = storeEntitlement { break }
+            storeEntitlement = .unverified
+        }
         resumeEntitlementWaiters()
     }
 

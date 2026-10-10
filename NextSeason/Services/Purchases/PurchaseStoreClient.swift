@@ -19,8 +19,9 @@ protocol PurchaseStoreClient: AnyObject {
         productID: String,
         onVerified: @escaping @MainActor (StoreTransaction) async -> Void
     ) async throws -> PurchaseOutcome
-    /// True when an active, non-revoked monthly or annual subscription entitlement exists.
-    func hasActivePlusEntitlement() async -> Bool
+    /// Whether an active, non-revoked monthly or annual subscription entitlement
+    /// exists, or `.unverified` when a Plus entitlement failed verification.
+    func plusEntitlementCheck() async -> PlusEntitlementCheck
     /// Triggers App Store sync (Restore Purchases); caller re-reads entitlements.
     func restorePurchases() async throws
     /// Long-lived listener for `Transaction.updates` (Ask to Buy, renewals, etc.).
@@ -29,6 +30,17 @@ protocol PurchaseStoreClient: AnyObject {
     )
     /// Cancels the updates task; called from `PurchaseService.deinit`.
     func stopObservingTransactionUpdates()
+}
+
+/// Result of scanning StoreKit's current entitlements for Plus.
+///
+/// `.unverified` means a Plus entitlement exists but StoreKit could not verify
+/// it. That is neither confirmed access nor a confirmed lapse: it never grants
+/// Plus, and it never pauses saved shows.
+nonisolated enum PlusEntitlementCheck: Equatable, Sendable {
+    case active
+    case inactive
+    case unverified
 }
 
 /// StoreKit-independent snapshot of a verified transaction.

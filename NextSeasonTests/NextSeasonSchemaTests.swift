@@ -39,6 +39,7 @@ struct NextSeasonSchemaTests {
         #expect(
             entity?.attributesByName.keys.sorted() == [
                 "dateAdded",
+                "isPaused",
                 "isStale",
                 "lastCheckedAt",
                 "lastNotifiedSignature",
@@ -138,7 +139,8 @@ struct NextSeasonSchemaTests {
             lastNotifiedSignature: "notified-sig",
             pendingChangeSignature: "pending-sig",
             isStale: true,
-            dateAdded: Date(timeIntervalSince1970: 1_699_000_000)
+            dateAdded: Date(timeIntervalSince1970: 1_699_000_000),
+            isPaused: true
         )
     }
 
@@ -167,6 +169,7 @@ struct NextSeasonSchemaTests {
             sourceLocation: sourceLocation)
         #expect(entity.isStale == tracked.isStale, sourceLocation: sourceLocation)
         #expect(entity.dateAdded == tracked.dateAdded, sourceLocation: sourceLocation)
+        #expect(entity.isPaused == tracked.isPaused, sourceLocation: sourceLocation)
 
         let reconstructed = try entity.toDomain()
         #expect(reconstructed == tracked, sourceLocation: sourceLocation)

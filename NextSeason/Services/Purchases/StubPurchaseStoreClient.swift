@@ -10,8 +10,10 @@ import Foundation
 final class StubPurchaseStoreClient: PurchaseStoreClient {
     /// Catalog returned by `loadProducts(ids:)`.
     var products: [StoreProduct]
-    /// Entitlement state returned by `hasActivePlusEntitlement()`.
+    /// Entitlement state returned by `plusEntitlementCheck()`.
     var isStoreEntitled: Bool
+    /// When true, `plusEntitlementCheck()` reports `.unverified` (verification failure).
+    var reportsUnverifiedEntitlement = false
     /// Outcome returned from `purchase`; `.success` still delivers a transaction when applicable.
     var purchaseOutcome: PurchaseOutcome
     /// When set, `restorePurchases()` throws this error.
@@ -19,7 +21,7 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     /// When set, `loadProducts(ids:)` throws this error.
     var loadError: (any Error)?
 
-    /// When true, `hasActivePlusEntitlement()` suspends until
+    /// When true, `plusEntitlementCheck()` suspends until
     /// `releaseEntitlementResolution()`.
     var delayEntitlementResolution = false
 
@@ -31,7 +33,7 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     private(set) var finishedTransactionIDs: [UInt64] = []
     /// Last transaction created by a successful stub purchase.
     private(set) var lastPurchasedTransaction: StoreTransaction?
-    /// Number of continuations blocked in `hasActivePlusEntitlement()` when delayed.
+    /// Number of continuations blocked in `plusEntitlementCheck()` when delayed.
     private(set) var entitlementWaiterCount = 0
     private(set) var observeTransactionUpdatesCallCount = 0
     private(set) var stopObservingTransactionUpdatesCallCount = 0
@@ -41,7 +43,7 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     /// Recorded side effects for test assertions.
     enum RecordedCall: Equatable, Sendable {
         case observeTransactionUpdates
-        case hasActivePlusEntitlement
+        case plusEntitlementCheck
         case stopObservingTransactionUpdates
     }
 
@@ -89,15 +91,16 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
         return purchaseOutcome
     }
 
-    func hasActivePlusEntitlement() async -> Bool {
-        recordedCalls.append(.hasActivePlusEntitlement)
+    func plusEntitlementCheck() async -> PlusEntitlementCheck {
+        recordedCalls.append(.plusEntitlementCheck)
         if delayEntitlementResolution {
             await withCheckedContinuation { continuation in
                 entitlementWaiters.append(continuation)
                 entitlementWaiterCount = entitlementWaiters.count
             }
         }
-        return isStoreEntitled
+        if reportsUnverifiedEntitlement { return .unverified }
+        return isStoreEntitled ? .active : .inactive
     }
 
     func restorePurchases() async throws {

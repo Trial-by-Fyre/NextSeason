@@ -320,6 +320,10 @@ final class WatchlistPendingRemoval {
     private func restore(_ tracked: TrackedShow) async throws {
         try await repository.add(Show(tracked: tracked))
         try await repository.updateAfterRefresh(tracked)
+        // Undoing a delete of a paused show must not reactivate it (or use a slot).
+        if tracked.isPaused {
+            try await repository.setPaused(true, showIDs: [tracked.id])
+        }
     }
 
     private func clearPendingPresentation() {

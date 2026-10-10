@@ -41,13 +41,20 @@ final class WatchlistViewModel {
         Self.sectionGroups(from: filteredShows)
     }
 
-    /// Groups shows into non-empty sections in `WatchlistSection` display order.
+    /// Paused shows (Plus lapsed) matching the current filter, alphabetical.
+    /// Rendered in their own section below every status section.
+    var filteredPausedShows: [TrackedShow] {
+        filteredShows.filter(\.isPaused).sorted(by: Self.alphabeticalSort)
+    }
+
+    /// Groups active shows into non-empty sections in `WatchlistSection` display
+    /// order. Paused shows are excluded — their stored status may be stale.
     ///
     /// Coming Soon sorts by premiere date (soonest first); every other section
     /// sorts alphabetically. Exposed as `static` for unit tests.
     static func sectionGroups(from shows: [TrackedShow]) -> [WatchlistSectionGroup] {
         var buckets: [WatchlistSection: [TrackedShow]] = [:]
-        for show in shows {
+        for show in shows where !show.isPaused {
             let section = WatchlistSection.section(for: show.nextSeason)
             buckets[section, default: []].append(show)
         }
@@ -85,6 +92,9 @@ final class WatchlistViewModel {
     private let refreshService: WatchlistRefreshService?
     private let removalCoordinator: WatchlistPendingRemoval
     private let analytics: any AnalyticsTracking
+    /// Applies confirmed Plus access to pause flags before each load, so the list
+    /// never shows a split that disagrees with current access.
+    private let accessReconciler: WatchlistAccessReconciler?
 
     private var reloadGeneration = 0
 
@@ -92,12 +102,14 @@ final class WatchlistViewModel {
         repository: any WatchlistRepository,
         refreshService: WatchlistRefreshService? = nil,
         removalCoordinator: WatchlistPendingRemoval,
-        analytics: any AnalyticsTracking
+        analytics: any AnalyticsTracking,
+        accessReconciler: WatchlistAccessReconciler? = nil
     ) {
         self.repository = repository
         self.refreshService = refreshService
         self.removalCoordinator = removalCoordinator
         self.analytics = analytics
+        self.accessReconciler = accessReconciler
 
         removalCoordinator.addOutcomeHandler { [weak self] outcome in
             self?.handleOutcome(outcome)
@@ -112,6 +124,7 @@ final class WatchlistViewModel {
     func reload() async {
         reloadGeneration += 1
         let generation = reloadGeneration
+        await accessReconciler?.reconcile()
         do {
             let fetched = try await repository.all()
             guard generation == reloadGeneration else { return }

@@ -24,6 +24,9 @@ struct WatchlistView: View {
     @Environment(\.analytics) private var analytics
     @Environment(\.scenePhase) private var scenePhase
     @Environment(PurchaseService.self) private var purchases
+    /// Optional so previews without the app composition still render.
+    @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
+        WatchlistAccessReconciler?
 
     @Binding var navigationPath: NavigationPath
     private let tvMaze: any TVMazeService
@@ -168,7 +171,8 @@ struct WatchlistView: View {
                 repository: repository,
                 refreshService: refreshService,
                 removalCoordinator: removalCoordinator,
-                analytics: analytics
+                analytics: analytics,
+                accessReconciler: accessReconciler
             )
         }
         await reloadScreen()
@@ -254,6 +258,16 @@ struct WatchlistView: View {
                         .accessibilityAction(named: String(localized: "Undo removal")) {
                             Task { await viewModel.undoPendingRemoval() }
                         }
+                } else if tracked.isPaused {
+                    // Paused (Plus lapsed): no NavigationLink, so Show Details
+                    // cannot be opened. Removal stays available.
+                    ShowRowLabel(tracked: tracked)
+                        .accessibilityIdentifier(
+                            "\(AccessibilityID.Watchlist.row).\(tracked.id)"
+                        )
+                        .accessibilityAction(named: String(localized: "Remove from watchlist")) {
+                            deleteImmediately(tracked, viewModel: viewModel)
+                        }
                 } else {
                     NavigationLink(value: tracked) {
                         ShowRowLabel(tracked: tracked)
@@ -266,13 +280,7 @@ struct WatchlistView: View {
                     // VoiceOver cannot use the list swipe gesture, so expose the
                     // same immediate-delete path as `.onDelete` as a rotor action.
                     .accessibilityAction(named: String(localized: "Remove from watchlist")) {
-                        withAnimation(.easeInOut(duration: 0.35)) {
-                            viewModel.deleteImmediately(
-                                tracked,
-                                rowAnchor: rowFrames[tracked.id] ?? .zero
-                            )
-                        }
-                        rowFrames[tracked.id] = nil
+                        deleteImmediately(tracked, viewModel: viewModel)
                     }
                 }
             }
@@ -307,6 +315,32 @@ struct WatchlistView: View {
                         updateRowFrame(tracked.id, from: geometry)
                     }
             }
+        }
+    }
+
+    /// VoiceOver row action: same immediate-delete path as swipe-to-delete.
+    private func deleteImmediately(_ tracked: TrackedShow, viewModel: WatchlistViewModel) {
+        withAnimation(.easeInOut(duration: 0.35)) {
+            viewModel.deleteImmediately(
+                tracked,
+                rowAnchor: rowFrames[tracked.id] ?? .zero
+            )
+        }
+        rowFrames[tracked.id] = nil
+    }
+
+    /// Swipe-to-delete for one rendered section's rows.
+    private func deleteRows(
+        at offsets: IndexSet,
+        in shows: [TrackedShow],
+        viewModel: WatchlistViewModel
+    ) {
+        // Avoid notifyWatchlistDataChanged here — bumping the
+        // reload token mid-delete jumps list scroll position.
+        viewModel.deleteImmediately(at: offsets, in: shows, rowAnchors: rowFrames)
+        for index in offsets {
+            guard shows.indices.contains(index) else { continue }
+            rowFrames[shows[index].id] = nil
         }
     }
 
@@ -351,17 +385,18 @@ struct WatchlistView: View {
                         shows: group.shows,
                         isExpanded: expansionBinding(for: group.section),
                         onDelete: { offsets in
-                            // Avoid notifyWatchlistDataChanged here — bumping the
-                            // reload token mid-delete jumps list scroll position.
-                            viewModel.deleteImmediately(
-                                at: offsets,
-                                in: group.shows,
-                                rowAnchors: rowFrames
-                            )
-                            for index in offsets {
-                                guard group.shows.indices.contains(index) else { continue }
-                                rowFrames[group.shows[index].id] = nil
-                            }
+                            deleteRows(at: offsets, in: group.shows, viewModel: viewModel)
+                        }
+                    ) { tracked in
+                        watchlistRow(for: tracked, viewModel: viewModel)
+                    }
+                }
+                let pausedShows = viewModel.filteredPausedShows
+                if !pausedShows.isEmpty {
+                    PausedWatchlistSection(
+                        shows: pausedShows,
+                        onDelete: { offsets in
+                            deleteRows(at: offsets, in: pausedShows, viewModel: viewModel)
                         }
                     ) { tracked in
                         watchlistRow(for: tracked, viewModel: viewModel)
@@ -379,7 +414,9 @@ struct WatchlistView: View {
             }
             .animation(
                 .easeInOut(duration: 0.35),
-                value: viewModel.filteredShows.map { "\($0.id):\($0.nextSeason.headline)" }
+                value: viewModel.filteredShows.map {
+                    "\($0.id):\($0.nextSeason.headline):\($0.isPaused)"
+                }
             )
             .appPlainListStyle()
             // Plain lists still insert default spacing between sections, but not

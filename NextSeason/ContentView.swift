@@ -11,6 +11,9 @@ struct ContentView: View {
     @Environment(\.watchlistRepository) private var repository
     @Environment(\.watchlistPendingRemoval) private var removalCoordinator
     @Environment(\.analytics) private var analytics
+    /// Optional so previews without the app composition still render.
+    @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
+        WatchlistAccessReconciler?
     @Bindable var coordinator: AppNavigationCoordinator
 
     private let searchService: any TheTVDBService
@@ -129,7 +132,8 @@ struct ContentView: View {
             await coordinator.resolvePendingNavigation(
                 repository: repository,
                 tvMaze: tvMaze,
-                analytics: analytics
+                analytics: analytics,
+                prepare: reconcileBeforeNavigation
             )
         }
         .onChange(of: coordinator.pendingShowID) { _, showID in
@@ -138,10 +142,17 @@ struct ContentView: View {
                 await coordinator.resolvePendingNavigation(
                     repository: repository,
                     tvMaze: tvMaze,
-                    analytics: analytics
+                    analytics: analytics,
+                    prepare: reconcileBeforeNavigation
                 )
             }
         }
+    }
+
+    /// Notification taps decide from reconciled pause state: wait for the first
+    /// StoreKit answer and apply it before looking the show up.
+    private func reconcileBeforeNavigation() async {
+        await accessReconciler?.reconcileWhenAccessKnown()
     }
 }
 

@@ -49,19 +49,39 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
         }
     }
 
-    /// Scans current entitlements for an active Plus subscription. Ignores revoked transactions and consumable tips.
-    func hasActivePlusEntitlement() async -> Bool {
+    /// Scans current entitlements for an active Plus subscription. Ignores revoked
+    /// transactions and consumable tips.
+    ///
+    /// `currentEntitlements` already includes subscriptions whose auto-renew is
+    /// off (until they expire) and subscriptions in a billing grace period, so no
+    /// separate expiration logic is needed. A Plus entitlement that fails
+    /// verification reports `.unverified` rather than `.inactive`.
+    func plusEntitlementCheck() async -> PlusEntitlementCheck {
+        var sawUnverifiedPlus = false
         for await result in Transaction.currentEntitlements {
-            guard let transaction = try? checkVerified(result) else { continue }
-            guard transaction.revocationDate == nil else { continue }
-            switch StoreProductID(rawValue: transaction.productID) {
-            case .plusAnnual, .plusMonthly:
-                return true
-            case .tipTrailer, .tipPilot, .tipHitShow, .none:
+            let transaction: Transaction
+            switch result {
+            case .verified(let verified):
+                transaction = verified
+            case .unverified(let unverified, _):
+                if Self.isPlus(unverified.productID) { sawUnverifiedPlus = true }
                 continue
             }
+            guard transaction.revocationDate == nil else { continue }
+            if Self.isPlus(transaction.productID) { return .active }
         }
-        return false
+        if sawUnverifiedPlus {
+            AppDiagnosticsLogger.breadcrumb("storekit_plus_entitlement_unverified")
+            return .unverified
+        }
+        return .inactive
+    }
+
+    private static func isPlus(_ productID: String) -> Bool {
+        switch StoreProductID(rawValue: productID) {
+        case .plusAnnual, .plusMonthly: true
+        case .tipTrailer, .tipPilot, .tipHitShow, .none: false
+        }
     }
 
     func restorePurchases() async throws {

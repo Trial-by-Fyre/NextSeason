@@ -15,6 +15,11 @@ This document captures enhancements planned after the initial App Store release.
 
 - User-selectable sorting.
 - Support marking which shows the user has fully caught up on.
+- **Subscription downgrade improvements:** Allow users whose Plus subscription
+  expires to choose which three shows remain active, rather than automatically
+  retaining the first three. Provide a simple interface for managing those
+  selections. (At launch, the three oldest saved shows stay active and the rest
+  are paused; restoring Plus reactivates everything.)
 
 Continue to favor fast, predictable title matching over discovery-oriented fuzzy search.
 

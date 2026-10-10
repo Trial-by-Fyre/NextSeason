@@ -112,6 +112,8 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
         }
     }
 
+    /// Preserve the verified reason: renewals have new transaction IDs too, so an
+    /// ID alone cannot identify the customer purchase that should end simulation.
     private func storeTransaction(from transaction: Transaction) -> StoreTransaction {
         StoreTransaction(
             id: transaction.id, productID: transaction.productID,

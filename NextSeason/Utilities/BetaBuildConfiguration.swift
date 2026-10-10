@@ -21,7 +21,7 @@ final class BetaBuildAvailability {
     private(set) var detectionAttempted = false
     private var hasVerifiedSandboxAppTransaction = false
 
-    /// Stricter than Diagnostics visibility: never trust an unverified transaction,
+    /// Stricter than Diagnostics visibility: never trust an unverified transaction
     /// or receipt fallback to override access in a release build.
     var allowsFreeTierSimulation: Bool {
         #if DEBUG
@@ -32,12 +32,16 @@ final class BetaBuildAvailability {
     }
 
     /// App provenance only; subscription transaction environments are irrelevant.
+    /// An App Store install making sandbox purchases is still a production app and
+    /// must not gain access to the override. Unknown provenance also rejects it.
     static func releaseAllowsFreeTierSimulation(
         environment: AppStore.Environment?, isVerified: Bool
     ) -> Bool {
         isVerified && environment == .sandbox
     }
 
+    /// General Diagnostics visibility may use the receipt fallback. Controls that
+    /// change effective access must use `allowsFreeTierSimulation` instead.
     var isAvailable: Bool {
         #if DEBUG
             return true
@@ -79,6 +83,9 @@ final class BetaBuildAvailability {
         #endif
     }
 
+    /// Refreshes display information and verified override eligibility separately.
+    /// Verification or lookup failure clears eligibility even if a beta channel
+    /// can still be displayed using unverified data or the receipt fallback.
     func refresh() async {
         #if DEBUG
             detectionAttempted = true

@@ -58,6 +58,8 @@ struct DiagnosticsView: View {
                     notificationsEnabledLabel: notificationStatus.diagnosticsEnabledLabel
                 )
 
+                // Access overrides require stricter eligibility than the general beta
+                // tools. The section checks that eligibility through PurchaseService.
                 FreeTierSimulationSection()
 
                 if betaValidationAvailable {

@@ -5,6 +5,7 @@
 
 import SwiftUI
 
+/// Developer/TestFlight switch and active-state notice for testing the free-tier cap.
 /// Uses the service's guarded setter so UI visibility is not the security boundary.
 struct FreeTierSimulationSection: View {
     @Environment(PurchaseService.self) private var purchases

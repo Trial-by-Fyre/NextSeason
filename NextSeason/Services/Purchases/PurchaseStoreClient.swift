@@ -38,6 +38,8 @@ nonisolated struct StoreTransaction: Equatable, Sendable {
     /// False for renewals or unknown reasons; only customer purchases complete tests.
     let isCustomerPurchase: Bool
 
+    /// Defaults to a customer purchase for existing test doubles. The live StoreKit
+    /// client always supplies the reason explicitly from the verified transaction.
     init(id: UInt64, productID: String, isCustomerPurchase: Bool = true) {
         self.id = id
         self.productID = productID

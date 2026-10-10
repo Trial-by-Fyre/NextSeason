@@ -48,6 +48,8 @@ struct PlusAccountSection: View {
 
     /// Watchlist capacity label: unlimited (Plus or complimentary),
     /// "Checking…" while StoreKit entitlements are unresolved, or the free cap.
+    /// Simulation takes precedence so preserved actual entitlements cannot make
+    /// About contradict the access decision being tested.
     private var statusValue: String {
         if purchases.isSimulatingFreeTier {
             return String(
@@ -64,7 +66,8 @@ struct PlusAccountSection: View {
         )
     }
 
-    /// Footer copy explaining Plus, complimentary access, or entitlement confirmation.
+    /// Footer copy explaining simulation, Plus, complimentary access, or entitlement
+    /// confirmation. During simulation, also explains how to restore actual access.
     private var footerText: String {
         if purchases.isSimulatingFreeTier {
             return String(

@@ -53,20 +53,31 @@ final class PurchaseService {
 
     /// Session-only override; actual StoreKit and complimentary state stay intact.
     private var freeTierSimulationRequested = false
+    /// Identifies one simulation run so purchases suspended across `await` cannot
+    /// disable a later run after the tester turns simulation off and back on.
     private var simulationSessionID: UUID?
+    /// Only a pending Plus purchase started in this run may complete through updates.
+    /// Cleared whenever simulation is toggled; never persisted across launches.
     private var pendingSimulationProductID: String?
     private let simulationAvailability: @MainActor () -> Bool
 
+    /// Developer/TestFlight eligibility shared by the control and the access override.
     var canSimulateFreeTier: Bool { simulationAvailability() }
 
+    /// Re-check eligibility when reading effective state, rather than relying only
+    /// on the UI hiding the control or the initial request being allowed.
     var isSimulatingFreeTier: Bool {
         canSimulateFreeTier && freeTierSimulationRequested
     }
 
+    /// Starts a fresh simulation run or restores actual access without changing
+    /// saved shows, complimentary persistence, or StoreKit entitlement state.
     func setFreeTierSimulation(_ enabled: Bool) {
         freeTierSimulationRequested = enabled && canSimulateFreeTier
         simulationSessionID = freeTierSimulationRequested ? UUID() : nil
         pendingSimulationProductID = nil
+        // Simulation already determines the access decision, so an add waiting for
+        // the initial StoreKit read can proceed using the normal free-tier cap.
         if isSimulatingFreeTier { resumeEntitlementWaiters() }
     }
 
@@ -75,7 +86,8 @@ final class PurchaseService {
     private let complimentaryGrantEligibility: @MainActor () async -> Bool
     private var didStartObserving = false
     private var entitlementWaiters: [CheckedContinuation<Void, Never>] = []
-    /// Prevents duplicate thank-you toasts when StoreKit redelivers the same tip.
+    /// Prevents duplicate tip thank-you toasts and replayed subscription updates
+    /// completing a simulation when StoreKit redelivers a transaction.
     private var processedTransactionIDs: Set<UInt64> = []
 
     /// True when StoreKit has reported an active Plus subscription.
@@ -94,7 +106,8 @@ final class PurchaseService {
         return false
     }
 
-    /// True when StoreKit Plus is active or the user has complimentary Plus.
+    /// Effective access for watchlist limits and paywall presentation. Simulation
+    /// masks both sources of Unlimited while their actual entitlement state stays intact.
     var isUnlimitedWatchlist: Bool {
         !isSimulatingFreeTier && (isStoreEntitled || entitlementStore.isComplimentary)
     }
@@ -202,7 +215,8 @@ final class PurchaseService {
     ///
     /// Watchlist adds use this so a Plus customer is not treated as free
     /// during cold launch. Pre-resolved stubs (tests, previews, UI tests)
-    /// return immediately.
+    /// return immediately. Active simulation also returns immediately because its
+    /// free-tier decision does not depend on StoreKit's answer.
     func waitForInitialEntitlementResolution() async {
         if isSimulatingFreeTier { return }
         if case .resolved = storeEntitlement { return }
@@ -219,7 +233,8 @@ final class PurchaseService {
     }
 
     /// Whether another show may be added after entitlement resolution.
-    /// Complimentary and paid Plus users are always allowed; free users hit the cap.
+    /// Effective Unlimited access bypasses the cap; free users and simulated free
+    /// users use the same policy. This only gates additions, never existing shows.
     func canAddToWatchlist(currentCount: Int) async -> Bool {
         await waitForInitialEntitlementResolution()
         return WatchlistLimitPolicy.canAddShow(
@@ -261,6 +276,8 @@ final class PurchaseService {
 
     /// Purchases a product; verified transactions refresh entitlements or
     /// set `thankYouMessage` for tips before the store client finishes them.
+    /// Simulation ends only after a successful verified Plus purchase, or later
+    /// when a pending purchase completes through a matching transaction update.
     func purchase(_ product: StoreProduct) async -> PurchaseOutcome {
         guard !isPurchasing else { return .pending }
         isPurchasing = true
@@ -268,6 +285,8 @@ final class PurchaseService {
         thankYouMessage = nil
         defer { isPurchasing = false }
 
+        // Capture the run before StoreKit can suspend; a purchase started outside
+        // this simulation (or in an earlier run) must not turn it off.
         let simulationSession = isSimulatingFreeTier ? simulationSessionID : nil
         var verifiedSubscriptionPurchase = false
         do {
@@ -283,12 +302,16 @@ final class PurchaseService {
             }
             switch outcome {
             case .success:
+                // The callback refreshes actual access before finish(). Wait for the
+                // purchase outcome too, so verification alone does not end simulation.
                 if verifiedSubscriptionPurchase, isStoreEntitled, !Task.isCancelled,
                     let simulationSession, simulationSessionID == simulationSession
                 {
                     setFreeTierSimulation(false)
                 }
             case .pending:
+                // Remember only the subscription the tester requested. Background
+                // renewals and unrelated purchases still refresh access but cannot unlock.
                 if product.kind == .plusAnnual || product.kind == .plusMonthly,
                     let simulationSession, simulationSessionID == simulationSession
                 {
@@ -356,6 +379,8 @@ final class PurchaseService {
     }
 
     /// Incorporates a verified StoreKit transaction, then the client finishes it.
+    /// Direct purchase callbacks leave simulation completion to `purchase()`;
+    /// observer updates may complete only a pending purchase from the current run.
     private func handleVerifiedTransaction(
         _ transaction: StoreTransaction, fromTransactionUpdate: Bool = false
     ) async {

@@ -9,8 +9,12 @@ import Testing
 
 @testable import NextSeason
 
+/// Simulation access rules, production eligibility, and purchase-completion timing
+/// using isolated entitlement storage and the in-memory StoreKit client.
 @MainActor
 struct FreeTierSimulationTests {
+    /// Avoids the real Keychain and shared defaults. Pre-resolved StoreKit state
+    /// keeps these tests focused on simulation rather than launch entitlement timing.
     private func makeService(
         store: StubPurchaseStoreClient = StubPurchaseStoreClient(),
         complimentary: Bool = false,
@@ -157,6 +161,8 @@ struct FreeTierSimulationTests {
                 StoreTransaction(
                     id: 36, productID: StoreProductID.plusMonthly.rawValue))
         }
+        // Wait for the observable suspension point rather than sleeping. Restart
+        // simulation while the old completion is awaiting its entitlement answer.
         for _ in 0..<200 {
             if store.entitlementWaiterCount > 0 { break }
             await Task.yield()
@@ -184,6 +190,7 @@ struct FreeTierSimulationTests {
         #expect(purchases.isSimulatingFreeTier == false)
         #expect(purchases.isUnlimitedWatchlist)
         purchases.setFreeTierSimulation(true)
+        // Redelivery of the already handled transaction must not end the new run.
         await store.emitVerifiedTransaction(
             StoreTransaction(id: 41, productID: StoreProductID.plusMonthly.rawValue))
         #expect(purchases.isSimulatingFreeTier)

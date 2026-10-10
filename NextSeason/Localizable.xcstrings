@@ -740,6 +740,26 @@
         }
       }
     },
+    "Enforces the normal limit of %lld shows. Existing shows and actual entitlements are preserved. Turn off to restore access. Simulation ends after a verified subscription purchase started during this simulation confirms active access, or when the app restarts. Renewals do not end simulation." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enforces the normal limit of %lld shows. Existing shows and actual entitlements are preserved. Turn off to restore access. Simulation ends after a verified subscription purchase started during this simulation confirms active access, or when the app restarts. Renewals do not end simulation."
+          }
+        }
+      }
+    },
+    "Enforces the normal watchlist limit without changing saved shows or actual entitlements." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enforces the normal watchlist limit without changing saved shows or actual entitlements."
+          }
+        }
+      }
+    },
     "Example searches" : {
       "localizations" : {
         "en" : {
@@ -825,6 +845,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Force Refresh Now"
+          }
+        }
+      }
+    },
+    "Free tier simulation is active" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free tier simulation is active"
+          }
+        }
+      }
+    },
+    "Free tier simulation is active. Your shows and actual access are preserved. Turn it off in Diagnostics to restore access." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Free tier simulation is active. Your shows and actual access are preserved. Turn it off in Diagnostics to restore access."
           }
         }
       }
@@ -1893,6 +1933,16 @@
     "Shows version, purchases, and app information" : {
 
     },
+    "Simulate Free Tier" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Simulate Free Tier"
+          }
+        }
+      }
+    },
     "Simulated scenarios are unavailable in production builds." : {
       "localizations" : {
         "en" : {
@@ -1962,6 +2012,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Stop tracking %@"
+          }
+        }
+      }
+    },
+    "Subscription Testing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Subscription Testing"
           }
         }
       }
@@ -2256,6 +2316,16 @@
     },
     "Up to %lld shows" : {
 
+    },
+    "Up to %lld shows (simulated)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Up to %lld shows (simulated)"
+          }
+        }
+      }
     },
     "Updated (dated next season)" : {
       "localizations" : {

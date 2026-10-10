@@ -82,6 +82,8 @@ straightforward work unnecessarily.
 
 ## AI Instructions
 
+- Never commit changes. Leave all changes uncommitted in the working copy so the
+  project owner can review and commit them.
 - Do not create unnecessary abstractions.
 - Keep files under 500 lines when possible.
 - Before writing Swift, read the relevant Swift skill file(s) first and note

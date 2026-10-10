@@ -51,6 +51,25 @@ final class PurchaseService {
     /// Shown once per verified tip transaction (deduped by transaction ID).
     private(set) var thankYouMessage: String?
 
+    /// Session-only override; actual StoreKit and complimentary state stay intact.
+    private var freeTierSimulationRequested = false
+    private var simulationSessionID: UUID?
+    private var pendingSimulationProductID: String?
+    private let simulationAvailability: @MainActor () -> Bool
+
+    var canSimulateFreeTier: Bool { simulationAvailability() }
+
+    var isSimulatingFreeTier: Bool {
+        canSimulateFreeTier && freeTierSimulationRequested
+    }
+
+    func setFreeTierSimulation(_ enabled: Bool) {
+        freeTierSimulationRequested = enabled && canSimulateFreeTier
+        simulationSessionID = freeTierSimulationRequested ? UUID() : nil
+        pendingSimulationProductID = nil
+        if isSimulatingFreeTier { resumeEntitlementWaiters() }
+    }
+
     private let store: any PurchaseStoreClient
     private let entitlementStore: PlusEntitlementStore
     private let complimentaryGrantEligibility: @MainActor () async -> Bool
@@ -77,7 +96,7 @@ final class PurchaseService {
 
     /// True when StoreKit Plus is active or the user has complimentary Plus.
     var isUnlimitedWatchlist: Bool {
-        isStoreEntitled || entitlementStore.isComplimentary
+        !isSimulatingFreeTier && (isStoreEntitled || entitlementStore.isComplimentary)
     }
 
     /// Permanent complimentary access: unlimited watchlist without an active StoreKit purchase.
@@ -117,8 +136,18 @@ final class PurchaseService {
         store: any PurchaseStoreClient,
         entitlementStore: PlusEntitlementStore = PlusEntitlementStore(),
         initialStoreEntitlement: StoreEntitlementState = .loading,
-        complimentaryGrantEligibility: @escaping @MainActor () async -> Bool = { false }
+        complimentaryGrantEligibility: @escaping @MainActor () async -> Bool = { false },
+        simulationAvailability: @escaping @MainActor () -> Bool = {
+            BetaBuildAvailability.shared.allowsFreeTierSimulation
+        }
     ) {
+        // Test injection is available only in developer builds. Release always uses
+        // verified app provenance, regardless of caller-supplied availability.
+        #if DEBUG
+            self.simulationAvailability = simulationAvailability
+        #else
+            self.simulationAvailability = { BetaBuildAvailability.shared.allowsFreeTierSimulation }
+        #endif
         self.complimentaryGrantEligibility = complimentaryGrantEligibility
         self.store = store
         self.entitlementStore = entitlementStore
@@ -175,6 +204,7 @@ final class PurchaseService {
     /// during cold launch. Pre-resolved stubs (tests, previews, UI tests)
     /// return immediately.
     func waitForInitialEntitlementResolution() async {
+        if isSimulatingFreeTier { return }
         if case .resolved = storeEntitlement { return }
         if entitlementStore.isComplimentary { return }
         await withCheckedContinuation { continuation in
@@ -238,13 +268,33 @@ final class PurchaseService {
         thankYouMessage = nil
         defer { isPurchasing = false }
 
+        let simulationSession = isSimulatingFreeTier ? simulationSessionID : nil
+        var verifiedSubscriptionPurchase = false
         do {
             let outcome = try await store.purchase(productID: product.productID) {
                 [weak self] transaction in
+                if transaction.productID == product.productID,
+                    transaction.isCustomerPurchase,
+                    transaction.kind == .plusAnnual || transaction.kind == .plusMonthly
+                {
+                    verifiedSubscriptionPurchase = true
+                }
                 await self?.handleVerifiedTransaction(transaction)
             }
             switch outcome {
-            case .success, .cancelled, .pending:
+            case .success:
+                if verifiedSubscriptionPurchase, isStoreEntitled, !Task.isCancelled,
+                    let simulationSession, simulationSessionID == simulationSession
+                {
+                    setFreeTierSimulation(false)
+                }
+            case .pending:
+                if product.kind == .plusAnnual || product.kind == .plusMonthly,
+                    let simulationSession, simulationSessionID == simulationSession
+                {
+                    pendingSimulationProductID = product.productID
+                }
+            case .cancelled:
                 break
             case .failed(let message):
                 lastErrorMessage = message
@@ -301,16 +351,31 @@ final class PurchaseService {
         guard !didStartObserving else { return }
         didStartObserving = true
         store.observeTransactionUpdates { [weak self] transaction in
-            await self?.handleVerifiedTransaction(transaction)
+            await self?.handleVerifiedTransaction(transaction, fromTransactionUpdate: true)
         }
     }
 
     /// Incorporates a verified StoreKit transaction, then the client finishes it.
-    private func handleVerifiedTransaction(_ transaction: StoreTransaction) async {
+    private func handleVerifiedTransaction(
+        _ transaction: StoreTransaction, fromTransactionUpdate: Bool = false
+    ) async {
         let isNew = processedTransactionIDs.insert(transaction.id).inserted
         switch transaction.kind {
         case .plusAnnual, .plusMonthly:
+            let simulationSession = simulationSessionID
+            let completesPendingSimulation =
+                fromTransactionUpdate && isNew
+                && transaction.isCustomerPurchase
+                && pendingSimulationProductID == transaction.productID
             await refreshEntitlements()
+            // Renewals never complete a test purchase, even for the pending product.
+            // Re-check the session after awaiting so an old completion cannot disable
+            // a simulation the tester restarted while StoreKit was resolving access.
+            if completesPendingSimulation, isStoreEntitled, !Task.isCancelled,
+                let simulationSession, simulationSessionID == simulationSession
+            {
+                setFreeTierSimulation(false)
+            }
         case .tip:
             if isNew {
                 thankYouMessage = String(localized: "Thank you for supporting NextSeason.")

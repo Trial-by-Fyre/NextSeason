@@ -113,7 +113,10 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
     }
 
     private func storeTransaction(from transaction: Transaction) -> StoreTransaction {
-        StoreTransaction(id: transaction.id, productID: transaction.productID)
+        StoreTransaction(
+            id: transaction.id, productID: transaction.productID,
+            isCustomerPurchase: transaction.reason == .purchase
+        )
     }
 
     private static func storeProduct(from product: Product) -> StoreProduct? {

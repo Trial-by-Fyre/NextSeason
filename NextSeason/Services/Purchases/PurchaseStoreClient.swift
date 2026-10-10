@@ -35,6 +35,14 @@ protocol PurchaseStoreClient: AnyObject {
 nonisolated struct StoreTransaction: Equatable, Sendable {
     let id: UInt64
     let productID: String
+    /// False for renewals or unknown reasons; only customer purchases complete tests.
+    let isCustomerPurchase: Bool
+
+    init(id: UInt64, productID: String, isCustomerPurchase: Bool = true) {
+        self.id = id
+        self.productID = productID
+        self.isCustomerPurchase = isCustomerPurchase
+    }
 
     /// Parsed product kind; `nil` for unknown product IDs.
     var kind: StoreProductKind? {

@@ -9,10 +9,9 @@ import StoreKit
 
 /// Tracks whether beta-only diagnostics are available in the current build/runtime.
 ///
-/// DEBUG builds are always allowed. A custom TESTFLIGHT compilation condition is
-/// also supported for beta-only archives, but normal App Store production builds
-/// rely on StoreKit's app transaction environment instead of the deprecated
-/// appStoreReceiptURL API.
+/// DEBUG builds are always allowed. Release builds detect TestFlight through
+/// StoreKit's app transaction environment, with a receipt fallback for Diagnostics
+/// visibility only. Access overrides require verified app provenance.
 @MainActor
 @Observable
 final class BetaBuildAvailability {
@@ -20,11 +19,27 @@ final class BetaBuildAvailability {
 
     private(set) var appStoreEnvironment: AppStore.Environment?
     private(set) var detectionAttempted = false
+    private var hasVerifiedSandboxAppTransaction = false
+
+    /// Stricter than Diagnostics visibility: never trust an unverified transaction,
+    /// or receipt fallback to override access in a release build.
+    var allowsFreeTierSimulation: Bool {
+        #if DEBUG
+            return true
+        #else
+            return hasVerifiedSandboxAppTransaction
+        #endif
+    }
+
+    /// App provenance only; subscription transaction environments are irrelevant.
+    static func releaseAllowsFreeTierSimulation(
+        environment: AppStore.Environment?, isVerified: Bool
+    ) -> Bool {
+        isVerified && environment == .sandbox
+    }
 
     var isAvailable: Bool {
         #if DEBUG
-            return true
-        #elseif TESTFLIGHT
             return true
         #else
             return appStoreEnvironment == .sandbox || hasSandboxReceipt
@@ -42,8 +57,6 @@ final class BetaBuildAvailability {
     var channelDisplayName: String {
         #if DEBUG
             return String(localized: "Debug")
-        #elseif TESTFLIGHT
-            return String(localized: "TestFlight")
         #else
             guard detectionAttempted else { return String(localized: "Detecting…") }
 
@@ -70,19 +83,20 @@ final class BetaBuildAvailability {
         #if DEBUG
             detectionAttempted = true
             appStoreEnvironment = .xcode
-        #elseif TESTFLIGHT
-            detectionAttempted = true
-            appStoreEnvironment = .sandbox
         #else
             do {
                 let result = try await AppTransaction.shared
                 switch result {
                 case .verified(let appTransaction):
                     appStoreEnvironment = appTransaction.environment
+                    hasVerifiedSandboxAppTransaction = Self.releaseAllowsFreeTierSimulation(
+                        environment: appTransaction.environment, isVerified: true)
                 case .unverified(let appTransaction, _):
+                    hasVerifiedSandboxAppTransaction = false
                     appStoreEnvironment = appTransaction.environment
                 }
             } catch {
+                hasVerifiedSandboxAppTransaction = false
                 appStoreEnvironment = nil
             }
             detectionAttempted = true

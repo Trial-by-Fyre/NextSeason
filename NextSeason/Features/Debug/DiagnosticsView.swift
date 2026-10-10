@@ -58,6 +58,8 @@ struct DiagnosticsView: View {
                     notificationsEnabledLabel: notificationStatus.diagnosticsEnabledLabel
                 )
 
+                FreeTierSimulationSection()
+
                 if betaValidationAvailable {
                     betaValidationSection
                 }
@@ -503,6 +505,7 @@ struct DiagnosticsView: View {
 #if DEBUG
     #Preview {
         DiagnosticsView()
+            .environment(PurchaseService.preview)
             .environment(\.analytics, RecordingAnalyticsService())
             .environment(
                 \.notificationService, NotificationService(analytics: RecordingAnalyticsService())

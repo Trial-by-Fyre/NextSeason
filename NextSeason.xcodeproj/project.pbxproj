@@ -253,6 +253,8 @@
 		E1F268CD2FEDF477006D0E58 /* 6-25-2026 Improve App Icon.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Improve App Icon.md"; sourceTree = "<group>"; };
 		E1F26A542FEE1B3A006D0E58 /* 6-25-2026 Implement Additional Analytics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Implement Additional Analytics.md"; sourceTree = "<group>"; };
 		E1F26BE52FEE285B006D0E58 /* 6-25-2026 Discuss Fix for Genre Breaking Before Separator.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Discuss Fix for Genre Breaking Before Separator.md"; sourceTree = "<group>"; };
+		E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Complimentary Plus Beta Grant.md"; sourceTree = "<group>"; };
+		E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FreeTierSimulation.md; sourceTree = "<group>"; };
 		E1UI00012FE400000076FCDD /* NextSeasonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextSeasonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -362,6 +364,8 @@
 		E102F0FC2FE5F1F40076FCDD /* Post-MVP */ = {
 			isa = PBXGroup;
 			children = (
+				E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */,
+				E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */,
 				E19A58B23047A29B00CC7190 /* Screenshots */,
 				E167D080301040BB007F7098 /* NextSeason - App Store Readiness Roadmap.md */,
 				E1AB8C4C3037BB410045498C /* NextSeason - Monetization Strategy Roadmap.md */,
@@ -976,7 +980,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 41;
 				DEVELOPMENT_TEAM = JTVUXCB28U;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1020,7 +1024,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 41;
 				DEVELOPMENT_TEAM = JTVUXCB28U;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1124,7 +1128,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 41;
 				DEVELOPMENT_TEAM = JTVUXCB28U;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -1327,7 +1331,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Profiling.entitlements;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 38;
+				CURRENT_PROJECT_VERSION = 41;
 				DEVELOPMENT_TEAM = JTVUXCB28U;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;

@@ -49,7 +49,11 @@ struct PlusAccountSection: View {
     /// Watchlist capacity label: unlimited (Plus or complimentary),
     /// "Checking…" while StoreKit entitlements are unresolved, or the free cap.
     private var statusValue: String {
-        if purchases.isStoreEntitled || purchases.isComplimentary {
+        if purchases.isSimulatingFreeTier {
+            return String(
+                localized: "Up to \(WatchlistLimitPolicy.freeShowLimit) shows (simulated)")
+        }
+        if purchases.isUnlimitedWatchlist {
             return String(localized: "Unlimited")
         }
         if !purchases.hasResolvedStoreEntitlement {
@@ -62,6 +66,12 @@ struct PlusAccountSection: View {
 
     /// Footer copy explaining Plus, complimentary access, or entitlement confirmation.
     private var footerText: String {
+        if purchases.isSimulatingFreeTier {
+            return String(
+                localized:
+                    "Free tier simulation is active. Your shows and actual access are preserved. Turn it off in Diagnostics to restore access."
+            )
+        }
         if purchases.isStoreEntitled {
             return String(localized: "You have NextSeason Plus.")
         }

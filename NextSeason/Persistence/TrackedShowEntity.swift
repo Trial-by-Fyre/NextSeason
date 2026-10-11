@@ -64,9 +64,15 @@ extension NextSeasonSchemaV1 {
             self.isPaused = tracked.isPaused
         }
 
-        /// Updates mutable fields after a refresh. Does not change `tvMazeID`,
-        /// `dateAdded` (identity and “when the user saved this show”), or `isPaused`.
+        /// Updates mutable fields after a refresh. Does not change `tvMazeID` or
+        /// `isPaused`.
+        ///
+        /// `dateAdded` is copied from `tracked`. Refresh writes pass the stored row
+        /// back, so it is unchanged there; undoing a delete passes the removed row,
+        /// which restores its original save date (free-tier order and the row's
+        /// catch-up mark both depend on it). Matches `InMemoryWatchlistRepository`.
         func apply(_ tracked: TrackedShow) throws {
+            dateAdded = tracked.dateAdded
             name = tracked.name
             posterMediumURL = tracked.posterMediumURL
             summaryHTML = tracked.summaryHTML

@@ -21,9 +21,11 @@ struct WatchlistRefreshOutcome: Sendable, Equatable {
 /// 2. Unless `force`, ask TVMaze which show IDs changed since the oldest check
 ///    (`/updates/shows`), then skip shows that neither changed on the server nor
 ///    need a calendar/status recheck.
-/// 3. For each show that needs work: fetch full detail, recompute
-///    `NextSeasonStatus`, run `StatusChangeDetector.evaluate`, persist, and
-///    optionally deliver a notification.
+/// 3. For each show that needs work: confirm it is still active, fetch full
+///    detail, re-read the stored row (it may have been paused or updated while
+///    the fetch was suspended), recompute `NextSeasonStatus`, run
+///    `StatusChangeDetector.evaluate`, persist, and optionally deliver a
+///    notification. Shows in `catchUpShowIDs` instead get a silent baseline.
 ///
 /// Remains `@MainActor` because `WatchlistRepository` is MainActor-bound for
 /// SwiftData; network work still runs off the actor while awaiting `TVMazeService`.
@@ -39,6 +41,10 @@ final class WatchlistRefreshService {
     private let clock: @Sendable () -> Date
     /// Last time `refreshAllIfNeeded` actually ran a refresh (foreground throttle).
     private var lastForegroundRefreshAt: Date?
+    /// Persists the catch-up marks.
+    private let userDefaults: UserDefaults
+
+    static let catchUpMarksKey = "watchlistCatchUpMarks"
 
     init(
         tvMaze: any TVMazeService,
@@ -46,6 +52,7 @@ final class WatchlistRefreshService {
         notifications: any NotificationDelivering,
         analytics: any AnalyticsTracking,
         diagnostics: BetaRefreshDiagnostics? = nil,
+        userDefaults: UserDefaults = .standard,
         clock: @escaping @Sendable () -> Date = { .now }
     ) {
         self.tvMaze = tvMaze
@@ -53,12 +60,82 @@ final class WatchlistRefreshService {
         self.notifications = notifications
         self.analytics = analytics
         self.diagnostics = diagnostics
+        self.userDefaults = userDefaults
         self.clock = clock
+    }
+
+    /// Resumed shows still awaiting a silent baseline, keyed by show ID, valued by
+    /// the saved row's `dateAdded` (reference-date seconds).
+    ///
+    /// Persisted so an interrupted or failed catch-up is retried later, and so any
+    /// refresh that reaches one of these shows first — including a notifying
+    /// foreground or background refresh — baselines it instead of announcing
+    /// changes that happened while it was paused. A mark is consumed when its
+    /// baseline is written.
+    ///
+    /// The `dateAdded` ties a mark to one saved row: deleting a show and adding
+    /// it again creates a new row (new `dateAdded`), so a leftover mark never
+    /// silences the new row's updates. Undoing a delete restores the original
+    /// `dateAdded`, so the mark still applies — even if a refresh ran while the
+    /// row was deleted, because marks are pruned only when superseded by a new
+    /// row, not when their row is temporarily absent.
+    private var catchUpMarks: [Int: TimeInterval] {
+        get {
+            let stored = userDefaults.dictionary(forKey: Self.catchUpMarksKey) ?? [:]
+            var marks: [Int: TimeInterval] = [:]
+            for (key, value) in stored {
+                if let id = Int(key), let dateAdded = value as? TimeInterval {
+                    marks[id] = dateAdded
+                }
+            }
+            return marks
+        }
+        set {
+            if newValue.isEmpty {
+                userDefaults.removeObject(forKey: Self.catchUpMarksKey)
+            } else {
+                let stored = Dictionary(
+                    uniqueKeysWithValues: newValue.map { (String($0.key), $0.value) })
+                userDefaults.set(stored, forKey: Self.catchUpMarksKey)
+            }
+        }
+    }
+
+    /// IDs of shows that still have a catch-up mark.
+    var catchUpShowIDs: Set<Int> { Set(catchUpMarks.keys) }
+
+    /// Marks resumed shows for a silent baseline. Call before persisting the
+    /// resume so no refresh can see them active but unmarked.
+    func markForCatchUp(_ shows: [TrackedShow]) {
+        guard !shows.isEmpty else { return }
+        var marks = catchUpMarks
+        for show in shows {
+            marks[show.id] = show.dateAdded.timeIntervalSinceReferenceDate
+        }
+        catchUpMarks = marks
+    }
+
+    /// Post-resume catch-up for just the resumed shows. Notifications are not
+    /// turned off for the whole run: a still-marked show is baselined silently,
+    /// but one whose mark another refresh already consumed is handled normally,
+    /// so a genuinely new change found by a delayed catch-up still notifies.
+    func catchUp(showIDs: Set<Int>) async {
+        await refreshAll(force: true, onlyShowIDs: showIDs)
+    }
+
+    /// True when `row` is the same saved row that was marked for catch-up.
+    private func needsCatchUp(_ row: TrackedShow) -> Bool {
+        catchUpMarks[row.id] == row.dateAdded.timeIntervalSinceReferenceDate
     }
 
     /// Scene-active / foreground entry point: runs `refreshAll` only when
     /// `RefreshPolicy` says enough time has passed since the last foreground run.
-    func refreshAllIfNeeded() async {
+    ///
+    /// - Parameter prepare: Always awaited first, even when the policy then skips
+    ///   the refresh. Production re-reads entitlements and reconciles pause state
+    ///   here, so the refresh sees reconciled shows rather than pre-lapse state.
+    func refreshAllIfNeeded(prepare: @MainActor () async -> Void = {}) async {
+        await prepare()
         guard
             RefreshPolicy.shouldPerformForegroundRefresh(
                 lastRefreshAt: lastForegroundRefreshAt,
@@ -83,12 +160,15 @@ final class WatchlistRefreshService {
     ///   dedupe signatures recorded, but no local notification is scheduled.
     ///   Use for interactive pull-to-refresh where the user can see the list.
     /// - Parameter recordDiagnostics: When true, writes a beta diagnostics sample.
+    /// - Parameter onlyShowIDs: When set, refreshes just these shows (post-resume
+    ///   catch-up) and leaves every other show for ordinary refreshes.
     /// - Returns: A summary of what happened, or `nil` if the run was cancelled.
     @discardableResult
     func refreshAll(
         force: Bool = false,
         deliverNotifications: Bool = true,
-        recordDiagnostics: Bool = false
+        recordDiagnostics: Bool = false,
+        onlyShowIDs: Set<Int>? = nil
     ) async -> WatchlistRefreshOutcome? {
         AppDiagnosticsLogger.logger(for: .cache)
             .notice(
@@ -105,9 +185,25 @@ final class WatchlistRefreshService {
 
         let trackedShows: [TrackedShow]
         do {
+            let savedShows = try await repository.all()
+            // Drop a catch-up mark only once its show was added again as a new row
+            // (same ID, different `dateAdded`). A mark whose row is merely absent
+            // is kept: the deletion may still be undone, which restores the
+            // original row, and the mark must still silence that row's history.
+            // An absent row's mark is inert, since it matches no other row.
+            let marks = catchUpMarks
+            if !marks.isEmpty {
+                let superseded = Set(
+                    savedShows.filter { marks[$0.id] != nil && !needsCatchUp($0) }.map(\.id))
+                if !superseded.isEmpty {
+                    catchUpMarks = marks.filter { !superseded.contains($0.key) }
+                }
+            }
             // Paused shows (Plus lapsed, beyond the free limit) are never fetched
             // or notified; they also don't widen the updates window below.
-            trackedShows = try await repository.all().filter { !$0.isPaused }
+            trackedShows = savedShows.filter { show in
+                !show.isPaused && (onlyShowIDs?.contains(show.id) ?? true)
+            }
         } catch {
             if error is CancellationError {
                 AppDiagnosticsLogger.logTaskCancel("watchlist_refresh")
@@ -166,23 +262,42 @@ final class WatchlistRefreshService {
             }
         }
 
-        for var tracked in trackedShows {
-            if !force {
+        for snapshot in trackedShows {
+            // Resumed shows awaiting their baseline are always fetched.
+            if !force, !needsCatchUp(snapshot) {
                 let serverChanged =
-                    updates[tracked.id].map { $0 > tracked.sourceUpdatedAt } ?? false
+                    updates[snapshot.id].map { $0 > snapshot.sourceUpdatedAt } ?? false
                 // `nextSeason` also depends on the calendar (airing → returning when a
                 // season ends, scheduled → airing on premiere). Search-track used to
                 // persist `.returningNoSeasonYet` without season data; re-check that
                 // case even when TVMaze's `updated` epoch is unchanged.
-                let needsRecheck = Self.needsCalendarOrStatusRecheck(tracked.nextSeason)
-                guard serverChanged || needsRecheck else {
+                let needsRecheck = Self.needsCalendarOrStatusRecheck(snapshot.nextSeason)
+                // A soft change seen once (PD-008) needs a second poll to confirm.
+                // TVMaze's `updated` won't move again for the same data, so without
+                // this the pending alert would wait for an unrelated server update.
+                let awaitsConfirmation = snapshot.pendingChangeSignature != nil
+                guard serverChanged || needsRecheck || awaitsConfirmation else {
                     skippedShowCount += 1
                     continue
                 }
             }
 
             do {
-                let show = try await tvMaze.show(id: tracked.id, bypassCache: true)
+                // The snapshot may be stale: a downgrade can pause a show (or the
+                // user remove it) while earlier fetches are suspended.
+                guard try await activeRow(for: snapshot.id) != nil else { continue }
+                let show = try await tvMaze.show(id: snapshot.id, bypassCache: true)
+                // Re-read after the fetch, which suspended: skip a show paused or
+                // removed meanwhile, and evaluate against the latest signatures so an
+                // overlapping refresh's baseline or debounce is not overwritten.
+                guard var tracked = try await activeRow(for: snapshot.id) else { continue }
+                // Overlapping requests can finish out of order. Never apply a
+                // response older than the version already stored (TVMaze `updated`),
+                // or it would overwrite a newer baseline and re-announce history.
+                guard show.updatedAt >= tracked.sourceUpdatedAt else {
+                    AppDiagnosticsLogger.breadcrumb("watchlist_refresh_stale_response:\(show.id)")
+                    continue
+                }
                 tracked.isStale = false
                 tracked.name = show.name
                 tracked.posterMediumURL = show.posterMediumURL
@@ -193,6 +308,22 @@ final class WatchlistRefreshService {
 
                 // Pure status + notify decision; persistence and delivery follow.
                 let newStatus = NextSeasonCalculator.status(for: show, at: clock())
+
+                // Checked now, not at loop start, so a refresh already running when a
+                // show was resumed still baselines it rather than notifying.
+                if needsCatchUp(tracked) {
+                    let baseline = StatusChangeDetector.baseline(
+                        tracked: tracked, newStatus: newStatus, at: clock())
+                    try await repository.updateAfterRefresh(baseline)
+                    catchUpMarks[tracked.id] = nil
+                    refreshedShowCount += 1
+                    lastNotificationDecision = String(
+                        localized:
+                            "Catch-up for \(tracked.name): baseline recorded, no notification"
+                    )
+                    continue
+                }
+
                 let evaluation = StatusChangeDetector.evaluate(
                     tracked: tracked, newStatus: newStatus, at: clock())
 
@@ -210,7 +341,9 @@ final class WatchlistRefreshService {
                 AppDiagnosticsLogger.logTaskCancel("watchlist_refresh_show")
                 return nil
             } catch TVMazeError.notFound {
-                // Show removed from TVMaze: keep the row but flag it stale.
+                // Show removed from TVMaze: keep the row but flag it stale, unless it
+                // was paused or removed while the request was in flight.
+                guard var tracked = try? await activeRow(for: snapshot.id) else { continue }
                 tracked.isStale = true
                 tracked.lastCheckedAt = clock()
                 try? await repository.updateAfterRefresh(tracked)
@@ -289,6 +422,14 @@ final class WatchlistRefreshService {
         return String(
             localized: "No notification for \(showName) (no meaningful change)"
         )
+    }
+
+    /// The stored row when the show is still saved and not paused.
+    private func activeRow(for showID: Int) async throws -> TrackedShow? {
+        guard let row = try await repository.trackedShow(showID: showID), !row.isPaused else {
+            return nil
+        }
+        return row
     }
 
     /// Statuses that can change without TVMaze bumping `updated` (calendar drift,

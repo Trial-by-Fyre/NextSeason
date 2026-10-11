@@ -11,11 +11,15 @@ import SwiftUI
 /// Lifecycle: `.task(id:)` loads seasons. Pending-removal cancellation when
 /// navigating *to* detail lives on the parent `navigationDestination` so tab
 /// switches that re-show an existing detail screen do not abort a removal.
-/// `.onAppear` and pending-removal outcomes reconcile tracked state.
+/// `.onAppear`, pending-removal outcomes, and Plus pause/resume changes
+/// reconcile tracked state.
 struct ShowDetailView: View {
     @Environment(\.watchlistPendingRemoval) private var removalCoordinator
     @Environment(\.onAutomationDetailLoaded) private var onAutomationDetailLoaded
     @Environment(\.presentPlusStore) private var presentPlusStore
+    /// Optional so previews without the app composition still render.
+    @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
+        WatchlistAccessReconciler?
 
     @State private var viewModel: ShowDetailViewModel
 
@@ -64,6 +68,14 @@ struct ShowDetailView: View {
                     await viewModel.handlePendingRemovalOutcome(
                         removalCoordinator: removalCoordinator
                     )
+                }
+            }
+            // A Plus lapse or restore can pause / resume this show while the screen
+            // stays mounted; re-read so the star (and its add vs. remove action)
+            // matches. Pending-removal exclusion still applies.
+            .onChange(of: accessReconciler?.changeGeneration) { _, _ in
+                Task {
+                    await viewModel.refreshTrackedState(removalCoordinator: removalCoordinator)
                 }
             }
             .onChange(of: viewModel.loadState) { _, loadState in

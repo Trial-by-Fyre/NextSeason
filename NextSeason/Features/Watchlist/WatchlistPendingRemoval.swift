@@ -316,7 +316,8 @@ final class WatchlistPendingRemoval {
         }.value
     }
 
-    /// Re-inserts a previously tracked show, preserving next-season and refresh fields.
+    /// Re-inserts a previously tracked show, preserving next-season and refresh
+    /// fields and its original `dateAdded` (so it is the same saved row again).
     private func restore(_ tracked: TrackedShow) async throws {
         try await repository.add(Show(tracked: tracked))
         try await repository.updateAfterRefresh(tracked)

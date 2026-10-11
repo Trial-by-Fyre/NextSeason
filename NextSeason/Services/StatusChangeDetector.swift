@@ -62,6 +62,23 @@ nonisolated enum StatusChangeDetector {
         }
     }
 
+    /// Records `newStatus` as an already-announced baseline, with no notification.
+    ///
+    /// Used for shows resumed after a Plus lapse: whatever changed while they were
+    /// paused is history, so the current state becomes the last-notified signature
+    /// and any pending soft-change debounce is cleared. Later changes away from
+    /// this baseline notify normally.
+    static func baseline(tracked: TrackedShow, newStatus: NextSeasonStatus, at: Date = .now)
+        -> TrackedShow
+    {
+        var updated = tracked
+        updated.lastCheckedAt = at
+        updated.nextSeason = newStatus
+        updated.lastNotifiedSignature = signature(for: newStatus)
+        updated.pendingChangeSignature = nil
+        return updated
+    }
+
     /// Updates local next-season state and decides whether to notify (PD-008).
     ///
     /// Always returns a tracked show with `lastCheckedAt` and `nextSeason` applied.

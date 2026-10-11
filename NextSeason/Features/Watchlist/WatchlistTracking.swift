@@ -52,6 +52,18 @@ enum WatchlistTracking {
         }
         try Task.checkCancellation()
         let showToStore = try await resolvedShowForTracking(show, tvMaze: tvMaze)
+        // Final admission check at persistence. The count above was read before
+        // the entitlement wait and the detail fetch suspended; meanwhile another
+        // add or an Undo may have taken the last free slot. Nothing between this
+        // check and the write suspends (repository calls are main-actor and do
+        // not await internally). An already-active show is an idempotent no-op.
+        let activeIDs = try await repository.activeShowIDs()
+        if !activeIDs.contains(showToStore.id),
+            !WatchlistLimitPolicy.canAddShow(
+                currentCount: activeIDs.count, isUnlimited: purchases.isUnlimitedWatchlist)
+        {
+            return .paywallRequired
+        }
         try await repository.add(showToStore)
         analytics.track(.watchlistAdded(source: source, showID: showToStore.id))
         if await notifications.needsAuthorizationPrompt() {

@@ -52,8 +52,12 @@ final class WatchlistAccessReconciler {
     private let userDefaults: UserDefaults
     private let access: @MainActor () -> Bool?
     private let waitForAccess: @MainActor () async -> Void
-    private let refreshAfterResume: @MainActor () async -> Void
+    private let willResume: @MainActor ([TrackedShow]) -> Void
+    private let refreshAfterResume: @MainActor (Set<Int>) async -> Void
     private var latestRun: Task<Outcome, Never>?
+    /// The most recent post-resume catch-up refresh. Not awaited by `reconcile()`;
+    /// exposed so callers (and tests) can wait for it deterministically.
+    private(set) var catchUpTask: Task<Void, Never>?
 
     /// - Parameters:
     ///   - repository: Saved shows whose pause flags are read and written.
@@ -62,20 +66,25 @@ final class WatchlistAccessReconciler {
     ///     (`PurchaseService.confirmedWatchlistAccess`).
     ///   - waitForAccess: Suspends until the first entitlement read has finished
     ///     (`PurchaseService.waitForInitialEntitlementResolution`).
-    ///   - refreshAfterResume: Replaces stale data on resumed shows. Started after
-    ///     the resume is persisted and not awaited, so reactivation never depends
-    ///     on it succeeding.
+    ///   - willResume: Called with the saved rows about to be resumed, before the
+    ///     resume is persisted (`WatchlistRefreshService.markForCatchUp`), so no
+    ///     refresh can see a resumed show without its catch-up mark.
+    ///   - refreshAfterResume: Catches up just the resumed IDs
+    ///     (`WatchlistRefreshService.catchUp`). Started after the resume is
+    ///     persisted and not awaited, so reactivation never depends on it.
     init(
         repository: any WatchlistRepository,
         userDefaults: UserDefaults = .standard,
         access: @escaping @MainActor () -> Bool?,
         waitForAccess: @escaping @MainActor () async -> Void = {},
-        refreshAfterResume: @escaping @MainActor () async -> Void = {}
+        willResume: @escaping @MainActor ([TrackedShow]) -> Void = { _ in },
+        refreshAfterResume: @escaping @MainActor (Set<Int>) async -> Void = { _ in }
     ) {
         self.repository = repository
         self.userDefaults = userDefaults
         self.access = access
         self.waitForAccess = waitForAccess
+        self.willResume = willResume
         self.refreshAfterResume = refreshAfterResume
         isPausedAlertPending = userDefaults.bool(forKey: Self.pausedAlertPendingKey)
     }
@@ -116,12 +125,13 @@ final class WatchlistAccessReconciler {
                 if isPausedAlertPending { setPausedAlertPending(false) }
                 let ids = WatchlistLimitPolicy.showIDsToResume(in: shows)
                 guard !ids.isEmpty else { return .unchanged }
+                willResume(shows.filter { ids.contains($0.id) })
                 try await repository.setPaused(false, showIDs: ids)
                 AppDiagnosticsLogger.breadcrumb("watchlist_resumed count=\(ids.count)")
                 changeGeneration += 1
-                Task { @MainActor [weak self] in
+                catchUpTask = Task { @MainActor [weak self] in
                     guard let self else { return }
-                    await self.refreshAfterResume()
+                    await self.refreshAfterResume(ids)
                     self.changeGeneration += 1
                 }
                 return .resumed(ids)

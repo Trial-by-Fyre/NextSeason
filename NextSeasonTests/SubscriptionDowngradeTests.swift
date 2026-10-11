@@ -93,7 +93,7 @@ struct SubscriptionDowngradeTests {
         repository: any WatchlistRepository,
         purchases: PurchaseService,
         defaults: UserDefaults? = nil,
-        refreshAfterResume: @escaping @MainActor () async -> Void = {}
+        refreshAfterResume: @escaping @MainActor (Set<Int>) async -> Void = { _ in }
     ) -> WatchlistAccessReconciler {
         WatchlistAccessReconciler(
             repository: repository,
@@ -334,9 +334,10 @@ struct SubscriptionDowngradeTests {
             tvMaze: tvMaze, repository: repository, notifications: RecordingNotifications(),
             analytics: RecordingAnalyticsService())
         var activeCountWhenRefreshStarted: Int?
-        let reconciler = makeReconciler(repository: repository, purchases: purchases) {
+        let reconciler = makeReconciler(repository: repository, purchases: purchases) { ids in
             activeCountWhenRefreshStarted = try? await repository.activeShowIDs().count
-            await refreshService.refreshAll(force: true, deliverNotifications: false)
+            await refreshService.refreshAll(
+                force: true, deliverNotifications: false, onlyShowIDs: ids)
         }
         _ = await reconciler.reconcile()
         #expect(try await pausedIDs(repository) == [4, 5])
@@ -346,8 +347,8 @@ struct SubscriptionDowngradeTests {
         #expect(await reconciler.reconcile() == .resumed([4, 5]))
         #expect(try await repository.activeShowIDs().count == 5)
 
-        // Let the unawaited refresh run; its failures must not undo reactivation.
-        for _ in 0..<20 where activeCountWhenRefreshStarted == nil { await Task.yield() }
+        // Wait for the unawaited catch-up; its failures must not undo reactivation.
+        await reconciler.catchUpTask?.value
         #expect(activeCountWhenRefreshStarted == 5)
         #expect(try await repository.activeShowIDs().count == 5)
     }
@@ -704,5 +705,27 @@ struct SwiftDataPausedWatchlistTests {
         #expect(try await repository.all().count == 1)
         #expect(reactivated.isPaused == false)
         #expect(reactivated.dateAdded == original.dateAdded)
+    }
+
+    /// Undo must restore the same saved row: free-tier order and the row's
+    /// catch-up mark both depend on its original `dateAdded`.
+    @Test("Undoing an immediate delete restores the original dateAdded")
+    func undoRestoresOriginalDateAdded() async throws {
+        let (repository, _) = try makeRepository()
+        try await repository.add(show(1))
+        let original = try #require(try await repository.trackedShow(showID: 1))
+        let removal = WatchlistPendingRemoval(
+            repository: repository, analytics: RecordingAnalyticsService())
+
+        await withCheckedContinuation { (committed: CheckedContinuation<Void, Never>) in
+            removal.addOutcomeHandler { outcome in
+                if case .committed(let id) = outcome, id == 1 { committed.resume() }
+            }
+            removal.requestImmediateRemoval(original, anchor: .zero, source: .watchlist)
+        }
+        #expect(try await repository.contains(showID: 1) == false)
+
+        _ = await removal.undoRemoval()
+        #expect(try await repository.trackedShow(showID: 1)?.dateAdded == original.dateAdded)
     }
 }

@@ -169,7 +169,14 @@ private struct AppRootView: View {
             AppDiagnosticsLogger.breadcrumb("foreground_refresh_scheduled")
             Task {
                 AppDiagnosticsLogger.logTaskStart("foreground_watchlist_refresh")
-                await refreshService.refreshAllIfNeeded()
+                await refreshService.refreshAllIfNeeded {
+                    // Subscription expiration is not reliably delivered through
+                    // Transaction.updates; re-read current entitlements, then apply
+                    // them to pause state, so the refresh never fetches or notifies
+                    // a show that just lost Plus. Unknown access pauses nothing.
+                    await purchaseService.handleSceneBecameActive()
+                    await accessReconciler.reconcileWhenAccessKnown()
+                }
                 // Refresh (or a background task while we were away) updates
                 // SwiftData; the watchlist UI keeps an in-memory snapshot and
                 // must reload so section/status match what just notified.
@@ -178,11 +185,6 @@ private struct AppRootView: View {
             }
             Task {
                 await onForegroundShowIDMappingRefresh()
-            }
-            // Subscription expiration is not reliably delivered through
-            // Transaction.updates; re-read current entitlements on foreground.
-            Task {
-                await purchaseService.handleSceneBecameActive()
             }
         }
         // Cancelled when leaving `.active` so backgrounding during startup

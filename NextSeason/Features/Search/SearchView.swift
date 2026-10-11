@@ -19,6 +19,8 @@ import SwiftUI
 ///   screen appears or when returning from show detail.
 /// - `.onChange(of: outcomeGeneration)` keeps row track-button state in sync when
 ///   a pending removal commits, is undone, or is cancelled.
+/// - `.onChange(of: changeGeneration)` re-reads tracked IDs when a Plus lapse or
+///   restore pauses or resumes shows (`WatchlistAccessReconciler`).
 ///
 /// First-run AppStorage (independent flags):
 /// - `hasCompletedFirstSearch` — retires the idle "Try an Example" button once the
@@ -32,6 +34,9 @@ struct SearchView: View {
     @Environment(\.dismissSearch) private var dismissSearch
     @Environment(\.presentPlusStore) private var presentPlusStore
     @Environment(PurchaseService.self) private var purchases
+    /// Optional so previews without the app composition still render.
+    @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
+        WatchlistAccessReconciler?
 
     @Binding var navigationPath: NavigationPath
     private let tvMaze: any TVMazeService
@@ -119,6 +124,12 @@ struct SearchView: View {
                 .onChange(of: removalCoordinator?.outcomeGeneration) { _, _ in
                     guard let outcome = removalCoordinator?.lastOutcome else { return }
                     Task { await handlePendingRemovalOutcome(outcome) }
+                }
+                // Plus lapse / restore paused or resumed shows while results are on
+                // screen: paused rows must show an empty star (add → reactivate or
+                // paywall); resumed rows a filled one.
+                .onChange(of: accessReconciler?.changeGeneration) { _, _ in
+                    Task { await refreshTrackedShows() }
                 }
                 .watchlistNotificationPromptAlerts(
                     prompt: notificationPrompt,

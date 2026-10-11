@@ -123,11 +123,11 @@ struct AppCompositionRoot {
             repository: repository,
             access: { purchases.confirmedWatchlistAccess },
             waitForAccess: { await purchases.waitForInitialEntitlementResolution() },
-            // Silent: resumed shows may hold months-old status; replace it
-            // without alerting about changes that happened while paused.
-            refreshAfterResume: {
-                await refresh.refreshAll(force: true, deliverNotifications: false)
-            }
+            // Resumed shows may hold months-old status. Mark them first so any
+            // refresh baselines them silently, then catch up only those IDs;
+            // continuously active shows keep ordinary notification behavior.
+            willResume: { shows in refresh.markForCatchUp(shows) },
+            refreshAfterResume: { ids in await refresh.catchUp(showIDs: ids) }
         )
     }
 

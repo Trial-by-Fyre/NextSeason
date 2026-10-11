@@ -232,7 +232,7 @@ struct SubscriptionDowngradeRefreshTests {
         await harness.tvMaze.waitUntilGatedFetchStarts()
         #expect(await harness.setPlus(false) == .paused([4, 5]))
         harness.tvMaze.releaseGatedFetch()
-        await refreshTask.value
+        _ = await refreshTask.value
 
         let after = try #require(try await harness.row(5))
         #expect(after.isPaused)
@@ -390,7 +390,7 @@ struct SubscriptionDowngradeRefreshTests {
         #expect(harness.refresh.catchUpShowIDs.isEmpty)
 
         harness.tvMaze.releaseGatedFetch()
-        await ordinary.value
+        _ = await ordinary.value
         #expect(harness.notifications.showIDs == [1], "Show 4's history is not announced")
     }
 
@@ -443,7 +443,7 @@ struct SubscriptionDowngradeRefreshTests {
         let baseline = try #require(try await harness.row(4))
 
         harness.tvMaze.releaseGatedFetch()
-        await ordinary.value
+        _ = await ordinary.value
 
         let after = try #require(try await harness.row(4))
         #expect(after.nextSeason == baseline.nextSeason, "A did not overwrite B")

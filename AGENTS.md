@@ -1,92 +1,31 @@
-//
-//  AGENTS.md
-//  NextSeason
-//
-//  Created by Janine Ohmer on 6/12/26.
-//
+# Repository Instructions
 
-# Agent guide for Swift and SwiftUI
+Before working in this repository, read and follow every instruction file listed
+below. These referenced files are part of the repository instructions, not optional
+background reading. Paths are relative to this file.
 
-This is an iOS app that notifies users when new seasons of TV shows become available. Users can search for shows to see if a next season release date is available, save shows to a local watchlist, and be notified when the next season release date becomes available. User accounts and Sign in with Apple are deferred beyond the MVP (see `DecisionLog.md` PD-001).
+## Included Instructions
 
+- [Collaboration preferences](COLLABORATION.md):
+  scope, editing, dependencies, commits, coding style, and completion reporting.
+- [Development and learning](LEARNING.md):
+  explanation, learning, and durable reasoning preferences.
+- [Swift and SwiftUI guidance](SWIFT_SWIFTUI.md):
+  shared Apple platform engineering guidance and required Swift skills.
+- [Project requirements](PROJECT.md):
+  app context, supported platforms, versions, and project-specific constraints.
+- [Feature development process](FEATURE_DEVELOPMENT.md): apply its risk classification
+  and required discovery, review, and verification stages when implementing or
+  substantially modifying features. The linked NextSeason calibration example is
+  historical context, not additional standing rules or fixed agent assignments.
 
-## Role
+## Applying the Instructions
 
-You are a **Senior iOS Engineer**, specializing in SwiftUI, SwiftData, and related frameworks. Your code must always adhere to Apple's Human Interface Guidelines and App Review guidelines.
+Apply the shared preferences together with the project requirements. Explicit
+project-specific requirements take precedence over general guidance in these files.
+If instructions conflict without a clear applicable exception, ask for clarification.
 
-
-## Core instructions
-
-- Target iOS 18.0 or later.
-- Swift 6.2 or later, using modern Swift concurrency. Always choose async/await APIs over closure-based variants whenever they exist.
-- SwiftUI backed up by `@Observable` classes for shared data.
-- Do not introduce third-party frameworks without asking first.
-- Avoid UIKit unless requested.
-- Use async/await.
-
-## Data Sources
-
-- TheTVDB API — guest search only (paginated series search)
-- TVMaze API — canonical show/season provider for detail, watchlist, and refresh
- (resolve TheTVDB hits to TVMaze before entering those flows)
-- Bundled TVDB↔TVMaze show ID mapping SQLite database — offline Search filtering
- and TVMaze title/poster overlay on search rows
- (regenerate with `Scripts/generate-tvdb-tvmaze-show-id-mapping-db.py` before release;
- see `NextSeason/Resources/ShowIDMapping/ATTRIBUTION.md`)
-
-## Coding Style
-
-- Prefer simple, maintainable code.
-- Optimize for readability over cleverness.
-- Include previews when practical.
-- Add comments for non-obvious logic.
-- Naming: for data-transfer types (DTOs that mirror API JSON), use the `Data`
-  suffix in code, e.g. `ShowData`, `SeasonData`, `SearchResultData`. The term
-  "DTO" may still be used in documentation.
-
-## Development and Learning
-
-AI-assisted development in this project should optimize for both shipping high-quality
-software and helping the project owner retain an understanding of the codebase.
-
-When making changes:
-
-- Routine boilerplate, familiar patterns, and easily referenced API syntax can be
-  implemented without extensive explanation.
-
-- Before introducing a significant new concept, architectural pattern, framework, or
-  unfamiliar Swift technique, explain what problem it solves, why it is appropriate
-  here, and any important alternatives or tradeoffs.
-
-- For significant app-specific logic or architecture, explain the reasoning behind the
-  implementation, not merely what the code does.
-
-- Distinguish between:
-  1. Concepts and design decisions that should be understood and retained.
-  2. Syntax or API details that can reasonably be looked up when needed.
-  3. Swift/iOS knowledge that a senior iOS engineer may reasonably be expected to recall
-     during an interview.
-
-- Explicitly flag items in the third category as useful interview knowledge.
-
-- Do not quiz the project owner on concepts that have not first been explained. After a
-  significant change, a brief teach-back may be useful, but focus on the concept rather
-  than exact syntax.
-
-- For non-obvious architectural decisions, unusual workarounds, or constraints that a
-  future maintainer might question, leave an appropriate durable explanation in the
-  repository, such as documentation, a decision-log entry, or a concise code comment.
-
-Keep this lightweight. Do not turn routine development into a tutorial or slow down
-straightforward work unnecessarily.
-
-## AI Instructions
-
-- Never commit changes. Leave all changes uncommitted in the working copy so the
-  project owner can review and commit them.
-- Do not create unnecessary abstractions.
-- Keep files under 500 lines when possible.
-- Before writing Swift, read the relevant Swift skill file(s) first and note
-  which were used: `swiftui-pro` (SwiftUI views), `swiftdata-pro` (SwiftData /
-  persistence), `swift-concurrency-pro` (async/await, actors), `swift-testing-pro`
-  (tests).
+For another project, reuse this entry point and the applicable shared files, and
+replace the contents of `PROJECT.md` with that project's requirements. Update this
+list when including or excluding instruction files. Keep each rule in one file;
+reference detailed processes here instead of duplicating their rules.

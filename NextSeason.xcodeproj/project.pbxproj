@@ -155,7 +155,6 @@
 		E167FE83301D42A3007F7098 /* 7-31-2026 Remove soak test code.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-31-2026 Remove soak test code.md"; sourceTree = "<group>"; };
 		E17E04942FDE291A00708D7A /* MVPDefinition.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MVPDefinition.md; sourceTree = "<group>"; };
 		E17E04952FDE291A00708D7A /* ProblemStatement.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProblemStatement.md; sourceTree = "<group>"; };
-		E17FC65E306DBFD100156F29 /* WORKING_WITH_AI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = WORKING_WITH_AI.md; sourceTree = "<group>"; };
 		E197008E2FF72BFF00D34A28 /* 7-2-2026 Diagnostics Work with Cursor.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-2-2026 Diagnostics Work with Cursor.md"; sourceTree = "<group>"; };
 		E197EC972FF06ED800D34A28 /* 6-27-2026 Fix UI Test Failure.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-27-2026 Fix UI Test Failure.md"; sourceTree = "<group>"; };
 		E197EF202FF31C0B00D34A28 /* 6-28-2026 Instruments Report Stage 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-28-2026 Instruments Report Stage 1.md"; sourceTree = "<group>"; };
@@ -256,6 +255,13 @@
 		E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Complimentary Plus Beta Grant.md"; sourceTree = "<group>"; };
 		E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FreeTierSimulation.md; sourceTree = "<group>"; };
 		E1UI00012FE400000076FCDD /* NextSeasonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextSeasonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		653746CCA38B4CEBAE028220 /* FEATURE_DEVELOPMENT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT.md; sourceTree = "<group>"; };
+		D8C588A84910441B99E38042 /* FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md; sourceTree = "<group>"; };
+		C34096CBBCD74A298971F04A /* COLLABORATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = COLLABORATION.md; sourceTree = "<group>"; };
+		E1B6B58E78BE4AB0A8F11162 /* LEARNING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LEARNING.md; sourceTree = "<group>"; };
+		D67093EB364E4F8CB5A54C91 /* SWIFT_SWIFTUI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SWIFT_SWIFTUI.md; sourceTree = "<group>"; };
+		F31B0BA7E120440A8A97C5E6 /* PROJECT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT.md; sourceTree = "<group>"; };
+		EC4E558F91EC4AFEB7363072 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -371,7 +377,6 @@
 				E1AB8C4C3037BB410045498C /* NextSeason - Monetization Strategy Roadmap.md */,
 				E167D081301040BB007F7098 /* NextSeason - Product Evolution Roadmap.md */,
 				E1C40B093063882B0006BBCD /* NextSeason TV - Trademark Research - 2026-09-22.md */,
-				E17FC65E306DBFD100156F29 /* WORKING_WITH_AI.md */,
 				E102F0FD2FE5F2100076FCDD /* AI Transcripts */,
 			);
 			path = "Post-MVP";
@@ -456,6 +461,13 @@
 				E1DA26BF2FDDDE6000C37DAC /* Documentation */,
 				E1DA26BE2FDDD9A800C37DAC /* Cursor Rules */,
 				E13811E42FDCAFE0009C141B /* AGENTS.md */,
+				EC4E558F91EC4AFEB7363072 /* CLAUDE.md */,
+				C34096CBBCD74A298971F04A /* COLLABORATION.md */,
+				E1B6B58E78BE4AB0A8F11162 /* LEARNING.md */,
+				D67093EB364E4F8CB5A54C91 /* SWIFT_SWIFTUI.md */,
+				F31B0BA7E120440A8A97C5E6 /* PROJECT.md */,
+				653746CCA38B4CEBAE028220 /* FEATURE_DEVELOPMENT.md */,
+				D8C588A84910441B99E38042 /* FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md */,
 				E1F0A0012FE200000076FCDD /* App-Info.plist */,
 				E13811CF2FDB795C009C141B /* NextSeason */,
 				E1SHARED012FE400000076FCDD /* NextSeasonShared */,

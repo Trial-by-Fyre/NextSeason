@@ -2,13 +2,7 @@
 description: Swift and SwiftUI conventions
 globs: ["**/*.swift"]
 ---
-- Use SwiftUI and MVVM.
-- No UIKit without approval.
-- No third-party dependencies without approval.
-- Prefer async/await over callbacks.
-- Keep views small and readable.
-- Put business logic in view models or services, not directly in views.
-- Do not add clever abstractions just to look architectural.
-- Preserve existing behavior.
-- Accessibility required.
-- Prefer simple solutions.
+
+Before writing Swift, read and follow the Swift and iOS guidance, coding style,
+and NextSeason requirements in the root [AGENTS.md](../../AGENTS.md), including
+its requirement to read the relevant Swift skills.

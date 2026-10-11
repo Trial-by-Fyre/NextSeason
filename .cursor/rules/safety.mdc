@@ -1,13 +1,8 @@
 ---
-description: Safe editing rules for this project
+description: Repository instructions and safe editing rules
 alwaysApply: true
 ---
 
-- Before changing code, briefly explain the intended change.
-- Do not rewrite unrelated files.
-- Do not introduce third-party dependencies without asking.
-- Do not change the app architecture unless explicitly requested.
-- Prefer small, reviewable diffs.
-- When unsure, ask instead of guessing.
-- Do not delete code unless it is clearly unused or I asked for it.
-- After editing, summarize what changed and what I should test.
+Read and follow the root [AGENTS.md](../../AGENTS.md) before working in this
+repository. It is the authoritative source for collaboration, scope, editing,
+learning, and engineering rules.

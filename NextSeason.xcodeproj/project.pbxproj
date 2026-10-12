@@ -28,6 +28,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		653746CCA38B4CEBAE028220 /* FEATURE_DEVELOPMENT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT.md; sourceTree = "<group>"; };
+		C34096CBBCD74A298971F04A /* COLLABORATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = COLLABORATION.md; sourceTree = "<group>"; };
+		D67093EB364E4F8CB5A54C91 /* SWIFT_SWIFTUI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SWIFT_SWIFTUI.md; sourceTree = "<group>"; };
+		D8C588A84910441B99E38042 /* FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md; sourceTree = "<group>"; };
 		E102EAA32FE356E70076FCDD /* 6-14-2026 Phase3.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-14-2026 Phase3.md"; sourceTree = "<group>"; };
 		E102EAA42FE356E70076FCDD /* 6-14-2026 Post Review Updates.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-14-2026 Post Review Updates.md"; sourceTree = "<group>"; };
 		E102EAA72FE356E70076FCDD /* 6-15-2026 Phase 4 Slice 1 Implement Review Items.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-15-2026 Phase 4 Slice 1 Implement Review Items.md"; sourceTree = "<group>"; };
@@ -209,6 +213,7 @@
 		E1AB9CFB303E38A30045498C /* 8-25-2026 Implement Small UI Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Implement Small UI Improvements.md"; sourceTree = "<group>"; };
 		E1AB9FC8303E3DA90045498C /* 8-25-2026 Discuss Watchlist Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Discuss Watchlist Improvements.md"; sourceTree = "<group>"; };
 		E1AB9FC9303E3DC70045498C /* 8-25-2026 Implement Watchlist Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Implement Watchlist Improvements.md"; sourceTree = "<group>"; };
+		E1B6B58E78BE4AB0A8F11162 /* LEARNING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LEARNING.md; sourceTree = "<group>"; };
 		E1BA91943052739F00C1572B /* 9-9-2026 Discuss Beta Crash Report.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-9-2026 Discuss Beta Crash Report.md"; sourceTree = "<group>"; };
 		E1BA9195305273F900C1572B /* 9-9-2026 Fix Crash.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-9-2026 Fix Crash.md"; sourceTree = "<group>"; };
 		E1BCCDC5304A65970049DE1D /* 9-3-2026 Final Full Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-3-2026 Final Full Review.md"; sourceTree = "<group>"; };
@@ -254,14 +259,12 @@
 		E1F26BE52FEE285B006D0E58 /* 6-25-2026 Discuss Fix for Genre Breaking Before Separator.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Discuss Fix for Genre Breaking Before Separator.md"; sourceTree = "<group>"; };
 		E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Complimentary Plus Beta Grant.md"; sourceTree = "<group>"; };
 		E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FreeTierSimulation.md; sourceTree = "<group>"; };
+		E1F5B6D0307C5B3B00B73B0D /* NextSeason-Beta-Regression-Checklist.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-Beta-Regression-Checklist.md"; sourceTree = "<group>"; };
+		E1F5B6D1307C5B3B00B73B0D /* NextSeason-Beta-Regression-Test.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-Beta-Regression-Test.md"; sourceTree = "<group>"; };
+		E1F5B6D2307C5B3B00B73B0D /* NextSeason-StoreKit-Manual-Test-Script.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-StoreKit-Manual-Test-Script.md"; sourceTree = "<group>"; };
 		E1UI00012FE400000076FCDD /* NextSeasonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextSeasonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		653746CCA38B4CEBAE028220 /* FEATURE_DEVELOPMENT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT.md; sourceTree = "<group>"; };
-		D8C588A84910441B99E38042 /* FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md; sourceTree = "<group>"; };
-		C34096CBBCD74A298971F04A /* COLLABORATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = COLLABORATION.md; sourceTree = "<group>"; };
-		E1B6B58E78BE4AB0A8F11162 /* LEARNING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LEARNING.md; sourceTree = "<group>"; };
-		D67093EB364E4F8CB5A54C91 /* SWIFT_SWIFTUI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SWIFT_SWIFTUI.md; sourceTree = "<group>"; };
-		F31B0BA7E120440A8A97C5E6 /* PROJECT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT.md; sourceTree = "<group>"; };
 		EC4E558F91EC4AFEB7363072 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
+		F31B0BA7E120440A8A97C5E6 /* PROJECT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -370,6 +373,9 @@
 		E102F0FC2FE5F1F40076FCDD /* Post-MVP */ = {
 			isa = PBXGroup;
 			children = (
+				E1F5B6D0307C5B3B00B73B0D /* NextSeason-Beta-Regression-Checklist.md */,
+				E1F5B6D1307C5B3B00B73B0D /* NextSeason-Beta-Regression-Test.md */,
+				E1F5B6D2307C5B3B00B73B0D /* NextSeason-StoreKit-Manual-Test-Script.md */,
 				E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */,
 				E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */,
 				E19A58B23047A29B00CC7190 /* Screenshots */,

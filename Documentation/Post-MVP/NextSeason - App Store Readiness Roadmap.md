@@ -178,9 +178,7 @@ documents how AI was used during development, including:
 
 These tasks are listed in approximately sequential order.
 
-## Legal and Business
-
-### Complete
+## Legal and Business (Complete)
 
 -   Receive the D-U-N-S Number for Trial by Fyre, LLC.
 -   Complete tax information.
@@ -194,16 +192,8 @@ These tasks are listed in approximately sequential order.
     Organization conversion.
 -   Finish and publish `getnextseason.com` as the support website.
 -   Publish and verify the Privacy Policy.
-
-### In Progress --- Awaiting Apple
-
 -   Complete Small Business Program enrollment --- enrollment submitted;
     awaiting Apple approval.
-
-### Not Started / Remaining
-
--   No remaining legal/business setup is currently blocking release
-    beyond Small Business Program approval.
 
 ## Website and Pre-Order
 
@@ -226,30 +216,12 @@ These tasks are listed in approximately sequential order.
 -   Once approved for pre-order, verify the public App Store listing and
     pre-order flow.
 
-## App Store Assets and Metadata
-
-### Complete
+## App Store Assets and Metadata (Complete)
 
 -   Decide whether to create an App Preview video --- **No App Preview
     for v1.0.**
-
-### In Progress
-
 -   App Store search/ASO research, including competitor searches and
     natural-language discovery terms.
-
-Starting queries:
-
--   tv show next season
--   tv show upcoming season
--   upcoming tv seasons
--   new season reminder
--   track tv show new seasons
--   when is the next season
--   when does my show come back
-
-### Not Started / Remaining
-
 -   Export and validate the final production app icon.
 -   Capture App Store screenshots for every required device size.
 -   Write the App Store description.
@@ -261,9 +233,7 @@ Starting queries:
 -   Complete ASO research and use the results to finalize the subtitle
     and keyword field.
 
-## Privacy and Compliance
-
-### Complete
+## Privacy and Compliance (Complete)
 
 -   Determine whether Aptabase analytics require explicit user consent
     under Apple's current rules and implement any required consent or
@@ -274,9 +244,6 @@ Starting queries:
     build.
 -   Cross-check the published Privacy Policy against the App Privacy
     answers, Aptabase configuration, and actual release-build behavior.
-
-### Not Started / Remaining
-
 -   Confirm export-compliance/encryption questionnaire answers.
 -   Review required legal acknowledgements and third-party licenses.
 -   Verify that external services and data sources are disclosed where
@@ -325,7 +292,7 @@ Starting queries:
 
 ## TestFlight Release Candidate
 
-### In Progress
+### Complete
 
 -   The current TestFlight build is the **baseline/provisional v1.0
     release candidate**. Additional release-readiness changes are
@@ -355,40 +322,38 @@ Starting queries:
 
 ## App Store Connect
 
-### In Progress
+### Complete
 
 -   Configure NextSeason's App Store Connect record.
 -   Configure production In-App Purchases for Plus and the tip jar.
 -   Complete final pricing and availability configuration.
-
-### Remaining
-
--   Create/configure the v1.0 App Store version.
--   Select the final release-candidate build.
 -   Upload final screenshots and other required assets.
 -   Add the final description, subtitle, promotional text, keywords,
     categories, support URL, and Privacy Policy URL.
 -   Select countries and regions.
 -   Configure and verify the age rating.
 -   Complete App Review contact information.
--   Write App Review notes explaining anything reviewers need to know,
-    particularly the free/Plus behavior and purchases.
--   Provide a demo account only if App Review actually needs one;
-    NextSeason does not otherwise require an account.
+
+### Remaining
+
+-   Create/configure the v1.0 App Store version.
+-   Select the final release-candidate build.
+-   Write App Review notes explaining anything reviewers need to know, particularly the free/Plus behavior and purchases.
 -   Complete final pricing and availability checks for the app and IAPs.
--   Perform a final App Store Connect review as if seeing the listing
-    for the first time, checking URLs, spelling, screenshots, pricing,
-    territories, privacy information, and review notes.
+-   Perform a final App Store Connect review as if seeing the listing for the first time, checking URLs, spelling, screenshots, pricing, territories, privacy information, and review notes.
 -   Submit the final build and metadata for App Review.
--   Monitor App Review status and respond promptly to reviewer
-    questions.
+-   Monitor App Review status and respond promptly to reviewer questions.
 
 ## Launch
 
 ### Decisions to Make Before Submission
 
+### Complete
 -   Decide between automatic release and manual release after App Review
     approval.
+    
+### Remaining
+
 -   Decide on the exact launch-announcement channels and timing.
 
 ### Launch
@@ -396,11 +361,8 @@ Starting queries:
 -   Switch from pre-order to download App Store Badge.
 -   Verify the live App Store listing, screenshots, pricing, purchases,
     support URL, and Privacy Policy URL.
--   Publish launch announcements through the selected channels,
-    potentially including the project website, GitHub, Substack, and
-    appropriate social accounts.
--   Update the Trial by Fyre website to feature NextSeason as a released
-    product.
+-   Publish launch announcements through the selected channels, potentially including the project website, GitHub, Substack, and appropriate social accounts.
+-   Update the Trial by Fyre website to feature NextSeason as a released product.
 -   Celebrate. 🥂
 
 ### Immediate Post-Launch

@@ -71,7 +71,7 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
 
     func testPopulatedWatchlistPassesAccessibilityAudit() {
         trackPreviewShowAndOpenWatchlist()
-        auditCurrentScreen("Watchlist populated")
+        auditCurrentScreen("Watchlist populated", allowsLegacyUnresolvedWatchlistRowText: true)
     }
 
     func testWatchlistPendingRemovalPassesAccessibilityAudit() {
@@ -114,7 +114,7 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
             watchlistNoResults,
             "A matching query should not show the no-matches state."
         )
-        auditCurrentScreen("Watchlist search match")
+        auditCurrentScreen("Watchlist search match", allowsLegacyUnresolvedWatchlistRowText: true)
     }
 
     // MARK: - Helpers
@@ -135,12 +135,21 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
     /// Audits the current screen and fails with every outstanding issue.
     /// Known issues are ignored in `shouldIgnore` so this test stays a
     /// regression net rather than a permanently red checklist.
-    private func auditCurrentScreen(_ name: String) {
+    ///
+    /// Pass `allowsLegacyUnresolvedWatchlistRowText: true` only for screens
+    /// showing a tappable watchlist row; see `isLegacyUnresolvedStyledCopy`.
+    private func auditCurrentScreen(
+        _ name: String,
+        allowsLegacyUnresolvedWatchlistRowText: Bool = false
+    ) {
         var issueSummaries: [String] = []
 
         do {
             try app.performAccessibilityAudit { issue in
-                if self.shouldIgnore(issue) {
+                if self.shouldIgnore(
+                    issue,
+                    allowsLegacyUnresolvedWatchlistRowText: allowsLegacyUnresolvedWatchlistRowText
+                ) {
                     return true
                 }
                 issueSummaries.append(self.formattedIssue(issue))
@@ -180,14 +189,57 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
 
     /// Ignore only known system or SwiftUI false positives, identified by
     /// element. Remove an entry here when the underlying UI is fixed.
-    private func shouldIgnore(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
+    private func shouldIgnore(
+        _ issue: XCUIAccessibilityAuditIssue,
+        allowsLegacyUnresolvedWatchlistRowText: Bool
+    ) -> Bool {
         if isSystemSearchClearButton(issue) { return true }
         if isUnlabeledWatchlistSearchChrome(issue) { return true }
         if isSystemSearchFieldTextClipped(issue) { return true }
         if isKnownContentUnavailableTextClipped(issue) { return true }
         if isKnownSwiftUIDynamicTypeFalsePositive(issue) { return true }
         if isKnownSecondaryContrastNearlyPassed(issue) { return true }
+        if isLegacyUndoToastContrastFalsePositive(issue) { return true }
+        if allowsLegacyUnresolvedWatchlistRowText && isLegacyUnresolvedStyledCopy(issue) {
+            return true
+        }
         return false
+    }
+
+    /// iOS 18 only: the pre-Liquid Glass undo toast reports "Contrast failed"
+    /// for its message, Undo, and OK even though measured ratios are well
+    /// above 4.5:1 (about 16.7:1, 5.1:1, and 16.9:1). iOS 26+ passes.
+    private func isLegacyUndoToastContrastFalsePositive(_ issue: XCUIAccessibilityAuditIssue)
+        -> Bool
+    {
+        if #available(iOS 26, *) { return false }
+        guard issue.auditType.contains(.contrast) else { return false }
+        let identifier = issue.element?.identifier ?? ""
+        let label = issue.element?.label ?? ""
+        return identifier == AccessibilityID.Watchlist.undoButton
+            || identifier == AccessibilityID.Watchlist.confirmButton
+            || label == "Removed from watchlist"
+    }
+
+    /// iOS 18 only, and only for audits that opt in via
+    /// `allowsLegacyUnresolvedWatchlistRowText` (populated Watchlist and
+    /// Watchlist search match). The audit cannot resolve the text nodes inside
+    /// a combined watchlist `NavigationLink` row, so the already-known
+    /// styled-copy Dynamic Type and "nearly passed" contrast issues arrive with
+    /// a nil element and cannot be matched by label. iOS 26+ resolves these
+    /// elements.
+    ///
+    /// Limitation: within the two opted-in states on iOS 18, any other
+    /// unresolved (nil-element) Dynamic Type or "nearly passed" issue is also
+    /// hidden. iOS 26+ runs of the same tests still report it.
+    private func isLegacyUnresolvedStyledCopy(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
+        if #available(iOS 26, *) { return false }
+        guard issue.element == nil else { return false }
+        // Exact type match: an issue that also carries any other flag (for
+        // example a full "Contrast failed" alongside Dynamic Type) is reported.
+        if issue.auditType == .dynamicType { return true }
+        return issue.auditType == .contrast
+            && issue.compactDescription.hasPrefix("Contrast nearly passed")
     }
 
     /// System search-field clear button is smaller than 44pt by design.

@@ -1154,6 +1154,9 @@
     "NextSeason couldn't verify this purchase. Please try again." : {
 
     },
+    "NextSeason couldn't verify your subscription status. Your saved shows are preserved. Check your connection and try Restore Purchases." : {
+
+    },
     "NextSeason Diagnostics" : {
       "localizations" : {
         "en" : {
@@ -2293,6 +2296,9 @@
           }
         }
       }
+    },
+    "Unable to Verify Plus" : {
+
     },
     "Unavailable" : {
 

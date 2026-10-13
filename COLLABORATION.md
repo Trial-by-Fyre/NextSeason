@@ -19,8 +19,28 @@
 - Do not treat placeholder, mock, test, or historical values as authoritative configuration.
   If a required real value or other essential information is missing, or uncertainty prevents
   safe completion, stop and ask rather than guessing.
-- After completing a task, report exactly which files changed and briefly explain why each
-  changed. Summarize validation performed and any testing the project owner should do.
+- After completing a task, follow the concise reporting guidance below.
+
+## User-facing Reporting
+
+- Default to a 50–150 word, outcome-focused completion summary; simple tasks may need
+  less. Lead with what changed and its effect. Briefly summarize actual verification
+  and review status, then surface material risks, gaps, decisions, or process exceptions.
+  Omit sections that do not apply; do not add “none” sections to fill a template.
+- Identify changed files concisely, grouping files that serve the same purpose. Include
+  testing the project owner needs to do only when relevant.
+- Keep progress updates brief and useful: meaningful findings, blockers, decisions, or
+  changes of direction. Avoid routine step-by-step narration, repeated plans, and
+  repeating reviewer reports or details already shared.
+- Perform the full required analysis, edge-case checks, implementation, testing, and
+  independent review. Keep detailed checklists, evidence, and review exchanges in
+  working notes or appropriate review artifacts; link supporting detail when useful
+  instead of copying it into chat. Retain only meaningful durable records.
+- Brevity must not hide material risks, unresolved decisions, failed or unperformed
+  checks, pending reviews, or agreed exceptions. Use more detail when necessary for
+  an informed decision or when requested.
+- Keep natural, conversational discussion when the project owner is exploring a topic.
+  The completion-summary length is not a limit on those discussions.
 
 ## Coding Style
 

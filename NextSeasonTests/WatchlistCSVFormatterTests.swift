@@ -115,6 +115,55 @@ struct WatchlistCSVFormatterTests {
         #expect(ids == ["10", "11", "20"])
     }
 
+    /// Review finding R02: west of UTC the descriptive column used to say Dec 31
+    /// while the premiere column said 2027-01-01.
+    @Test("Next Season text names the same day as the premiere column in Los Angeles")
+    func nextSeasonTextAgreesWithPremiereColumn() throws {
+        let premiere = try #require(TVMazeDate.dateOnly("2027-01-01"))
+        let show = trackedShow(
+            id: 1,
+            name: "Example",
+            nextSeason: .scheduled(season: 2, premiere: premiere)
+        )
+
+        let csv = WatchlistCSVFormatter.csv(
+            shows: [show],
+            tvdbIDsByTVMazeID: [:],
+            dateStyle: try losAngelesDateStyle()
+        )
+
+        #expect(csv.contains(#""Season 2 premieres Jan 1, 2027",2027-01-01,"#))
+    }
+
+    /// `dateAdded` is a real instant: it keeps its time of day rather than being
+    /// collapsed to a provider-style calendar day. 05:30 UTC is still Dec 31 in
+    /// Los Angeles, so a day-only or shifted value would show up here.
+    @Test("Date Added keeps its full timestamp")
+    func dateAddedKeepsInstant() throws {
+        let dateAdded = try Date("2027-01-01T05:30:00Z", strategy: .iso8601)
+        let show = trackedShow(id: 1, name: "Example", dateAdded: dateAdded)
+
+        let csv = WatchlistCSVFormatter.csv(
+            shows: [show],
+            tvdbIDsByTVMazeID: [:],
+            dateStyle: try losAngelesDateStyle()
+        )
+
+        #expect(csv.contains(",2027-01-01T05:30:00Z,"))
+    }
+
+    /// The app's default date style with a fixed locale and a west-of-UTC zone,
+    /// so results do not depend on the simulator's settings.
+    private func losAngelesDateStyle() throws -> Date.FormatStyle {
+        Date.FormatStyle(
+            date: .abbreviated,
+            time: .omitted,
+            locale: Locale(identifier: "en_US"),
+            calendar: Calendar(identifier: .gregorian),
+            timeZone: try #require(TimeZone(identifier: "America/Los_Angeles"))
+        )
+    }
+
     /// Minimal `TrackedShow` fixture for CSV row assertions.
     private func trackedShow(
         id: Int,

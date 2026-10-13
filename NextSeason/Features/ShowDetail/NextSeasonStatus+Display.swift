@@ -10,13 +10,20 @@ import SwiftUI
 extension NextSeasonStatus {
     /// Safe to call from CSV export and other non-UI code.
     nonisolated var headline: String {
+        headline(dateStyle: Date.FormatStyle(date: .abbreviated, time: .omitted))
+    }
+
+    /// `dateStyle` supplies the locale (and, in tests, a fixed device time zone).
+    /// The premiere keeps its provider calendar day regardless of time zone.
+    nonisolated func headline(dateStyle: Date.FormatStyle) -> String {
         switch self {
         case .airing(let season):
             String(localized: "Currently showing Season \(season)")
         case .scheduled(let season, let premiere):
             String(
                 localized:
-                    "Season \(season) premieres \(premiere.formatted(date: .abbreviated, time: .omitted))"
+                    "Season \(season) premieres \(TVMazeDate.calendarDayString(premiere, style: dateStyle))",
+                locale: dateStyle.locale
             )
         case .announcedUndated(let season):
             String(localized: "Season \(season) announced — date to be confirmed")

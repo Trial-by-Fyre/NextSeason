@@ -1,0 +1,21 @@
+CoreData: error: unable to check registration for posting store changed notification
+CoreData: error: unable to check registration for posting store changed notification
+MIDSEASON_EPISODE number=8 result=scheduled(season: 2, premiere: 2027-02-01 00:00:00 +0000)
+NOTIFICATION_NAVIGATION expectedLatestTab=watchlist actual=search pendingLatestShow=2
+SwiftData.DefaultStore save failed with error: Error Domain=NSCocoaErrorDomain Code=513 "The file couldn’t be saved because you don’t have permission." UserInfo={NSPersistentStoreOptions={
+    NSInferMappingModelAutomaticallyOption = 1;
+    NSMigratePersistentStoresAutomaticallyOption = 1;
+    NSPersistentHistoryTrackingKey = 1;
+    NSPersistentStoreRemoteChangeNotificationOptionKey = 1;
+    NSPersistentStoreStagedMigrationManagerOptionKey = "<SwiftData.DefaultMigrationManager: 0x78e0d28280>";
+    NSReadOnlyPersistentStoreOption = 1;
+}, reason=Unable to write to file opened Read Only., storeURL=/tmp/NextSeasonReviewStore-265B7015-64CD-4AF8-AAF4-DC771BBCD3BA/default.store}
+SAVE_FAILURE threw=true insertedStillVisible=true contextHasChanges=true
+CORRUPT_ROW containerOpened=true allThrows=true identitiesReadable=[1]
+MAPPING_DELAYED_RESUME records=false,false,true completed=true
+SEARCH_OVERFLOW expected=19 actual=10 hasMore=false ids=[1, 2, 3, 4, 5, 6, 7, 8, 9, 11]
+SEARCH_RACE expected_B_only=[101, 102, 103, 104, 105, 106, 107, 108, 109, 110] actual=[101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+DATE_FORMAT source=2027-01-01 actual=Dec 31, 2026
+UNDO_LIMIT expected_at_most=3 actual=4 pausedOnReconcile=[4]
+LONG_ABSENCE period=[NextSeasonReviewHarness.TVMazeUpdatePeriod.month] fullUpdateFetches=0 showFetches=0
+FAILED_DELIVERY firstAttempt=true retryAttempt=false signatureAlreadyRecorded=true

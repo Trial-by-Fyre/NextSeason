@@ -15,10 +15,9 @@ nonisolated enum DiagnosticsSimulatedData {
     /// Uses the production formatter with a fictional premiere-date announcement.
     /// This sample is only delivered by Diagnostics; it never changes watchlist data.
     static func notificationContent(from tracked: TrackedShow) -> SeasonNotificationContent {
-        // Local noon keeps the screenshot date stable in the production local-date formatter.
-        let premiere = Calendar.current.date(
-            from: DateComponents(year: 2026, month: 10, day: 22, hour: 12)
-        )!
+        // Built like a real TVMaze date (midnight UTC) so the production
+        // calendar-day formatter shows Oct 22 in every time zone.
+        let premiere = TVMazeDate.dateOnly("2026-10-22")!
         return SeasonNotificationContent(
             showID: tracked.id,
             showName: tracked.name,

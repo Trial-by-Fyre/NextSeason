@@ -38,6 +38,22 @@ nonisolated enum TVMazeDate {
         startOfDayUTC(date) > startOfDayUTC(other)
     }
 
+    /// Formats a TVMaze date-only value for display, keeping its calendar day.
+    ///
+    /// Provider dates are stored as midnight UTC (see `dateOnly`), so formatting
+    /// them in the device time zone shows the previous day west of UTC. `style`
+    /// supplies the user's locale and calendar; its time zone is replaced with UTC.
+    /// Use only for provider calendar dates, never for real instants such as
+    /// `dateAdded` or `lastCheckedAt`, which belong in the user's local time.
+    static func calendarDayString(
+        _ date: Date,
+        style: Date.FormatStyle = Date.FormatStyle(date: .abbreviated, time: .omitted)
+    ) -> String {
+        var style = style
+        style.timeZone = utcCalendar.timeZone
+        return date.formatted(style)
+    }
+
     /// Parses a TVMaze `"yyyy-MM-dd"` (or longer ISO) string as a UTC calendar date.
     static func dateOnly(_ string: String?) -> Date? {
         guard let string, string.count >= 10 else { return nil }

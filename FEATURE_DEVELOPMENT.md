@@ -18,7 +18,9 @@ significant choices and retain meaningful decisions proportionally to the task.
 
 ## 1. Classify the change
 
-Before coding, state the risk level and why:
+Before coding, assess the risk level and record a brief rationale in working notes or
+the task checklist. Surface it to the product owner when it affects a decision,
+required review, or process exception:
 
 - **Low:** Copy, styling, or isolated adjustments with well-understood behavior and
   little consequence if incorrect. Implement and verify appropriately.
@@ -44,7 +46,7 @@ record the reason and any omitted verification or review.
 | --- | --- | --- | --- |
 | Low | State intended change; no separate checklist required | As needed | Appropriate verification and brief results |
 | Medium | Short scenario checklist with expected results and verification plans | As needed | Check scenarios and review behavior; report results and gaps |
-| High | Authoritative research and behavior matrix | Independent review before high-risk implementation | Matrix coverage, independent behavioral review, and full completion report |
+| High | Authoritative research and behavior matrix | Independent review before high-risk implementation | Matrix coverage, independent behavioral review, and concise outcome summary |
 
 Sections 2–6 specify the high-risk process. Apply their useful techniques to lower-risk
 work proportionally; do not require a matrix or independent review for every change.
@@ -62,7 +64,7 @@ For **high-risk** features:
 5. Separate **platform rules**, **product decisions**, and **unverified assumptions**. Ask the product owner to resolve product decisions; research platform rules instead of guessing.
 6. Define what is explicitly **out of scope**.
 
-Output a concise **behavior matrix** with: scenario/trigger, expected result, source or decision owner, and planned verification. Include both normal paths and important edge cases.
+Create a concise **behavior matrix** in working notes or an appropriate review artifact with: scenario/trigger, expected result, source or decision owner, and planned verification. Include both normal paths and important edge cases.
 
 **Stop gate:** Do not implement high-risk behavior until material unresolved product decisions are answered. If the user explicitly wants a prototype, label assumptions and limitations.
 
@@ -101,7 +103,8 @@ and keep full process completion pending.
 
 ## 6. Definition of done
 
-Do not declare a high-risk feature complete solely because code builds or tests pass. A completion report must include:
+Do not declare a high-risk feature complete solely because code builds or tests pass.
+Maintain acceptance evidence in working notes or an appropriate review artifact covering:
 
 - Intended behavior and key invariants
 - Platform documentation reviewed (or gaps)
@@ -110,6 +113,12 @@ Do not declare a high-risk feature complete solely because code builds or tests 
 - Independent review findings and disposition
 - Remaining assumptions, limitations, and risks
 - Any product decisions still needed and review exceptions explicitly agreed by the product owner
+
+Give the product owner a concise outcome summary following COLLABORATION.md (default
+50–150 words). Summarize behavior, actual verification and independent review status;
+surface material gaps, risks, decisions, and agreed review exceptions. Link supporting
+evidence when useful rather than repeating the full acceptance record in chat. The
+shorter report does not reduce any required research, matrix checks, tests, or review.
 
 Material unresolved product decisions, blocking findings, or required reviews prevent
 full process completion. Distinguish implementation status from acceptance status.

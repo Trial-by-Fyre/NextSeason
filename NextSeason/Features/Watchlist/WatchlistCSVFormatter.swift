@@ -25,14 +25,18 @@ nonisolated enum WatchlistCSVFormatter {
 
     /// RFC 4180 CSV (CRLF), without a UTF-8 BOM. The file writer adds the BOM
     /// so Excel on Windows still opens the sheet as UTF-8.
+    ///
+    /// `dateStyle` formats the premiere inside the descriptive Next Season text;
+    /// tests inject a fixed locale and time zone.
     static func csv(
         shows: [TrackedShow],
-        tvdbIDsByTVMazeID: [Int: Int]
+        tvdbIDsByTVMazeID: [Int: Int],
+        dateStyle: Date.FormatStyle = Date.FormatStyle(date: .abbreviated, time: .omitted)
     ) -> String {
         let rows =
             shows
             .sorted(by: Self.isOrderedBefore)
-            .map { row(for: $0, tvdbID: tvdbIDsByTVMazeID[$0.id]) }
+            .map { row(for: $0, tvdbID: tvdbIDsByTVMazeID[$0.id], dateStyle: dateStyle) }
         let lines = [headerColumns.map(escape).joined(separator: ",")] + rows
         return lines.joined(separator: "\r\n") + "\r\n"
     }
@@ -45,13 +49,17 @@ nonisolated enum WatchlistCSVFormatter {
         return lhs.id < rhs.id
     }
 
-    private static func row(for show: TrackedShow, tvdbID: Int?) -> String {
+    private static func row(
+        for show: TrackedShow,
+        tvdbID: Int?,
+        dateStyle: Date.FormatStyle
+    ) -> String {
         let fields = [
             escape(sanitizeForSpreadsheet(show.name)),
             escape(String(show.id)),
             escape(tvdbID.map(String.init) ?? ""),
             escape(show.status.displayLabel),
-            escape(show.nextSeason.headline),
+            escape(show.nextSeason.headline(dateStyle: dateStyle)),
             escape(premiereDateString(show.nextSeason)),
             escape(dateAddedString(show.dateAdded)),
             escape(show.tvMazeURL?.absoluteString ?? ""),

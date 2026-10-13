@@ -7,9 +7,9 @@ background reading. Paths are relative to this file.
 ## Included Instructions
 
 - [Collaboration preferences](COLLABORATION.md):
-  scope, editing, dependencies, commits, coding style, and completion reporting.
+  scope, editing, dependencies, commits, coding style, and concise outcome reporting.
 - [Development and learning](LEARNING.md):
-  explanation, learning, and durable reasoning preferences.
+  brief explanations when needed, optional learning, and durable reasoning preferences.
 - [Swift and SwiftUI guidance](SWIFT_SWIFTUI.md):
   shared Apple platform engineering guidance and required Swift skills.
 - [Project requirements](PROJECT.md):

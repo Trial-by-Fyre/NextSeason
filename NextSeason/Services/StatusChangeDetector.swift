@@ -147,12 +147,19 @@ nonisolated struct SeasonNotificationContent: Sendable {
     var title: String { showName }
 
     var body: String {
+        body(dateStyle: Date.FormatStyle(date: .abbreviated, time: .omitted))
+    }
+
+    /// `dateStyle` supplies the locale (and, in tests, a fixed device time zone).
+    /// The premiere keeps its provider calendar day regardless of time zone.
+    func body(dateStyle: Date.FormatStyle) -> String {
         switch status {
         case .airing(let season):
             return String(localized: "Season \(season) is now airing.")
         case .scheduled(let season, let premiere):
-            let date = premiere.formatted(date: .abbreviated, time: .omitted)
-            return String(localized: "Season \(season) premieres \(date).")
+            let date = TVMazeDate.calendarDayString(premiere, style: dateStyle)
+            return String(
+                localized: "Season \(season) premieres \(date).", locale: dateStyle.locale)
         case .announcedUndated(let season):
             return String(localized: "Season \(season) announced — date to be confirmed.")
         case .returningNoSeasonYet:

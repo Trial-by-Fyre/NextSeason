@@ -271,7 +271,7 @@ extension NextSeasonStatus {
         case .scheduled(let season, let premiere):
             String(
                 localized:
-                    "Season \(season) premieres \(premiere.formatted(date: .abbreviated, time: .omitted))"
+                    "Season \(season) premieres \(TVMazeDate.calendarDayString(premiere))"
             )
         case .announcedUndated(let season):
             String(localized: "Season \(season) announced without a date")

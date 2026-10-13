@@ -439,8 +439,15 @@ extension NextSeasonUITesting where Self: XCTestCase {
     }
 
     private func dismissSearchKeyboardIfPresent() {
-        if app.keyboards.buttons["Search"].waitForExistence(timeout: 1) {
-            app.keyboards.buttons["Search"].tap()
+        let searchKey = app.keyboards.buttons["Search"]
+        guard searchKey.waitForExistence(timeout: 1) else { return }
+        // The key can exist while the keyboard is still off-screen; tapping it then
+        // fails with "failed to scroll to visible" (seen on iOS 27). Return submits
+        // the search the same way without needing the key on screen.
+        if searchKey.isHittable {
+            searchKey.tap()
+        } else {
+            app.typeText(XCUIKeyboardKey.return.rawValue)
         }
     }
 }

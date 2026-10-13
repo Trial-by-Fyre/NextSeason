@@ -528,6 +528,73 @@ struct SearchViewModelTests {
         )
     }
 
+    /// Review finding R04: reaching the target mid-page used to discard the rest
+    /// of that page even though the cursor had already moved past it.
+    @Test("A partial first page plus a full final page keeps every mapped hit")
+    func fillKeepsRemainderOfLastFetchedPage() async {
+        let firstPage = (1...9).map(Self.mappedResult)
+        let finalPage = (11...20).map(Self.mappedResult)
+        let viewModel = makeViewModel(
+            search: MockSearchService { _, offset in
+                offset == 0
+                    ? Self.page(firstPage, hasMore: true, offset: offset, rawCount: 10)
+                    : Self.page(finalPage, hasMore: false, offset: offset)
+            },
+            mapping: Self.mapping(for: firstPage + finalPage)
+        )
+        viewModel.query = "partial"
+        await viewModel.search()
+
+        guard case .results(let page) = viewModel.state else {
+            Issue.record("Expected results, got \(viewModel.state)")
+            return
+        }
+        #expect(page.items.map(\.id) == Array(1...9) + Array(11...20))
+        #expect(page.hasMore == false)
+    }
+
+    @Test("Load More continues after a fully kept page without skipping or repeating hits")
+    func loadMoreContinuesAfterKeptRemainder() async {
+        let firstPage = (1...9).map(Self.mappedResult)
+        let secondPage = (11...20).map(Self.mappedResult)
+        let thirdPage = (21...25).map(Self.mappedResult)
+        let requestedOffsets = OffsetRecorder()
+        let viewModel = makeViewModel(
+            search: MockSearchService { _, offset in
+                requestedOffsets.append(offset)
+                switch offset {
+                case 0: return Self.page(firstPage, hasMore: true, offset: offset, rawCount: 10)
+                case 10: return Self.page(secondPage, hasMore: true, offset: offset)
+                default: return Self.page(thirdPage, hasMore: false, offset: offset)
+                }
+            },
+            mapping: Self.mapping(for: firstPage + secondPage + thirdPage)
+        )
+        viewModel.query = "paged"
+        await viewModel.search()
+        await viewModel.loadMore()
+
+        guard case .results(let page) = viewModel.state else {
+            Issue.record("Expected results, got \(viewModel.state)")
+            return
+        }
+        #expect(page.items.map(\.id) == Array(1...9) + Array(11...25))
+        #expect(page.hasMore == false)
+        #expect(requestedOffsets.values == [0, 10, 20])
+    }
+
+    /// A TheTVDB hit with only an id, for pagination tests.
+    nonisolated private static func mappedResult(_ id: Int) -> TVDBSearchResult {
+        TVDBSearchResult(
+            id: id, name: "Show \(id)", year: nil, network: nil, status: nil, posterURL: nil)
+    }
+
+    /// Maps every result to an arbitrary TVMaze id so all of them are actionable.
+    private static func mapping(for results: [TVDBSearchResult]) -> InMemoryShowIDMapping {
+        InMemoryShowIDMapping(
+            map: Dictionary(uniqueKeysWithValues: results.map { ($0.id, $0.id + 1_000) }))
+    }
+
     @Test("Resolve maps a TheTVDB hit to a TVMaze show via mapped id")
     func resolveMapsToTVMazeShow() async throws {
         let viewModel = makeViewModel(

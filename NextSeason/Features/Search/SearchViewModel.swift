@@ -266,6 +266,10 @@ final class SearchViewModel {
 
     /// Fetches TheTVDB pages and keeps only hits present in the local
     /// TVDB→TVMaze show ID mapping.
+    ///
+    /// `targetCount` is a soft limit: it decides whether to fetch another page,
+    /// but every actionable hit on a fetched page is kept. The cursor has already
+    /// moved past the whole page, so trimming it would lose those hits for good.
     private func collectActionableResults(
         matching query: String,
         startingOffset: Int,
@@ -299,7 +303,6 @@ final class SearchViewModel {
             for result in actionable where !seen.contains(result.id) {
                 seen.insert(result.id)
                 collected.append(result)
-                if collected.count >= targetCount { break }
             }
 
             // Stop when TheTVDB reports exhaustion even if under target — do not

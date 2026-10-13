@@ -13,10 +13,14 @@ import os
 /// refresh) already hop to the main actor before awaiting these methods.
 @MainActor
 final class SwiftDataWatchlistRepository: WatchlistRepository {
-    private let context: ModelContext
+    /// Replaced after a failed write; see `performWrite`.
+    private var context: ModelContext
+    private let save: (ModelContext) throws -> Void
 
-    init(context: ModelContext) {
+    /// `save` is a test seam for forcing a save failure; production uses the default.
+    init(context: ModelContext, save: @escaping (ModelContext) throws -> Void = { try $0.save() }) {
         self.context = context
+        self.save = save
     }
 
     /// Newest saves first (`dateAdded` descending).
@@ -63,16 +67,16 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         AppDiagnosticsLogger.logger(for: .persistence)
             .notice("watchlist_write_add show_id=\(show.id, privacy: .public)")
         AppDiagnosticsLogger.breadcrumb("watchlist_add:\(show.id)")
-        if let existing = try entity(for: show.id) {
-            guard existing.isPaused else { return }
-            try existing.apply(TrackedShow(reactivating: try existing.toDomain(), from: show))
-            existing.isPaused = false
-            try context.save()
-            return
+        try performWrite {
+            if let existing = try entity(for: show.id) {
+                guard existing.isPaused else { return }
+                try existing.apply(TrackedShow(reactivating: try existing.toDomain(), from: show))
+                existing.isPaused = false
+                return
+            }
+            let tracked = TrackedShow(from: show)
+            context.insert(try TrackedShowEntity(tracked: tracked))
         }
-        let tracked = TrackedShow(from: show)
-        context.insert(try TrackedShowEntity(tracked: tracked))
-        try context.save()
     }
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
@@ -86,10 +90,11 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         let descriptor = FetchDescriptor<TrackedShowEntity>(
             predicate: #Predicate { ids.contains($0.tvMazeID) }
         )
-        for entity in try context.fetch(descriptor) {
-            entity.isPaused = isPaused
+        try performWrite {
+            for entity in try context.fetch(descriptor) {
+                entity.isPaused = isPaused
+            }
         }
-        try context.save()
     }
 
     /// No-op if the show is not on the watchlist.
@@ -97,9 +102,10 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         AppDiagnosticsLogger.logger(for: .persistence)
             .notice("watchlist_write_remove show_id=\(showID, privacy: .public)")
         AppDiagnosticsLogger.breadcrumb("watchlist_remove:\(showID)")
-        guard let entity = try entity(for: showID) else { return }
-        context.delete(entity)
-        try context.save()
+        try performWrite {
+            guard let entity = try entity(for: showID) else { return }
+            context.delete(entity)
+        }
     }
 
     /// Applies refresh fields onto an existing row. No-op if the show was removed
@@ -108,9 +114,37 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         AppDiagnosticsLogger.logger(for: .persistence)
             .notice("watchlist_write_refresh show_id=\(tracked.id, privacy: .public)")
         AppDiagnosticsLogger.breadcrumb("watchlist_refresh_write:\(tracked.id)")
-        guard let entity = try entity(for: tracked.id) else { return }
-        try entity.apply(tracked)
-        try context.save()
+        try performWrite {
+            guard let entity = try entity(for: tracked.id) else { return }
+            try entity.apply(tracked)
+        }
+    }
+
+    /// Runs one logical write and saves it. If any step throws (a failed save, or
+    /// `apply` failing partway), rolls the context back so later reads do not see
+    /// the failed change and a later save cannot commit it.
+    ///
+    /// Rolling back alone is not enough on iOS 18: after a save the store rejected,
+    /// the next fetch on the rolled-back context still returned the discarded
+    /// insert or omitted the discarded delete once. Fresh contexts read correctly,
+    /// so the repository switches to a new context on the same container.
+    ///
+    /// Discarding the context is safe because it belongs to the repository alone
+    /// (autosave off), and every write saves or rolls back here without awaiting,
+    /// so it never holds another operation's unsaved work. Models never leave
+    /// the repository, so no caller keeps objects from the old context.
+    private func performWrite(_ mutate: () throws -> Void) throws {
+        do {
+            try mutate()
+            try save(context)
+        } catch {
+            context.rollback()
+            context = ModelContext(context.container)
+            AppDiagnosticsLogger.logger(for: .persistence).error(
+                "watchlist_write_rolled_back error=\(String(describing: error), privacy: .public)"
+            )
+            throw error
+        }
     }
 
     private func entity(for showID: Int) throws -> TrackedShowEntity? {

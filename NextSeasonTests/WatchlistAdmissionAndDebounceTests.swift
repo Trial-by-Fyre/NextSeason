@@ -56,6 +56,11 @@ private final class HoldingTVMazeService: TVMazeService {
     @MainActor func updatedShows(since period: TVMazeUpdatePeriod) async throws -> [Int: Date] {
         updates
     }
+
+    /// A first refresh has no coverage watermark and asks for the full map.
+    @MainActor func allUpdatedShows() async throws -> [Int: Date] {
+        updates
+    }
 }
 
 @MainActor

@@ -62,8 +62,15 @@ extension TVMazeService {
 nonisolated enum TVMazeUpdatePeriod: String, Sendable {
     case day, week, month
 
-    /// Approximate length of TVMaze's `since=month` window.
-    static let monthWindow: TimeInterval = 30 * 86_400
+    /// Conservative length of TVMaze's `since=month` window. TVMaze does not
+    /// document the exact length, so assume 28 days (shorter than any calendar
+    /// month) rather than risk gaps a shorter window would miss.
+    static let monthWindow: TimeInterval = 28 * 86_400
+
+    /// TVMaze caches API output for up to an hour, so a change can take that long
+    /// to appear. Sync watermarks are set this far before the request or horizon
+    /// so the next sync re-checks the unpublished hour.
+    static let propagationDelay: TimeInterval = 60 * 60
 
     /// Smallest TVMaze update window that still covers every change since
     /// `oldestCheck`. Background refresh is best-effort and may be delayed, so

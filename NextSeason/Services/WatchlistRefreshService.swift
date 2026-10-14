@@ -18,14 +18,16 @@ struct WatchlistRefreshOutcome: Sendable, Equatable {
 ///
 /// Pipeline for each refresh:
 /// 1. Load tracked shows from the repository, excluding paused shows.
-/// 2. Unless `force`, ask TVMaze which show IDs changed since the oldest check
-///    (`/updates/shows`), then skip shows that neither changed on the server nor
-///    need a calendar/status recheck.
+/// 2. Unless `force`, ask TVMaze which show IDs changed since the coverage
+///    watermark (`/updates/shows`), then skip shows that neither changed on the
+///    server nor need a calendar/status recheck.
 /// 3. For each show that needs work: confirm it is still active, fetch full
 ///    detail, re-read the stored row (it may have been paused or updated while
 ///    the fetch was suspended), recompute `NextSeasonStatus`, run
 ///    `StatusChangeDetector.evaluate`, persist, and optionally deliver a
 ///    notification. Shows in `catchUpShowIDs` instead get a silent baseline.
+/// 4. Unless `force`, advance the coverage watermark if the saved rows prove
+///    every reported change was applied.
 ///
 /// Remains `@MainActor` because `WatchlistRepository` is MainActor-bound for
 /// SwiftData; network work still runs off the actor while awaiting `TVMazeService`.
@@ -45,6 +47,7 @@ final class WatchlistRefreshService {
     private let userDefaults: UserDefaults
 
     static let catchUpMarksKey = "watchlistCatchUpMarks"
+    static let updatesCoveredThroughKey = "watchlistUpdatesCoveredThrough"
 
     init(
         tvMaze: any TVMazeService,
@@ -103,6 +106,28 @@ final class WatchlistRefreshService {
 
     /// IDs of shows that still have a catch-up mark.
     var catchUpShowIDs: Set<Int> { Set(catchUpMarks.keys) }
+
+    /// Every TVMaze change up to this time is reflected in every active saved row.
+    /// It decides the next updates window (see `fetchUpdates(at:)`) and advances
+    /// only through `advanceUpdatesCoverage`.
+    ///
+    /// Kept separately from rows' `lastCheckedAt` because rows skipped as
+    /// unchanged are never written, so their `lastCheckedAt` ages even when the
+    /// app refreshes daily and cannot tell a long absence from a stable show.
+    private var updatesCoveredThrough: Date? {
+        get {
+            guard userDefaults.object(forKey: Self.updatesCoveredThroughKey) != nil else {
+                return nil
+            }
+            return Date(
+                timeIntervalSinceReferenceDate: userDefaults.double(
+                    forKey: Self.updatesCoveredThroughKey))
+        }
+        set {
+            userDefaults.set(
+                newValue?.timeIntervalSinceReferenceDate, forKey: Self.updatesCoveredThroughKey)
+        }
+    }
 
     /// Marks resumed shows for a silent baseline. Call before persisting the
     /// resume so no refresh can see them active but unmarked.
@@ -181,6 +206,9 @@ final class WatchlistRefreshService {
             localized: "No notification (no meaningful change)"
         )
         var refreshedShowCount = 0
+        // Shows whose not-found (stale) flag this pass actually saved; the only
+        // evidence a stale row counts as covered (see `isCovered`).
+        var staleSavedIDs: Set<Int> = []
         var skippedShowCount = 0
 
         let trackedShows: [TrackedShow]
@@ -238,16 +266,13 @@ final class WatchlistRefreshService {
         }
 
         // Map of showID → TVMaze "updated" timestamp. Empty when forcing a full pass.
+        let requestTime = clock()
         let updates: [Int: Date]
         if force {
             updates = [:]
         } else {
-            // Grow the updates window with the largest polling gap so a delayed
-            // background run still sees every change since we last checked.
-            let oldestCheck = trackedShows.map(\.lastCheckedAt).min() ?? clock()
-            let period = TVMazeUpdatePeriod.covering(since: oldestCheck, at: clock())
             do {
-                updates = try await tvMaze.updatedShows(since: period)
+                updates = try await fetchUpdates(at: requestTime)
             } catch {
                 analytics.trackNonFatalError(error, context: "watchlist_refresh_updates")
                 recordBackgroundDiagnosticsIfNeeded(
@@ -346,7 +371,9 @@ final class WatchlistRefreshService {
                 guard var tracked = try? await activeRow(for: snapshot.id) else { continue }
                 tracked.isStale = true
                 tracked.lastCheckedAt = clock()
-                try? await repository.updateAfterRefresh(tracked)
+                if (try? await repository.updateAfterRefresh(tracked)) != nil {
+                    staleSavedIDs.insert(tracked.id)
+                }
                 refreshedShowCount += 1
                 lastNotificationDecision = String(
                     localized: "Marked stale: \(tracked.name) not found on TVMaze"
@@ -356,6 +383,13 @@ final class WatchlistRefreshService {
                 analytics.trackNonFatalError(error, context: "watchlist_refresh_show")
                 continue
             }
+        }
+
+        // Forced passes (pull-to-refresh, catch-up) never consult the updates map,
+        // so they cannot prove coverage; ordinary refreshes advance it.
+        if !force, onlyShowIDs == nil {
+            await advanceUpdatesCoverage(
+                updates: updates, requestTime: requestTime, staleSavedIDs: staleSavedIDs)
         }
 
         if refreshedShowCount == 0, skippedShowCount > 0 {
@@ -422,6 +456,75 @@ final class WatchlistRefreshService {
         return String(
             localized: "No notification for \(showName) (no meaningful change)"
         )
+    }
+
+    /// Requests the TVMaze updates map that covers every change since the
+    /// coverage watermark. `since=` is a rolling window ending now, so the full
+    /// map is needed when there is no watermark, when the gap exceeds the month
+    /// window, or when the watermark is later than now (the clock moved back).
+    private func fetchUpdates(at requestTime: Date) async throws -> [Int: Date] {
+        guard let coveredThrough = updatesCoveredThrough,
+            coveredThrough <= requestTime,
+            !TVMazeUpdatePeriod.requiresUnfilteredUpdateMap(since: coveredThrough, at: requestTime)
+        else {
+            AppDiagnosticsLogger.breadcrumb("watchlist_refresh_updates_unfiltered")
+            return try await tvMaze.allUpdatedShows()
+        }
+        let period = TVMazeUpdatePeriod.covering(since: coveredThrough, at: requestTime)
+        return try await tvMaze.updatedShows(since: period)
+    }
+
+    /// Advances the coverage watermark after an ordinary pass, but only when the
+    /// saved rows prove every change in `updates` was applied.
+    ///
+    /// Re-reads the repository instead of trusting this pass's own results, so a
+    /// failed fetch or write, a skipped older response, or a show another refresh
+    /// is still handling leaves the watermark unchanged, and the next pass's
+    /// window still reaches back to it.
+    private func advanceUpdatesCoverage(
+        updates: [Int: Date], requestTime: Date, staleSavedIDs: Set<Int>
+    ) async {
+        let saved: [TrackedShow]
+        do {
+            saved = try await repository.all()
+        } catch {
+            return
+        }
+        // This read is the last suspension point; the write below never awaits.
+        guard !Task.isCancelled else { return }
+        let uncoveredCount = saved.filter {
+            !$0.isPaused && !Self.isCovered($0, by: updates, staleSavedIDs: staleSavedIDs)
+        }.count
+        guard uncoveredCount == 0 else {
+            AppDiagnosticsLogger.breadcrumb(
+                "watchlist_refresh_coverage_unchanged:\(uncoveredCount)")
+            return
+        }
+
+        // Step back by TVMaze's propagation delay so the next window re-checks
+        // changes that were not yet published when this map was served.
+        let coveredThrough = requestTime.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay)
+        // Keep the later value, so an older pass finishing after a newer one
+        // cannot move it back. A saved value later than the current clock can
+        // only mean the clock moved backwards, so replace it. A newer pass's
+        // value is never later than the clock, so it is kept.
+        if let current = updatesCoveredThrough, current <= clock() {
+            updatesCoveredThrough = max(current, coveredThrough)
+        } else {
+            updatesCoveredThrough = coveredThrough
+        }
+    }
+
+    /// True when `row` already reflects the change `updates` reports for it.
+    private static func isCovered(
+        _ row: TrackedShow, by updates: [Int: Date], staleSavedIDs: Set<Int>
+    ) -> Bool {
+        guard let changedAt = updates[row.id] else { return true }
+        if row.sourceUpdatedAt >= changedAt { return true }
+        // Not found on TVMaze: covered only if this pass saved the stale flag
+        // itself. An earlier pass's flag is not evidence, and its `lastCheckedAt`
+        // cannot be trusted either: after a clock reset it may be in the future.
+        return row.isStale && staleSavedIDs.contains(row.id)
     }
 
     /// The stored row when the show is still saved and not paused.

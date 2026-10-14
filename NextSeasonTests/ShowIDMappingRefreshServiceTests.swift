@@ -142,7 +142,9 @@ struct ShowIDMappingRefreshServiceTests {
         #expect(await database.tvMazeID(forTVDBID: 1_010) == nil)
 
         let metadata = try await database.metadata()
-        #expect(metadata.lastSuccessfulSyncAt == now)
+        #expect(
+            metadata.lastSuccessfulSyncAt
+                == now.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay))
     }
 
     @Test("Refresh persists TVMaze title and poster on the mapping")
@@ -229,7 +231,9 @@ struct ShowIDMappingRefreshServiceTests {
         #expect(await database.tvMazeID(forTVDBID: 1_020) == nil)
 
         let metadata = try await database.metadata()
-        #expect(metadata.lastSuccessfulSyncAt == now)
+        #expect(
+            metadata.lastSuccessfulSyncAt
+                == now.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay))
     }
 
     @Test("Long absence uses the unfiltered updates map and still applies local watermark")
@@ -282,7 +286,9 @@ struct ShowIDMappingRefreshServiceTests {
         #expect(await database.tvMazeID(forTVDBID: 1_030) == nil)
 
         let metadata = try await database.metadata()
-        #expect(metadata.lastSuccessfulSyncAt == horizon)
+        #expect(
+            metadata.lastSuccessfulSyncAt
+                == horizon.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay))
     }
 
     @Test("Capped update pass stores a resume cursor and does not mark sync complete")
@@ -333,8 +339,11 @@ struct ShowIDMappingRefreshServiceTests {
         let metadataAfterSecond = try await database.metadata()
         #expect(metadataAfterSecond.updatesResumeCursor == nil)
         #expect(metadataAfterSecond.syncHorizonAt == nil)
-        // Commit the original horizon, not a later wall-clock time.
-        #expect(metadataAfterSecond.lastSuccessfulSyncAt == syncStart)
+        // Commit the original horizon, not a later wall-clock time,
+        // less TVMaze's propagation margin.
+        #expect(
+            metadataAfterSecond.lastSuccessfulSyncAt
+                == syncStart.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay))
         #expect(await tvMaze.fetchedShowIDs == [10, 20, 30])
         #expect(await database.tvMazeID(forTVDBID: 1_030) == 30)
     }
@@ -394,7 +403,9 @@ struct ShowIDMappingRefreshServiceTests {
         await refresh.refreshIfNeeded()
         let afterSecond = try await database.metadata()
         #expect(afterSecond.syncHorizonAt == nil)
-        #expect(afterSecond.lastSuccessfulSyncAt == syncStart)
+        #expect(
+            afterSecond.lastSuccessfulSyncAt
+                == syncStart.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay))
         #expect(await tvMaze.fetchedShowIDs == [10, 20])
         #expect(await database.tvMazeID(forTVDBID: 1_099) == nil)
 
@@ -405,8 +416,122 @@ struct ShowIDMappingRefreshServiceTests {
         #expect(await tvMaze.fetchedShowIDs.contains(99))
         #expect(await database.tvMazeID(forTVDBID: 1_099) == 99)
         let afterThird = try await database.metadata()
-        #expect(afterThird.lastSuccessfulSyncAt == nextSyncNow)
+        #expect(
+            afterThird.lastSuccessfulSyncAt
+                == nextSyncNow.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay))
         #expect(afterThird.syncHorizonAt == nil)
+    }
+
+    // MARK: R08: request window chosen at request time
+
+    /// Review R08 reproduction: a capped sync started with a one-hour gap kept
+    /// requesting `day` when it resumed two days later. TVMaze's rolling window
+    /// no longer contained the backlog, so the sync completed without it.
+    @Test("A capped sync resumed two days later requests a wider window and keeps its backlog")
+    func resumedSyncWidensWindow() async throws {
+        let (database, url) = try await makeDatabase()
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        // First launch: the bundled snapshot's generation time is the watermark,
+        // so a sync can start an hour after it.
+        let lastSync = Date(timeIntervalSince1970: 1_700_000_000)
+        try await database.setGeneratedAt(lastSync)
+        let syncStart = lastSync.addingTimeInterval(3_600)
+        let clock = DateBox(syncStart)
+        let tvMaze = RecordingIndexTVMazeService(
+            updates: [
+                10: lastSync.addingTimeInterval(600),
+                20: lastSync.addingTimeInterval(1_200),
+                30: lastSync.addingTimeInterval(1_800),
+            ],
+            externalsByShowID: [10: 1_010, 20: 1_020, 30: 1_030],
+            serverNow: { clock.date }
+        )
+        let refresh = ShowIDMappingRefreshService(
+            database: database, tvMaze: tvMaze, now: { clock.date },
+            maxShowDetailFetchesPerRefresh: 1, requestPause: .zero)
+
+        await refresh.refreshIfNeeded()
+        #expect(await tvMaze.lastFilteredPeriod == .day)
+
+        clock.date = syncStart.addingTimeInterval(2 * 86_400)
+        await refresh.refreshIfNeeded()
+        #expect(await tvMaze.lastFilteredPeriod == .week, "Window chosen from request time")
+        await refresh.refreshIfNeeded()
+
+        #expect(await database.tvMazeID(forTVDBID: 1_010) == 10)
+        #expect(await database.tvMazeID(forTVDBID: 1_020) == 20)
+        #expect(await database.tvMazeID(forTVDBID: 1_030) == 30)
+        let metadata = try await database.metadata()
+        #expect(metadata.lastSuccessfulSyncAt == syncStart.addingTimeInterval(-3_600))
+    }
+
+    @Test("A sync resumed more than 28 days after its last success uses the full map")
+    func longResumeUsesFullMap() async throws {
+        let (database, url) = try await makeDatabase()
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let lastSync = Date(timeIntervalSince1970: 1_700_000_000)
+        try await database.setGeneratedAt(lastSync)
+        let clock = DateBox(lastSync.addingTimeInterval(3_600))
+        let tvMaze = RecordingIndexTVMazeService(
+            updates: [
+                10: lastSync.addingTimeInterval(600), 20: lastSync.addingTimeInterval(1_200),
+            ],
+            externalsByShowID: [10: 1_010, 20: 1_020],
+            serverNow: { clock.date }
+        )
+        let refresh = ShowIDMappingRefreshService(
+            database: database, tvMaze: tvMaze, now: { clock.date },
+            maxShowDetailFetchesPerRefresh: 1, requestPause: .zero)
+
+        await refresh.refreshIfNeeded()
+        #expect(await tvMaze.didFetchAllUpdatedShows == false)
+
+        clock.date = lastSync.addingTimeInterval(29 * 86_400)
+        await refresh.refreshIfNeeded()
+
+        #expect(await tvMaze.didFetchAllUpdatedShows)
+        #expect(await database.tvMazeID(forTVDBID: 1_010) == 10)
+        #expect(await database.tvMazeID(forTVDBID: 1_020) == 20)
+    }
+
+    @Test("A change not yet published when a sync started is applied by the next sync")
+    func unpublishedChangeIsAppliedNextSync() async throws {
+        let (database, url) = try await makeDatabase()
+        defer { try? FileManager.default.removeItem(at: url) }
+
+        let syncStart = Date(timeIntervalSince1970: 1_700_000_000)
+        try await database.setLastSuccessfulSyncAt(syncStart.addingTimeInterval(-8 * 86_400))
+        let clock = DateBox(syncStart)
+        // Show 40 changed 30 minutes before the sync, but TVMaze's cache does not
+        // list it yet.
+        let lateChange = syncStart.addingTimeInterval(-1_800)
+        let tvMaze = RecordingIndexTVMazeService(
+            updates: [:], externalsByShowID: [40: 1_040])
+        let refresh = ShowIDMappingRefreshService(
+            database: database, tvMaze: tvMaze, now: { clock.date },
+            maxShowDetailFetchesPerRefresh: 10, requestPause: .zero)
+
+        await refresh.refreshIfNeeded()
+        #expect(await database.tvMazeID(forTVDBID: 1_040) == nil)
+
+        // A week later the change is published, still dated before the old horizon.
+        await tvMaze.setUpdates([40: lateChange])
+        clock.date = syncStart.addingTimeInterval(ShowIDMappingRefreshService.refreshInterval + 1)
+        await refresh.refreshIfNeeded()
+
+        #expect(await database.tvMazeID(forTVDBID: 1_040) == 40, "Product decision 2: margin")
+    }
+
+    /// Settable clock shared by the service and the fake's rolling window.
+    private final class DateBox: Sendable {
+        private let state: Mutex<Date>
+        init(_ date: Date) { state = Mutex(date) }
+        var date: Date {
+            get { state.withLock { $0 } }
+            set { state.withLock { $0 = newValue } }
+        }
     }
 
     private final class SyncClock: Sendable {
@@ -438,17 +563,22 @@ struct ShowIDMappingRefreshServiceTests {
         private(set) var fetchedShowIDs: [Int] = []
         private(set) var didFetchAllUpdatedShows = false
         private(set) var lastFilteredPeriod: TVMazeUpdatePeriod?
+        /// When set, `since=` behaves like TVMaze's rolling window ending at this
+        /// time: changes older than the period are left out.
+        let serverNow: (@Sendable () -> Date)?
 
         init(
             updates: [Int: Date],
             externalsByShowID: [Int: Int],
             namesByShowID: [Int: String] = [:],
-            posterURLsByShowID: [Int: URL] = [:]
+            posterURLsByShowID: [Int: URL] = [:],
+            serverNow: (@Sendable () -> Date)? = nil
         ) {
             self.updates = updates
             self.externalsByShowID = externalsByShowID
             self.namesByShowID = namesByShowID
             self.posterURLsByShowID = posterURLsByShowID
+            self.serverNow = serverNow
         }
 
         func setUpdates(_ updates: [Int: Date]) {
@@ -461,7 +591,15 @@ struct ShowIDMappingRefreshServiceTests {
 
         func updatedShows(since period: TVMazeUpdatePeriod) async throws -> [Int: Date] {
             lastFilteredPeriod = period
-            return updates
+            guard let serverNow else { return updates }
+            let length: TimeInterval =
+                switch period {
+                case .day: 86_400
+                case .week: 604_800
+                case .month: TVMazeUpdatePeriod.monthWindow
+                }
+            let windowStart = serverNow().addingTimeInterval(-length)
+            return updates.filter { $0.value >= windowStart }
         }
 
         func allUpdatedShows() async throws -> [Int: Date] {

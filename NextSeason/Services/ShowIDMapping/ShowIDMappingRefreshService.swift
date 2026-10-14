@@ -92,8 +92,12 @@ actor ShowIDMappingRefreshService {
             )
             if updatesFinished {
                 // Commit the horizon, not wall-clock "now", so anything newer than
-                // the horizon remains eligible for the next sync window.
-                try await database.setLastSuccessfulSyncAt(horizonAt)
+                // the horizon remains eligible for the next sync window. Step back
+                // by TVMaze's propagation delay: a change made just before the
+                // horizon may not have been published yet, so the next sync
+                // re-checks that hour (re-applying a mapping is harmless).
+                try await database.setLastSuccessfulSyncAt(
+                    horizonAt.addingTimeInterval(-TVMazeUpdatePeriod.propagationDelay))
                 try await database.clearInProgressSyncState()
                 AppDiagnosticsLogger.logger(for: .network)
                     .notice("show_id_mapping_refresh_complete")
@@ -206,6 +210,11 @@ actor ShowIDMappingRefreshService {
     /// For older sync points, fetch the complete show-update map and
     /// locally discard entries whose last-updated timestamp is at or
     /// before our saved sync watermark.
+    ///
+    /// The window is chosen from the request time, not the frozen horizon:
+    /// `since=` is a rolling window ending now, so a sync resumed days after it
+    /// started must reach back further. `pendingUpdates` still limits the
+    /// result to (`lastSync`, `horizonAt`].
     private func fetchUpdates(
         since lastSync: Date?,
         horizonAt: Date
@@ -215,19 +224,18 @@ actor ShowIDMappingRefreshService {
             return try await tvMaze.allUpdatedShows()
         }
 
+        let requestTime = now()
         if TVMazeUpdatePeriod.requiresUnfilteredUpdateMap(
             since: lastSync,
-            at: horizonAt
+            at: requestTime
         ) {
             AppDiagnosticsLogger.breadcrumb("show_id_mapping_updates_unfiltered")
             return try await tvMaze.allUpdatedShows()
         }
 
-        // Cover from the updates watermark through the fixed horizon, not
-        // wall-clock now — keeps the window stable across resume passes.
         let period = TVMazeUpdatePeriod.covering(
             since: lastSync,
-            at: horizonAt
+            at: requestTime
         )
 
         return try await tvMaze.updatedShows(since: period)

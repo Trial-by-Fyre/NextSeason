@@ -47,6 +47,15 @@ struct WatchlistRefreshServiceTests {
             lastUpdatePeriod = period
             return updates
         }
+
+        private(set) var fullMapRequests = 0
+
+        /// Same changed shows as the filtered map; the real full map also lists
+        /// unchanged shows, which the refresh skips either way.
+        func allUpdatedShows() async throws -> [Int: Date] {
+            fullMapRequests += 1
+            return updates
+        }
     }
 
     private func season(_ number: Int, premiere: String?, end: String? = nil) -> Season {
@@ -89,21 +98,26 @@ struct WatchlistRefreshServiceTests {
     private func makeService(
         repository: InMemoryWatchlistRepository,
         tvMaze: MockTVMazeService,
-        notifications: RecordingNotificationService
+        notifications: RecordingNotificationService,
+        userDefaults: UserDefaults = isolatedDefaults()
     ) -> WatchlistRefreshService {
         makeService(
             repository: repository,
             tvMaze: tvMaze,
             notifications: notifications,
+            userDefaults: userDefaults,
             clock: { fixedNow }
         )
     }
 
     /// Refresh service with an injectable clock (stale / cooldown tests).
+    /// Each service gets its own defaults so the persisted coverage watermark
+    /// and catch-up marks never leak between tests.
     private func makeService(
         repository: InMemoryWatchlistRepository,
         tvMaze: MockTVMazeService,
         notifications: RecordingNotificationService,
+        userDefaults: UserDefaults = isolatedDefaults(),
         clock: @escaping @Sendable () -> Date
     ) -> WatchlistRefreshService {
         WatchlistRefreshService(
@@ -111,8 +125,18 @@ struct WatchlistRefreshServiceTests {
             repository: repository,
             notifications: notifications,
             analytics: RecordingAnalyticsService(),
+            userDefaults: userDefaults,
             clock: clock
         )
+    }
+
+    /// Defaults with a coverage watermark `age` before the suite's fixed clock.
+    private func defaults(coveredFor age: TimeInterval) -> UserDefaults {
+        let defaults = isolatedDefaults()
+        defaults.set(
+            fixedNow.addingTimeInterval(-age).timeIntervalSinceReferenceDate,
+            forKey: WatchlistRefreshService.updatesCoveredThroughKey)
+        return defaults
     }
 
     @Test("Background refresh skips shows that did not change on TVMaze")
@@ -395,7 +419,7 @@ struct WatchlistRefreshServiceTests {
         #expect(notifications.delivered[0].status == .announcedUndated(season: 3))
     }
 
-    @Test("Background refresh uses a week window when the oldest check is older than a day")
+    @Test("Background refresh uses a week window when coverage is more than a day old")
     func usesWeekWindowAfterDayGap() async throws {
         let repository = InMemoryWatchlistRepository()
         let tvMaze = MockTVMazeService()
@@ -403,18 +427,17 @@ struct WatchlistRefreshServiceTests {
 
         try await repository.add(show())
 
-        var tracked = try await repository.all()[0]
-        tracked.lastCheckedAt = fixedNow.addingTimeInterval(-2 * 86_400)
-        try await repository.updateAfterRefresh(tracked)
-
         tvMaze.updates = [:]
-        await makeService(repository: repository, tvMaze: tvMaze, notifications: notifications)
-            .refreshAll()
+        await makeService(
+            repository: repository, tvMaze: tvMaze, notifications: notifications,
+            userDefaults: defaults(coveredFor: 2 * 86_400)
+        ).refreshAll()
 
         #expect(tvMaze.lastUpdatePeriod == .week)
+        #expect(tvMaze.fullMapRequests == 0)
     }
 
-    @Test("Background refresh uses a month window when the oldest check is older than a week")
+    @Test("Background refresh uses a month window when coverage is more than a week old")
     func usesMonthWindowAfterWeekGap() async throws {
         let repository = InMemoryWatchlistRepository()
         let tvMaze = MockTVMazeService()
@@ -422,15 +445,14 @@ struct WatchlistRefreshServiceTests {
 
         try await repository.add(show())
 
-        var tracked = try await repository.all()[0]
-        tracked.lastCheckedAt = fixedNow.addingTimeInterval(-8 * 86_400)
-        try await repository.updateAfterRefresh(tracked)
-
         tvMaze.updates = [:]
-        await makeService(repository: repository, tvMaze: tvMaze, notifications: notifications)
-            .refreshAll()
+        await makeService(
+            repository: repository, tvMaze: tvMaze, notifications: notifications,
+            userDefaults: defaults(coveredFor: 8 * 86_400)
+        ).refreshAll()
 
         #expect(tvMaze.lastUpdatePeriod == .month)
+        #expect(tvMaze.fullMapRequests == 0)
     }
 
     @Test("Foreground refresh skips network work when a refresh just ran")
@@ -465,4 +487,11 @@ struct WatchlistRefreshServiceTests {
         await service.refreshAllIfNeeded()
         #expect(tvMaze.fetchedShowIDs.count == 2)
     }
+}
+
+private func isolatedDefaults() -> UserDefaults {
+    let suiteName = "WatchlistRefreshServiceTests.\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: suiteName)!
+    defaults.removePersistentDomain(forName: suiteName)
+    return defaults
 }

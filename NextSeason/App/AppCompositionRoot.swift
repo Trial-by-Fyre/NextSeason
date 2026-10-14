@@ -82,7 +82,12 @@ struct AppCompositionRoot {
             }
         } else {
             modelContainer = try NextSeasonModelContainer.make()
-            repository = SwiftDataWatchlistRepository(context: ModelContext(modelContainer))
+            // Same defaults as `WatchlistRefreshService` (`.standard`), so the
+            // refresh sees repair marks the repository records.
+            repository = SwiftDataWatchlistRepository(
+                context: ModelContext(modelContainer),
+                rowMarks: WatchlistRowMarks(userDefaults: .standard),
+                analytics: analyticsService)
             // Mapping already retries from the bundled baseline. If that still
             // fails, degrade to an empty in-memory map so Search still works
             // and we never send the user through watchlist-destroying recovery.

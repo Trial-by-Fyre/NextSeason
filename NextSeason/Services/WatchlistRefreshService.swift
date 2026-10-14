@@ -43,10 +43,12 @@ final class WatchlistRefreshService {
     private let clock: @Sendable () -> Date
     /// Last time `refreshAllIfNeeded` actually ran a refresh (foreground throttle).
     private var lastForegroundRefreshAt: Date?
-    /// Persists the catch-up marks.
+    /// Persists the coverage watermark; catch-up marks live in `rowMarks`.
     private let userDefaults: UserDefaults
+    /// Catch-up marks and damage reports, shared with the SwiftData repository.
+    private let rowMarks: WatchlistRowMarks
 
-    static let catchUpMarksKey = "watchlistCatchUpMarks"
+    static let catchUpMarksKey = WatchlistRowMarks.catchUpKey
     static let updatesCoveredThroughKey = "watchlistUpdatesCoveredThrough"
 
     init(
@@ -64,11 +66,13 @@ final class WatchlistRefreshService {
         self.analytics = analytics
         self.diagnostics = diagnostics
         self.userDefaults = userDefaults
+        self.rowMarks = WatchlistRowMarks(userDefaults: userDefaults)
         self.clock = clock
     }
 
-    /// Resumed shows still awaiting a silent baseline, keyed by show ID, valued by
-    /// the saved row's `dateAdded` (reference-date seconds).
+    /// Resumed shows, and rows the repository found with an undecodable snapshot,
+    /// still awaiting a silent baseline, keyed by show ID, valued by the saved
+    /// row's `dateAdded` (reference-date seconds).
     ///
     /// Persisted so an interrupted or failed catch-up is retried later, and so any
     /// refresh that reaches one of these shows first — including a notifying
@@ -83,25 +87,8 @@ final class WatchlistRefreshService {
     /// row was deleted, because marks are pruned only when superseded by a new
     /// row, not when their row is temporarily absent.
     private var catchUpMarks: [Int: TimeInterval] {
-        get {
-            let stored = userDefaults.dictionary(forKey: Self.catchUpMarksKey) ?? [:]
-            var marks: [Int: TimeInterval] = [:]
-            for (key, value) in stored {
-                if let id = Int(key), let dateAdded = value as? TimeInterval {
-                    marks[id] = dateAdded
-                }
-            }
-            return marks
-        }
-        set {
-            if newValue.isEmpty {
-                userDefaults.removeObject(forKey: Self.catchUpMarksKey)
-            } else {
-                let stored = Dictionary(
-                    uniqueKeysWithValues: newValue.map { (String($0.key), $0.value) })
-                userDefaults.set(stored, forKey: Self.catchUpMarksKey)
-            }
-        }
+        get { rowMarks.catchUp }
+        set { rowMarks.catchUp = newValue }
     }
 
     /// IDs of shows that still have a catch-up mark.
@@ -151,6 +138,18 @@ final class WatchlistRefreshService {
     /// True when `row` is the same saved row that was marked for catch-up.
     private func needsCatchUp(_ row: TrackedShow) -> Bool {
         catchUpMarks[row.id] == row.dateAdded.timeIntervalSinceReferenceDate
+    }
+
+    /// True when the repository found this saved row's snapshot undecodable.
+    private func isReportedDamaged(_ row: TrackedShow) -> Bool {
+        rowMarks.damageReported[row.id] == row.dateAdded.timeIntervalSinceReferenceDate
+    }
+
+    /// Consumes the row's catch-up mark and any damage report, once a write has
+    /// left it with a valid saved status.
+    private func clearCatchUp(for row: TrackedShow) {
+        catchUpMarks[row.id] = nil
+        rowMarks.damageReported[row.id] = nil
     }
 
     /// Scene-active / foreground entry point: runs `refreshAll` only when
@@ -225,6 +224,9 @@ final class WatchlistRefreshService {
                     savedShows.filter { marks[$0.id] != nil && !needsCatchUp($0) }.map(\.id))
                 if !superseded.isEmpty {
                     catchUpMarks = marks.filter { !superseded.contains($0.key) }
+                    rowMarks.damageReported = rowMarks.damageReported.filter {
+                        !superseded.contains($0.key)
+                    }
                 }
             }
             // Paused shows (Plus lapsed, beyond the free limit) are never fetched
@@ -340,12 +342,19 @@ final class WatchlistRefreshService {
                     let baseline = StatusChangeDetector.baseline(
                         tracked: tracked, newStatus: newStatus, at: clock())
                     try await repository.updateAfterRefresh(baseline)
-                    catchUpMarks[tracked.id] = nil
+                    let wasDamaged = isReportedDamaged(tracked)
+                    clearCatchUp(for: tracked)
                     refreshedShowCount += 1
-                    lastNotificationDecision = String(
-                        localized:
-                            "Catch-up for \(tracked.name): baseline recorded, no notification"
-                    )
+                    lastNotificationDecision =
+                        wasDamaged
+                        ? String(
+                            localized:
+                                "Repaired \(tracked.name)'s saved status: baseline recorded, no notification"
+                        )
+                        : String(
+                            localized:
+                                "Catch-up for \(tracked.name): baseline recorded, no notification"
+                        )
                     continue
                 }
 
@@ -371,8 +380,16 @@ final class WatchlistRefreshService {
                 guard var tracked = try? await activeRow(for: snapshot.id) else { continue }
                 tracked.isStale = true
                 tracked.lastCheckedAt = clock()
+                // A damaged row's stale write stores its fallback status as valid
+                // JSON, which repairs it. Its repair mark and any pending signature
+                // would each force a refetch on every later refresh (and another
+                // "not found"), so clear the signature in this same write and the
+                // mark once it succeeds. Undamaged rows keep their existing behavior.
+                let repairsDamage = isReportedDamaged(tracked)
+                if repairsDamage { tracked.pendingChangeSignature = nil }
                 if (try? await repository.updateAfterRefresh(tracked)) != nil {
                     staleSavedIDs.insert(tracked.id)
+                    if repairsDamage { clearCatchUp(for: tracked) }
                 }
                 refreshedShowCount += 1
                 lastNotificationDecision = String(

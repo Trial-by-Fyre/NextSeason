@@ -1,4 +1,4 @@
-# R03 / R13 behavior matrix — revision 3, design review approved
+# R03 / R13 behavior matrix — revision 4, design review approved
 
 This is the high-risk discovery step from `FEATURE_DEVELOPMENT.md` for two findings in [2026-10-12-feature-area-review.md](2026-10-12-feature-area-review.md), as refined in [2026-10-12-feature-area-review-analysis.md](2026-10-12-feature-area-review-analysis.md):
 
@@ -348,6 +348,55 @@ Review of revision 2 by ChatGPT, October 12, 2026:
 4. Launch recovery for an unreadable store, which is unchanged.
 
 Review of revision 3 by ChatGPT, October 12, 2026: approved. Finding 1 is resolved by per-show serialization of refresh work, with row and state checks for user actions. No design-review questions remain open.
+
+## Revision 4: consistency check after R01 and R08/R11 (October 14, 2026)
+
+R01 and R08/R11 were implemented after revision 3 was approved. This section checks the matrix against the current code. **Approved: the design reviewer (ChatGPT) accepted revision 4 on October 14, 2026, and the product owner approved the delayed catch-up baseline (change 1) the same day.** Where this section and the scenarios above differ, this section wins.
+
+Still valid as written:
+
+1. **Retry does not depend on the updates map.** R11 may advance its coverage watermark past B's server change once B's row is saved. That is harmless: the R03 retry is driven by `pendingChangeSignature`, which forces a fetch (`awaitsConfirmation`) whatever the map says. Fact 8 also still holds: a failed updates request, now possibly the full map, still ends a non-forced refresh before any row is fetched.
+2. **R11's coverage rule tolerates serialization.** A pass that skips a busy show counts it only if the saved row already proves coverage. Under R03 the owner saves the row before scheduling, so a show whose delivery is in flight is covered, and one still being fetched is not. A not-found row counts only when the pass saved its own stale flag, so a show skipped while its owner handles a 404 blocks the advance. That is conservative and correct.
+3. **R01 supplies the rollback for R03 scenario 17 and R13 scenario 9,** provided the new guarded-restore operation goes through `SwiftDataWatchlistRepository.performWrite`. That requirement is added below.
+
+Proposed changes:
+
+1. **Skip, not join, for a busy show** (candidate design 1.2; R03 scenarios 8, 10 and 12).
+   - Scenario 12 requires the second refresh to make no decision for the show, so joining would only add waiting. Waiting uses the 30-second background budget for nothing.
+   - Proposal: every refresh skips a show whose work is in flight.
+   - Scenario 10's expected result changes accordingly. The catch-up refresh skips the busy show and its mark stays, so the next refresh that reaches the show records the silent baseline and clears any retry. B is still never announced; the baseline is only delayed.
+2. **A successful stale write clears the catch-up mark** (R13 scenario 8 left this to implementation).
+   - A marked row is fetched on every pass. If the mark stays after a 404, every refresh refetches the row and gets 404 again.
+   - The stale write stores the fallback `.unknown` as valid JSON, so the snapshot is repaired, and clearing the mark is safe.
+   - A failed stale write keeps the mark.
+3. **New R13 scenario 16: a damaged row no longer blocks R11 coverage.** R11's coverage check reads `all()`. Today one undecodable row makes that read throw, so the watermark cannot advance; this is the limitation recorded at R11 completion. After R13, `all()` returns the fallback row.
+   - Expected: the fallback row is judged by its stored `sourceUpdatedAt` like any other row. Its repair baseline (catch-up) updates it, and the watermark can advance.
+   - Verify: a SwiftData test with one invalid snapshot, where a non-forced refresh advances the watermark after the repair.
+4. **Detection events once per detection, not per read** (R13 scenario 15). R11 added a second `all()` read per refresh, the coverage check. Recording the mark marks the detection, so a read of an already-marked row records nothing.
+   - Verify: assert one analytics event across a full refresh, which makes at least two reads.
+5. **Guarded restore uses R01's write boundary** (R03 scenario 17). The new repository restore operation runs inside `performWrite`, so a failed restore is rolled back, including the fresh-context replacement on iOS 18. `InMemoryWatchlistRepository` implements the same guard, so refresh tests match production semantics (R03 scenario 11).
+
+Test impact, which needs no design change: several R11 coverage tests (scenarios 10, 11 and 16 in the R08/R11 matrix) overlap two passes on the same show. Once R03 serializes per show, the second pass skips that show instead of fetching it. Those tests will be restructured to keep their intent; for example, the first pass is held during delivery (after its save) rather than during the fetch.
+
+Clarifications from the design reviewer's approval:
+
+1. **Scenario 10 applies to a failed delivery.** "B is never announced" holds when B's in-flight delivery fails. If iOS already accepted B, a later pause and resume cannot retract that alert; the baseline only prevents a second one.
+2. **Damage detection is tracked separately from the catch-up mark** (change 4). A row can already carry a resume mark when its damage is first found, so "the mark exists" cannot mean "damage already reported". The repository records the detection itself, keyed like marks by show ID and `dateAdded`, and emits the analytics event the first time it sees the damage for that row. This applies whether or not a resume mark already existed. Repair clears the detection record together with the mark.
+   - Verify: a damaged row that already has a resume mark still produces exactly one detection event.
+
+Out-of-scope note 1 is superseded: R08/R11 are done. Repair still needs the updates request to succeed (fact 8).
+
+## Implementation status (October 14, 2026)
+
+- **R13: implemented; independent acceptance review pending.** Each R13 scenario 1–16 has a test in `WatchlistSnapshotRepairTests.swift`, except scenario 13's existing pruning tests, which are reused. The repository side covers scenarios 1–3 and 15; the refresh side covers scenarios 4–14 and 16.
+  - A successful stale write clears the repair mark only for rows whose damage was reported. A resumed but undamaged row that returns 404 keeps its existing behavior.
+- **R13 acceptance review, finding 1 (P2), resolved.** A damaged row repaired through a 404 kept any `pendingChangeSignature`, which forced a refetch on every later refresh even after the mark was cleared. The 404 repair now clears the pending signature in the same saved write and clears the mark only after that write succeeds. Resumed, undamaged rows keep their existing behavior. New regression: `notFoundRepairClearsPendingSignature`, which fails without the fix.
+- **R13 accepted (October 14, 2026).** The design reviewer's re-review found no blocking issues.
+  - iPhone 16 / iOS 18.6: 551 of 552 passed; the only failure is the documented show-detail audit.
+  - iPhone 18 Pro Max / iOS 27.0: 552 of 552 passed.
+  - The five suspected intermittent failures passed on both; their earlier cause remains unproven.
+- **Suspected intermittent failures (not proven pre-existing).** One full iOS 18.6 run on October 14 failed five tests in `WatchlistPendingRemovalTests` and `WatchlistViewModelTests`: `replacingPendingRemovalEmitsReplacedOutcome`, `replacingPendingRemovalCommitsPrevious`, `timerExpiryRemovesShowWithCancellationAwareRepository`, `failedImmediateDeleteRestoresRow` and `replacingPendingRemovalDropsFirstShowFromDisplayedList`. They use the in-memory repository, which R13 does not touch, and all 38 tests in those suites passed when rerun alone. Passing in isolation does not prove the failures predate R13.
+- **R03: not started.**
 
 ## Remaining process steps
 

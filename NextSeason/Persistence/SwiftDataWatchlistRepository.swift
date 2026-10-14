@@ -16,10 +16,21 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
     /// Replaced after a failed write; see `performWrite`.
     private var context: ModelContext
     private let save: (ModelContext) throws -> Void
+    /// Repair marks for rows with an undecodable snapshot; see `domain(_:)`.
+    private let rowMarks: WatchlistRowMarks
+    private let analytics: (any AnalyticsTracking)?
 
     /// `save` is a test seam for forcing a save failure; production uses the default.
-    init(context: ModelContext, save: @escaping (ModelContext) throws -> Void = { try $0.save() }) {
+    /// `rowMarks` must use the refresh service's defaults so it sees repair marks.
+    init(
+        context: ModelContext,
+        rowMarks: WatchlistRowMarks = WatchlistRowMarks(userDefaults: .standard),
+        analytics: (any AnalyticsTracking)? = nil,
+        save: @escaping (ModelContext) throws -> Void = { try $0.save() }
+    ) {
         self.context = context
+        self.rowMarks = rowMarks
+        self.analytics = analytics
         self.save = save
     }
 
@@ -30,7 +41,7 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         let descriptor = FetchDescriptor<TrackedShowEntity>(
             sortBy: [SortDescriptor(\.dateAdded, order: .reverse)]
         )
-        let result = try context.fetch(descriptor).map { try $0.toDomain() }
+        let result = try context.fetch(descriptor).map(domain)
         AppDiagnosticsLogger.logger(for: .persistence)
             .notice("watchlist_read_all complete count=\(result.count, privacy: .public)")
         return result
@@ -38,7 +49,7 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
 
     func trackedShow(showID: Int) async throws -> TrackedShow? {
         guard let entity = try entity(for: showID) else { return nil }
-        return try entity.toDomain()
+        return domain(entity)
     }
 
     func trackedShowIDs() async throws -> Set<Int> {
@@ -70,7 +81,7 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         try performWrite {
             if let existing = try entity(for: show.id) {
                 guard existing.isPaused else { return }
-                try existing.apply(TrackedShow(reactivating: try existing.toDomain(), from: show))
+                try existing.apply(TrackedShow(reactivating: domain(existing), from: show))
                 existing.isPaused = false
                 return
             }
@@ -145,6 +156,38 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
             )
             throw error
         }
+    }
+
+    /// Every path that turns a saved row into a `TrackedShow` goes through here.
+    ///
+    /// An undecodable next-season snapshot must not hide the row or the rest of the
+    /// watchlist (review finding R13). The row is marked for a silent repair
+    /// baseline before any caller sees it, then returned with `.unknown`. Marking
+    /// first means an action that rewrites the row, such as Undo or reactivation,
+    /// cannot erase the repair. Damage is recognized only by a decode failure, and
+    /// nothing here rewrites the damaged snapshot; a successful repair write does.
+    private func domain(_ entity: TrackedShowEntity) -> TrackedShow {
+        do {
+            return try entity.toDomain()
+        } catch {
+            recordDamage(entity, error: error)
+            return entity.toDomain(nextSeason: .unknown)
+        }
+    }
+
+    /// Marks a damaged row for repair and reports the first detection only. The
+    /// report is tracked apart from the mark: a resumed row may already carry a
+    /// mark when its damage is first found.
+    private func recordDamage(_ entity: TrackedShowEntity, error: Error) {
+        let showID = entity.tvMazeID
+        let dateAdded = entity.dateAdded.timeIntervalSinceReferenceDate
+        rowMarks.catchUp[showID] = dateAdded
+        guard rowMarks.damageReported[showID] != dateAdded else { return }
+        rowMarks.damageReported[showID] = dateAdded
+        AppDiagnosticsLogger.logger(for: .persistence).error(
+            "watchlist_snapshot_damaged show_id=\(showID, privacy: .public) error=\(String(describing: error), privacy: .public)"
+        )
+        analytics?.trackNonFatalError(error, context: "watchlist_snapshot_damaged")
     }
 
     private func entity(for showID: Int) throws -> TrackedShowEntity? {

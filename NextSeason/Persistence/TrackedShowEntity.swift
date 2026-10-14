@@ -89,7 +89,13 @@ extension NextSeasonSchemaV1 {
         func toDomain() throws -> TrackedShow {
             let nextSeason = try JSONDecoder().decode(
                 NextSeasonStatus.self, from: nextSeasonSnapshot)
-            return TrackedShow(
+            return toDomain(nextSeason: nextSeason)
+        }
+
+        /// The row with a given next-season status, for when the stored snapshot
+        /// cannot be decoded. Every other field is an ordinary column.
+        func toDomain(nextSeason: NextSeasonStatus) -> TrackedShow {
+            TrackedShow(
                 id: tvMazeID,
                 name: name,
                 posterMediumURL: posterMediumURL,

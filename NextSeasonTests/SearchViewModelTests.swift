@@ -583,6 +583,103 @@ struct SearchViewModelTests {
         #expect(requestedOffsets.values == [0, 10, 20])
     }
 
+    /// Review finding R05: a Load More for query A that finished after query B
+    /// had loaded used to append A's page to B and replace B's cursor.
+    @Test(
+        "A stale Load More does not change a newer query's results or cursor",
+        .timeLimit(.minutes(1))
+    )
+    func staleLoadMoreDoesNotAffectNewerQuery() async throws {
+        let resultsA = (1...10).map(Self.mappedResult)
+        let staleA = (11...20).map(Self.mappedResult)
+        let resultsB = (101...110).map(Self.mappedResult)
+        let moreB = (111...115).map(Self.mappedResult)
+        let gateA = PageGate()
+        let offsetsB = OffsetRecorder()
+        let viewModel = makeViewModel(
+            search: MockSearchService { query, offset in
+                switch (query, offset) {
+                case ("a", 0):
+                    return Self.page(resultsA, hasMore: true, offset: offset)
+                case ("a", _):
+                    await gateA.wait()
+                    return Self.page(staleA, hasMore: false, offset: offset)
+                case (_, 0):
+                    offsetsB.append(offset)
+                    // B's cursor (40) differs from A's (20), so a stale cursor write shows.
+                    return Self.page(resultsB, hasMore: true, offset: offset, rawCount: 40)
+                default:
+                    offsetsB.append(offset)
+                    return Self.page(moreB, hasMore: false, offset: offset)
+                }
+            },
+            mapping: Self.mapping(for: resultsA + staleA + resultsB + moreB)
+        )
+        viewModel.query = "a"
+        await viewModel.search()
+        let staleLoad = Task { await viewModel.loadMore() }
+        try await waitUntil { viewModel.isLoadingMore }
+
+        viewModel.query = "b"
+        await viewModel.search()
+        gateA.open()
+        await staleLoad.value
+
+        #expect(viewModel.state == .results(.init(items: resultsB, hasMore: true)))
+
+        await viewModel.loadMore()
+        #expect(viewModel.state == .results(.init(items: resultsB + moreB, hasMore: false)))
+        #expect(offsetsB.values == [0, 40])
+    }
+
+    @Test(
+        "A stale Load More failure neither alerts nor clears a newer query's loading flag",
+        .timeLimit(.minutes(1))
+    )
+    func staleLoadMoreFailureDoesNotAffectNewerQuery() async throws {
+        let resultsA = (1...10).map(Self.mappedResult)
+        let resultsB = (101...110).map(Self.mappedResult)
+        let moreB = (111...115).map(Self.mappedResult)
+        let gateA = PageGate()
+        let gateB = PageGate()
+        let viewModel = makeViewModel(
+            search: MockSearchService { query, offset in
+                switch (query, offset) {
+                case ("a", 0):
+                    return Self.page(resultsA, hasMore: true, offset: offset)
+                case ("a", _):
+                    await gateA.wait()
+                    throw TestError()
+                case (_, 0):
+                    return Self.page(resultsB, hasMore: true, offset: offset)
+                default:
+                    await gateB.wait()
+                    return Self.page(moreB, hasMore: false, offset: offset)
+                }
+            },
+            mapping: Self.mapping(for: resultsA + resultsB + moreB)
+        )
+        viewModel.query = "a"
+        await viewModel.search()
+        let staleLoad = Task { await viewModel.loadMore() }
+        try await waitUntil { viewModel.isLoadingMore }
+
+        viewModel.query = "b"
+        await viewModel.search()
+        let loadB = Task { await viewModel.loadMore() }
+        try await waitUntil { viewModel.isLoadingMore }
+
+        gateA.open()
+        await staleLoad.value
+        #expect(viewModel.resolveErrorMessage == nil)
+        #expect(viewModel.isLoadingMore)
+
+        gateB.open()
+        await loadB.value
+        #expect(viewModel.isLoadingMore == false)
+        #expect(viewModel.state == .results(.init(items: resultsB + moreB, hasMore: false)))
+    }
+
     /// A TheTVDB hit with only an id, for pagination tests.
     nonisolated private static func mappedResult(_ id: Int) -> TVDBSearchResult {
         TVDBSearchResult(
@@ -724,6 +821,37 @@ struct SearchViewModelTests {
 
         var values: [Int] {
             stored.withLock { $0 }
+        }
+    }
+
+    /// Holds a mocked page request until the test opens the gate. Opening before
+    /// anyone waits lets later waiters through immediately.
+    private final class PageGate: Sendable {
+        private struct State {
+            var isOpen = false
+            var waiters: [CheckedContinuation<Void, Never>] = []
+        }
+
+        private let state = Mutex(State())
+
+        func wait() async {
+            await withCheckedContinuation { continuation in
+                let resumeNow = state.withLock { state in
+                    if state.isOpen { return true }
+                    state.waiters.append(continuation)
+                    return false
+                }
+                if resumeNow { continuation.resume() }
+            }
+        }
+
+        func open() {
+            let waiters = state.withLock { state in
+                state.isOpen = true
+                defer { state.waiters = [] }
+                return state.waiters
+            }
+            waiters.forEach { $0.resume() }
         }
     }
 }

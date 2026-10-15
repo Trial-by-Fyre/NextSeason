@@ -67,6 +67,12 @@ final class SearchViewModel {
     private var displayedQuery: String?
     /// Next TheTVDB `offset` for the active `displayedQuery` (sum of fetched counts).
     private var nextOffset = 0
+    /// Incremented whenever a search replaces or clears the current outcome. A
+    /// load-more captures it and discards its completion if it changed while
+    /// awaiting, so an older query's page, cursor, loading flag, or error never
+    /// lands on a newer query. (Changing the text cancels the search task, not
+    /// the button-created load-more task.)
+    private var searchGeneration = 0
     /// Cache of TheTVDB series id → TVMaze show id from the local mapping.
     /// Used for search-row stars without network prefetch.
     private var resolvedTVMazeIDsByTVDBID: [Int: Int] = [:]
@@ -92,6 +98,7 @@ final class SearchViewModel {
     func search() async {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
+            searchGeneration += 1
             state = .idle
             displayedQuery = nil
             nextOffset = 0
@@ -111,6 +118,7 @@ final class SearchViewModel {
             return
         }
 
+        searchGeneration += 1
         state = .loading
         isLoadingMore = false
         nextOffset = 0
@@ -189,8 +197,13 @@ final class SearchViewModel {
         let trimmed = displayedQuery ?? query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
+        let generation = searchGeneration
         isLoadingMore = true
-        defer { isLoadingMore = false }
+        defer {
+            // A newer search already reset the flag and may have its own
+            // load-more in flight; leave that one's flag alone.
+            if generation == searchGeneration { isLoadingMore = false }
+        }
 
         do {
             let existingIDs = Set(page.items.map(\.id))
@@ -200,7 +213,7 @@ final class SearchViewModel {
                 existingIDs: existingIDs,
                 targetCount: Self.actionablePageTarget
             )
-            guard !Task.isCancelled else { return }
+            guard !Task.isCancelled, generation == searchGeneration else { return }
             guard case .results(let current) = state else { return }
 
             var merged = current.items
@@ -218,6 +231,8 @@ final class SearchViewModel {
             return
         } catch {
             analytics.trackNonFatalError(error, context: "search_load_more")
+            // The user has moved on to another query; don't alert about the old one.
+            guard generation == searchGeneration else { return }
             presentResolveError(error.localizedDescription)
         }
     }

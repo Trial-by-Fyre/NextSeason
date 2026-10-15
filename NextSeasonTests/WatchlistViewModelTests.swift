@@ -194,7 +194,27 @@ struct WatchlistViewModelTests {
         #expect(try await repository.contains(showID: tracked.id))
     }
 
-    @Test("Failed immediate delete restores the row via outcome")
+    @Test(
+        "The state wait is released by cancellation when the state never arrives",
+        .timeLimit(.minutes(1)))
+    func waitIsReleasedByCancellation() async {
+        final class Checks { var count = 0 }
+        let checks = Checks()
+        let waiting = Task {
+            try await waitUntil {
+                checks.count += 1
+                return false
+            }
+        }
+        // The second check runs inside the observation tracking, just before the
+        // wait suspends; both run on the main actor without yielding in between.
+        while checks.count < 2 { await Task.yield() }
+        waiting.cancel()
+
+        await #expect(throws: CancellationError.self) { try await waiting.value }
+    }
+
+    @Test("Failed immediate delete restores the row via outcome", .timeLimit(.minutes(1)))
     func failedImmediateDeleteRestoresRow() async throws {
         let repository = FailingRemoveWatchlistRepository()
         let removalCoordinator = WatchlistPendingRemoval(
@@ -214,17 +234,18 @@ struct WatchlistViewModelTests {
             rowAnchors: [tracked.id: .zero]
         )
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, viewModel.shows.isEmpty {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // The failed remove and the row restore both run in tasks the view model
+        // starts itself; wait for the restored row rather than a fixed time.
+        try await waitUntil { viewModel.shows.isEmpty == false }
 
         #expect(removalCoordinator.lastOutcome == .failed(showID: tracked.id))
         #expect(viewModel.shows.count == 1)
         #expect(try await repository.contains(showID: tracked.id))
     }
 
-    @Test("Replacing a pending removal drops the first show from the displayed list")
+    @Test(
+        "Replacing a pending removal drops the first show from the displayed list",
+        .timeLimit(.minutes(1)))
     func replacingPendingRemovalDropsFirstShowFromDisplayedList() async throws {
         let repository = InMemoryWatchlistRepository()
         let removalCoordinator = WatchlistPendingRemoval(
@@ -248,10 +269,8 @@ struct WatchlistViewModelTests {
 
         #expect(viewModel.pendingRemoval?.id == second.id)
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: first.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // The replaced outcome is emitted after the first show's remove is saved.
+        try await waitUntil { removalCoordinator.lastOutcome == .replaced(showID: first.id) }
 
         #expect(try await repository.contains(showID: first.id) == false)
         #expect(viewModel.shows.map(\.id).contains(first.id) == false)
@@ -260,7 +279,7 @@ struct WatchlistViewModelTests {
         #expect(try await repository.contains(showID: second.id))
     }
 
-    @Test("Swipe delete removes the row immediately and persists")
+    @Test("Swipe delete removes the row immediately and persists", .timeLimit(.minutes(1)))
     func deleteImmediatelyRemovesRowAndPersists() async throws {
         let repository = InMemoryWatchlistRepository()
         let removalCoordinator = WatchlistPendingRemoval(
@@ -284,15 +303,16 @@ struct WatchlistViewModelTests {
         #expect(removalCoordinator.pendingRemoval?.id == tracked.id)
         #expect(removalCoordinator.toastAnchor?.minY == 120)
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: tracked.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // The immediate remove runs on the coordinator's own task, which emits
+        // the outcome after the remove is saved; wait for it, not a fixed time.
+        try await waitUntil { removalCoordinator.lastOutcome != nil }
 
         #expect(try await repository.contains(showID: tracked.id) == false)
     }
 
-    @Test("VoiceOver-equivalent immediate delete uses the same path as swipe")
+    @Test(
+        "VoiceOver-equivalent immediate delete uses the same path as swipe",
+        .timeLimit(.minutes(1)))
     func deleteImmediatelyTrackedShowRemovesRowAndPersists() async throws {
         let repository = InMemoryWatchlistRepository()
         let removalCoordinator = WatchlistPendingRemoval(
@@ -313,10 +333,8 @@ struct WatchlistViewModelTests {
         #expect(removalCoordinator.pendingRemoval?.id == tracked.id)
         #expect(removalCoordinator.toastAnchor == anchor)
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: tracked.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // Same immediate-remove path as swipe; wait for the emitted outcome.
+        try await waitUntil { removalCoordinator.lastOutcome != nil }
 
         #expect(try await repository.contains(showID: tracked.id) == false)
     }

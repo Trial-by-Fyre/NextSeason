@@ -77,7 +77,7 @@ struct WatchlistPendingRemovalTests {
         #expect(outcomes == [.committed(showID: tracked.id)])
     }
 
-    @Test("OK confirm dismisses the toast before persistence finishes")
+    @Test("OK confirm dismisses the toast before persistence finishes", .timeLimit(.minutes(1)))
     func confirmPendingRemovalDismissesSynchronously() async throws {
         let repository = GatedCancellationAwareRemoveRepository()
         let coordinator = WatchlistPendingRemoval(
@@ -98,10 +98,9 @@ struct WatchlistPendingRemovalTests {
         await repository.waitUntilRemoveBegan()
         repository.resumeRemove()
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, outcomes.isEmpty {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // Persistence finishes on the coordinator's own task, which emits the
+        // outcome after the remove is saved; wait for it, not a fixed time.
+        try await waitUntil { coordinator.lastOutcome != nil }
 
         #expect(try await repository.contains(showID: tracked.id) == false)
         #expect(outcomes == [.committed(showID: tracked.id)])
@@ -140,7 +139,7 @@ struct WatchlistPendingRemovalTests {
         #expect(try await repository.contains(showID: tracked.id))
     }
 
-    @Test("Replacing a pending removal emits replaced for the prior show")
+    @Test("Replacing a pending removal emits replaced for the prior show", .timeLimit(.minutes(1)))
     func replacingPendingRemovalEmitsReplacedOutcome() async throws {
         let repository = InMemoryWatchlistRepository()
         let coordinator = WatchlistPendingRemoval(
@@ -155,10 +154,9 @@ struct WatchlistPendingRemovalTests {
         coordinator.requestRemoval(first, anchor: .zero, source: .watchlist)
         coordinator.requestRemoval(second, anchor: .zero, source: .detail)
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: first.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // The replaced outcome is emitted by a task the coordinator starts itself;
+        // wait for it rather than a fixed time.
+        try await waitUntil { coordinator.lastOutcome == .replaced(showID: first.id) }
 
         #expect(outcomes == [.replaced(showID: first.id)])
     }
@@ -180,7 +178,9 @@ struct WatchlistPendingRemovalTests {
         #expect(try await repository.contains(showID: tracked.id))
     }
 
-    @Test("Immediate removal persists right away and undo restores the show")
+    @Test(
+        "Immediate removal persists right away and undo restores the show",
+        .timeLimit(.minutes(1)))
     func immediateRemovalPersistsThenUndoRestores() async throws {
         let repository = InMemoryWatchlistRepository()
         let analytics = RecordingAnalyticsService()
@@ -194,10 +194,9 @@ struct WatchlistPendingRemovalTests {
             tracked, anchor: CGRect(x: 10, y: 40, width: 100, height: 44), source: .watchlist
         )
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: tracked.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // The immediate remove runs on the coordinator's own task, which emits
+        // the outcome after the remove is saved; wait for it, not a fixed time.
+        try await waitUntil { coordinator.lastOutcome != nil }
 
         #expect(try await repository.contains(showID: tracked.id) == false)
         #expect(outcomes == [.committed(showID: tracked.id)])
@@ -218,7 +217,7 @@ struct WatchlistPendingRemovalTests {
         )
     }
 
-    @Test("Committing an immediate removal only dismisses the toast")
+    @Test("Committing an immediate removal only dismisses the toast", .timeLimit(.minutes(1)))
     func commitImmediateRemovalDismissesToastOnly() async throws {
         let repository = InMemoryWatchlistRepository()
         let coordinator = WatchlistPendingRemoval(
@@ -228,10 +227,8 @@ struct WatchlistPendingRemovalTests {
 
         coordinator.requestImmediateRemoval(tracked, anchor: .zero, source: .watchlist)
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: tracked.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // Wait for the immediate remove's emitted outcome, not a fixed time.
+        try await waitUntil { coordinator.lastOutcome != nil }
 
         await coordinator.commitPendingRemovalIfNeeded()
 
@@ -239,7 +236,7 @@ struct WatchlistPendingRemovalTests {
         #expect(try await repository.contains(showID: tracked.id) == false)
     }
 
-    @Test("A new pending removal commits the previous show")
+    @Test("A new pending removal commits the previous show", .timeLimit(.minutes(1)))
     func replacingPendingRemovalCommitsPrevious() async throws {
         let repository = InMemoryWatchlistRepository()
         let coordinator = WatchlistPendingRemoval(
@@ -254,12 +251,9 @@ struct WatchlistPendingRemovalTests {
 
         #expect(coordinator.pendingRemoval?.id == second.id)
 
-        // Replace commits the previous show via an unstructured Task; wait until
-        // persistence finishes instead of a fixed sleep (flaky under load).
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: first.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // Replace commits the previous show via an unstructured Task, which emits
+        // the replaced outcome after the remove is saved; wait for that outcome.
+        try await waitUntil { coordinator.lastOutcome == .replaced(showID: first.id) }
 
         #expect(try await repository.contains(showID: first.id) == false)
         #expect(try await repository.contains(showID: second.id))
@@ -317,7 +311,9 @@ struct WatchlistPendingRemovalTests {
         )
     }
 
-    @Test("Timer expiry still removes when the repository checks cancellation")
+    @Test(
+        "Timer expiry still removes when the repository checks cancellation",
+        .timeLimit(.minutes(1)))
     func timerExpiryRemovesShowWithCancellationAwareRepository() async throws {
         let repository = CancellationCheckingRemoveRepository()
         let analytics = RecordingAnalyticsService()
@@ -330,10 +326,9 @@ struct WatchlistPendingRemovalTests {
         coordinator.addOutcomeHandler { outcomes.append($0) }
         coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
 
-        let deadline = Date().addingTimeInterval(1)
-        while Date() < deadline, try await repository.contains(showID: tracked.id) {
-            try await Task.sleep(for: .milliseconds(10))
-        }
+        // The undo timer commits on its own task, emitting the outcome after the
+        // remove is saved; wait for that outcome rather than a fixed time.
+        try await waitUntil { coordinator.lastOutcome != nil }
 
         #expect(try await repository.contains(showID: tracked.id) == false)
         #expect(coordinator.pendingRemoval == nil)

@@ -117,10 +117,38 @@ private final class ScriptedRepository: WatchlistRepository {
     }
 }
 
+/// Records deliveries and can hold one, so a pass stays in flight after its save.
 @MainActor
 private final class RecordingNotifications: NotificationDelivering {
     private(set) var delivered: [SeasonNotificationContent] = []
-    func deliver(_ content: SeasonNotificationContent) async { delivered.append(content) }
+    /// When true, the next delivery waits until `releaseHeldDelivery()`.
+    var holdNextDelivery = false
+    private var held: CheckedContinuation<Void, Never>?
+    private var heldStarted: CheckedContinuation<Void, Never>?
+
+    /// Waits until the held delivery has started.
+    func waitForHeldDelivery() async {
+        if held != nil { return }
+        await withCheckedContinuation { heldStarted = $0 }
+    }
+
+    func releaseHeldDelivery() {
+        held?.resume()
+        held = nil
+    }
+
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+        if holdNextDelivery {
+            holdNextDelivery = false
+            await withCheckedContinuation { continuation in
+                held = continuation
+                heldStarted?.resume()
+                heldStarted = nil
+            }
+        }
+        delivered.append(content)
+        return .accepted
+    }
 }
 
 private final class ClockBox: @unchecked Sendable {
@@ -357,14 +385,14 @@ struct WatchlistRefreshCoverageTests {
         tvMaze.shows[1] = show(1, updatedAt: now - 2 * hour)
         tvMaze.holdFirstFetchOf = 1
         let defaults = isolatedDefaults(coveredThrough: now - 6 * hour)
-        let owner = makeService(repository, tvMaze, defaults)
-        let other = makeService(repository, tvMaze, defaults)
+        let service = makeService(repository, tvMaze, defaults)
 
-        let ownerPass = Task { await owner.refreshAll() }
+        let ownerPass = Task { await service.refreshAll() }
         await tvMaze.waitForHeldFetch()
-        // The other pass reaches the same show while the owning fetch is held.
-        tvMaze.failNextFetchOf = [1]
-        await other.refreshAll()
+        // The other pass reaches the same show while the owning fetch is held. It
+        // skips the busy show (R03), whose saved row does not yet cover the change.
+        await service.refreshAll()
+        #expect(tvMaze.fetchedShowIDs == [1], "The other pass skipped the busy show")
         #expect(coveredThrough(defaults) == now - 6 * hour, "The other pass did not cover the show")
 
         // The owning refresh then fails too.
@@ -375,26 +403,29 @@ struct WatchlistRefreshCoverageTests {
         #expect(coveredThrough(defaults) == now - 6 * hour, "Scenario 10")
     }
 
-    @Test("A pass whose own fetch failed is covered by an overlapping pass's saved result")
+    /// Restructured for R03: a pass now skips a show another pass is working on, so
+    /// the owner is held during delivery, after its save, rather than mid-fetch.
+    @Test("A pass that skips a busy show is covered by the owning pass's saved result")
     func overlappingSuccessCovers() async {
         let repository = ScriptedRepository(seed: [row(1, updatedAt: now - 10 * day)])
         let tvMaze = CoverageTVMaze()
         tvMaze.updates = [1: now - 2 * hour]
-        tvMaze.shows[1] = show(1, updatedAt: now - 2 * hour)
-        tvMaze.holdFirstFetchOf = 1
+        tvMaze.shows[1] = show(1, updatedAt: now - 2 * hour, seasonTwoPremiere: "2026-09-01")
+        let notifications = RecordingNotifications()
+        notifications.holdNextDelivery = true
         let defaults = isolatedDefaults(coveredThrough: now - 6 * hour)
+        let service = makeService(repository, tvMaze, defaults, notifications: notifications)
 
-        let first = Task { await makeService(repository, tvMaze, defaults).refreshAll() }
-        await tvMaze.waitForHeldFetch()
-        // A pull-to-refresh saves the change but never advances coverage itself.
-        await makeService(repository, tvMaze, defaults)
-            .refreshAll(force: true, deliverNotifications: false)
-        #expect(coveredThrough(defaults) == now - 6 * hour)
-        tvMaze.failNextFetchOf = [1]
-        tvMaze.releaseHeldFetch()
-        _ = await first.value
+        let owner = Task { await service.refreshAll() }
+        await notifications.waitForHeldDelivery()
+        await service.refreshAll()
 
+        #expect(tvMaze.fetchedShowIDs == [1], "The second pass skipped the busy show")
         #expect(coveredThrough(defaults) == now - hour, "Scenario 11: persisted rows decide")
+        notifications.releaseHeldDelivery()
+        _ = await owner.value
+        #expect(notifications.delivered.map(\.showID) == [1])
+        #expect(coveredThrough(defaults) == now - hour)
     }
 
     @Test("Cancellation just before the watermark write leaves it unchanged")
@@ -492,26 +523,29 @@ struct WatchlistRefreshCoverageTests {
         #expect(coveredThrough(defaults) == now - 6 * hour, "Scenario 15")
     }
 
+    /// Restructured for R03: pass A is held during delivery, after its save, since
+    /// pass B now skips the show A is working on.
     @Test("An older pass finishing after a newer one keeps the newer watermark")
     func olderPassKeepsNewerWatermark() async {
         let repository = ScriptedRepository(seed: [row(1, updatedAt: now - 10 * day)])
         let tvMaze = CoverageTVMaze()
         tvMaze.updates = [1: now - 2 * hour]
-        tvMaze.shows[1] = show(1, updatedAt: now - 2 * hour)
-        tvMaze.holdFirstFetchOf = 1
+        tvMaze.shows[1] = show(1, updatedAt: now - 2 * hour, seasonTwoPremiere: "2026-09-01")
+        let notifications = RecordingNotifications()
+        notifications.holdNextDelivery = true
         let clock = ClockBox(now)
         let defaults = isolatedDefaults(coveredThrough: now - 6 * hour)
+        let service = makeService(
+            repository, tvMaze, defaults, notifications: notifications, clock: { clock.date })
 
         // Pass A starts at `now` and is held; pass B starts two hours later.
-        let passA = Task {
-            await makeService(repository, tvMaze, defaults, clock: { clock.date }).refreshAll()
-        }
-        await tvMaze.waitForHeldFetch()
+        let passA = Task { await service.refreshAll() }
+        await notifications.waitForHeldDelivery()
         clock.date = now + 2 * hour
-        await makeService(repository, tvMaze, defaults, clock: { clock.date }).refreshAll()
+        await service.refreshAll()
         #expect(coveredThrough(defaults) == now + hour)
 
-        tvMaze.releaseHeldFetch()
+        notifications.releaseHeldDelivery()
         _ = await passA.value
 
         // B's watermark is later than A's request time but not later than the

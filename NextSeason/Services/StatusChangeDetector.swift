@@ -79,6 +79,19 @@ nonisolated enum StatusChangeDetector {
         return updated
     }
 
+    /// True when `stored` is still the row and decision `attempt` saved before
+    /// delivering: the same saved row (`dateAdded`), still active, with the same
+    /// status and both notification signatures. Guards the delivery-failure
+    /// restore (review finding R03) against removal, re-adding, pausing, or a
+    /// newer decision. No timestamp is compared; wall-clock time is not unique.
+    static func isStillCurrent(_ stored: TrackedShow, decidedBy attempt: TrackedShow) -> Bool {
+        stored.dateAdded == attempt.dateAdded
+            && !stored.isPaused
+            && signature(for: stored.nextSeason) == signature(for: attempt.nextSeason)
+            && stored.lastNotifiedSignature == attempt.lastNotifiedSignature
+            && stored.pendingChangeSignature == attempt.pendingChangeSignature
+    }
+
     /// Updates local next-season state and decides whether to notify (PD-008).
     ///
     /// Always returns a tracked show with `lastCheckedAt` and `nextSeason` applied.

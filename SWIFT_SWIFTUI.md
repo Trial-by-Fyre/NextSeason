@@ -21,6 +21,10 @@ in the project-specific instructions.
   which were used: `swiftui-pro` (SwiftUI views), `swiftdata-pro` (SwiftData /
   persistence), `swift-concurrency-pro` (async/await, actors), `swift-testing-pro`
   (tests).
+  The shared skills directory is `~/.agents/skills/`. Read each skill directly at
+  `~/.agents/skills/<skill-name>/SKILL.md`, even if it is absent from the session's
+  available-skills list. `~/.claude/skills/` may contain symbolic links to these
+  directories; a search that does not follow links can miss installed skills.
 - Naming: for data-transfer types (DTOs that mirror API JSON), use the `Data`
   suffix in code, e.g. `ShowData`, `SeasonData`, `SearchResultData`. The term
   "DTO" may still be used in documentation.

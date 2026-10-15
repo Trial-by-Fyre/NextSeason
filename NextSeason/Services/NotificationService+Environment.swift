@@ -33,13 +33,19 @@ private final class UnconfiguredNotificationService: NotificationManaging {
     func enableNotificationsFromSettingsEntryPoint() async { fail() }
     @discardableResult
     func requestAuthorizationIfNeeded() async -> Bool { fail() }
-    func deliver(_ content: SeasonNotificationContent) async { fail() }
-    func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async { fail() }
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+        fail()
+    }
+    func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async
+        -> NotificationDeliveryOutcome
+    {
+        fail()
+    }
     func deliverAfterDelay(
         _ content: SeasonNotificationContent,
         requestIdentifier: String,
         delay: TimeInterval
-    ) async {
+    ) async -> NotificationDeliveryOutcome {
         fail()
     }
 }

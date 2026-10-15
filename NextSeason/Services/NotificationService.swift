@@ -7,11 +7,29 @@ import Foundation
 import UIKit
 import UserNotifications
 
+/// What happened to one delivery request (review finding R03).
+///
+/// Only `failed` is safe to retry: it means the request never reached the
+/// system. Re-adding a request whose identifier matches an already delivered
+/// notification alerts the user again, so `unknown` is never retried.
+nonisolated enum NotificationDeliveryOutcome: Sendable, Equatable {
+    /// The system accepted the request.
+    case accepted
+    /// Not attempted: alerts are not permitted, or delivery is off for this refresh.
+    case suppressed
+    /// The request was not scheduled: the system rejected it, or the task was
+    /// cancelled before it was submitted.
+    case failed
+    /// The request was submitted, but whether the system accepted it is unknown.
+    case unknown
+}
+
 /// Narrow delivery surface used by refresh / diagnostics so they can be tested
 /// without the full permission API.
 @MainActor
 protocol NotificationDelivering: AnyObject {
-    func deliver(_ content: SeasonNotificationContent) async
+    @discardableResult
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome
 }
 
 /// Full permission + settings + delivery surface for SwiftUI and view models.
@@ -27,12 +45,15 @@ protocol NotificationManaging: NotificationDelivering {
     func enableNotificationsFromSettingsEntryPoint() async
     @discardableResult
     func requestAuthorizationIfNeeded() async -> Bool
+    @discardableResult
     func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async
+        -> NotificationDeliveryOutcome
+    @discardableResult
     func deliverAfterDelay(
         _ content: SeasonNotificationContent,
         requestIdentifier: String,
         delay: TimeInterval
-    ) async
+    ) async -> NotificationDeliveryOutcome
 }
 
 /// Local notification permission and delivery for season-change alerts (FR-011, FR-012).
@@ -55,6 +76,7 @@ final class NotificationService: NotificationManaging {
     private let analytics: any AnalyticsTracking
     #if DEBUG
         private let authorizationStatusForTesting: UNAuthorizationStatus?
+        private let schedulerForTesting: SchedulerForTesting?
     #endif
 
     init(
@@ -67,6 +89,7 @@ final class NotificationService: NotificationManaging {
         self.analytics = analytics
         #if DEBUG
             self.authorizationStatusForTesting = nil
+            self.schedulerForTesting = nil
         #endif
     }
 
@@ -81,6 +104,23 @@ final class NotificationService: NotificationManaging {
             self.center = .current()
             self.userDefaults = userDefaults
             self.authorizationStatusForTesting = authorizationStatusForTesting
+            self.schedulerForTesting = nil
+            self.analytics = analytics
+        }
+
+        /// Stands in for the system's permission check and `add` call, which cannot
+        /// be made to fail on demand, so tests can check each delivery outcome.
+        struct SchedulerForTesting {
+            var alertsPermitted: Bool
+            var add: @MainActor (UNNotificationRequest) async throws -> Void
+        }
+
+        /// Test seam: schedules through `scheduler` instead of the system center.
+        init(scheduler: SchedulerForTesting, analytics: any AnalyticsTracking) {
+            self.center = .current()
+            self.userDefaults = .standard
+            self.authorizationStatusForTesting = nil
+            self.schedulerForTesting = scheduler
             self.analytics = analytics
         }
 
@@ -207,26 +247,32 @@ final class NotificationService: NotificationManaging {
     }
 
     /// Schedules an immediate local notification (nil trigger → deliver ASAP).
-    func deliver(_ content: SeasonNotificationContent) async {
+    @discardableResult
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
         await scheduleNotification(content, requestIdentifier: nil, trigger: nil)
     }
 
-    func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async {
+    @discardableResult
+    func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async
+        -> NotificationDeliveryOutcome
+    {
         await scheduleNotification(content, requestIdentifier: requestIdentifier, trigger: nil)
     }
 
     /// Beta diagnostics helper: schedules delivery with the system so the
     /// notification can arrive after the app is backgrounded or terminated.
+    @discardableResult
     func deliverAfterDelay(
         _ content: SeasonNotificationContent,
         requestIdentifier: String,
         delay interval: TimeInterval
-    ) async {
+    ) async -> NotificationDeliveryOutcome {
         let trigger = UNTimeIntervalNotificationTrigger(
             timeInterval: max(1, interval),
             repeats: false
         )
-        await scheduleNotification(content, requestIdentifier: requestIdentifier, trigger: trigger)
+        return await scheduleNotification(
+            content, requestIdentifier: requestIdentifier, trigger: trigger)
     }
 
     /// Builds and adds a `UNNotificationRequest` when alerts are allowed.
@@ -234,13 +280,17 @@ final class NotificationService: NotificationManaging {
     /// - `userInfo["showID"]` is what `NotificationRouting` reads on tap.
     /// - Default identifier embeds show ID + status signature so re-scheduling
     ///   the same next-season state replaces the prior pending request.
+    ///
+    /// Cancellation alone never makes the outcome `unknown` (R03 scenario 15):
+    /// before submission it is `failed`, which is safe to retry; once submitted,
+    /// `add`'s own result is awaited and used.
     private func scheduleNotification(
         _ content: SeasonNotificationContent,
         requestIdentifier: String?,
         trigger: UNNotificationTrigger?
-    ) async {
-        let settings = await center.notificationSettings()
-        guard NotificationAuthorizationPolicy.canDeliverAlerts(from: settings) else { return }
+    ) async -> NotificationDeliveryOutcome {
+        guard await alertsPermitted() else { return .suppressed }
+        guard !Task.isCancelled else { return .failed }
 
         let notification = UNMutableNotificationContent()
         let title = content.title
@@ -260,20 +310,45 @@ final class NotificationService: NotificationManaging {
         )
 
         do {
-            try await center.add(request)
-            analytics.track(.notificationReminderScheduled)
-            // Background delivery never hits `willPresent` / `didReceive` unless
-            // the user taps. Record eligibility here so the next foreground can
-            // request a review after the system accepted the notification.
-            NotificationRouting.noteShowNotificationExperience(
-                userInfo: notification.userInfo,
-                requestIdentifier: identifier
-            )
+            try await add(request)
+        } catch is CancellationError {
+            // Submitted, but cancelled before the system answered; the request may
+            // still have been accepted, so it must not be retried.
+            analytics.trackNonFatalError(
+                CancellationError(), context: "notification_schedule_unknown")
+            return .unknown
         } catch {
+            // Expected and recoverable now that the refresh retries a failed
+            // delivery, so no DEBUG assertion here.
             analytics.trackNonFatalError(error, context: "notification_schedule")
-            #if DEBUG
-                assertionFailure("Failed to schedule notification: \(error)")
-            #endif
+            return .failed
         }
+        analytics.track(.notificationReminderScheduled)
+        // Background delivery never hits `willPresent` / `didReceive` unless
+        // the user taps. Record eligibility here so the next foreground can
+        // request a review after the system accepted the notification.
+        NotificationRouting.noteShowNotificationExperience(
+            userInfo: notification.userInfo,
+            requestIdentifier: identifier
+        )
+        return .accepted
+    }
+
+    private func alertsPermitted() async -> Bool {
+        #if DEBUG
+            if let schedulerForTesting { return schedulerForTesting.alertsPermitted }
+        #endif
+        let settings = await center.notificationSettings()
+        return NotificationAuthorizationPolicy.canDeliverAlerts(from: settings)
+    }
+
+    private func add(_ request: UNNotificationRequest) async throws {
+        #if DEBUG
+            if let schedulerForTesting {
+                try await schedulerForTesting.add(request)
+                return
+            }
+        #endif
+        try await center.add(request)
     }
 }

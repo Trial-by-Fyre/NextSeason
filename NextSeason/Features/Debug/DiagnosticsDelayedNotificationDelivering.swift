@@ -17,8 +17,11 @@ final class DiagnosticsDelayedNotificationDelivering: NotificationDelivering {
         self.delay = delay
     }
 
-    func deliver(_ content: SeasonNotificationContent) async {
+    /// Passes the real outcome on, so simulated runs follow the same retry rules.
+    @discardableResult
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
         let identifier = "debug-pipeline-\(content.showID)-\(UUID().uuidString)"
-        await service.deliverAfterDelay(content, requestIdentifier: identifier, delay: delay)
+        return await service.deliverAfterDelay(
+            content, requestIdentifier: identifier, delay: delay)
     }
 }

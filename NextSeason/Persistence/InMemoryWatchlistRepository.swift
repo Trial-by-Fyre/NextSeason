@@ -61,4 +61,17 @@ final class InMemoryWatchlistRepository: WatchlistRepository {
             shows[id]?.isPaused = isPaused
         }
     }
+
+    /// Same guard as SwiftData, as one write.
+    @discardableResult
+    func restoreUndeliveredNotification(
+        _ attempt: TrackedShow, previousLastNotifiedSignature: String?
+    ) async throws -> Bool {
+        guard let stored = shows[attempt.id],
+            StatusChangeDetector.isStillCurrent(stored, decidedBy: attempt)
+        else { return false }
+        shows[attempt.id]?.lastNotifiedSignature = previousLastNotifiedSignature
+        shows[attempt.id]?.pendingChangeSignature = attempt.lastNotifiedSignature
+        return true
+    }
 }

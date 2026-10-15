@@ -25,7 +25,9 @@ struct WatchlistRefreshOutcome: Sendable, Equatable {
 ///    detail, re-read the stored row (it may have been paused or updated while
 ///    the fetch was suspended), recompute `NextSeasonStatus`, run
 ///    `StatusChangeDetector.evaluate`, persist, and optionally deliver a
-///    notification. Shows in `catchUpShowIDs` instead get a silent baseline.
+///    notification. If delivery definitely fails, put it back as pending so the
+///    next poll retries. Shows in `catchUpShowIDs` instead get a silent baseline.
+///    A show another refresh is still working on is skipped (`inFlightShowIDs`).
 /// 4. Unless `force`, advance the coverage watermark if the saved rows prove
 ///    every reported change was applied.
 ///
@@ -47,6 +49,12 @@ final class WatchlistRefreshService {
     private let userDefaults: UserDefaults
     /// Catch-up marks and damage reports, shared with the SwiftData repository.
     private let rowMarks: WatchlistRowMarks
+    /// Shows whose refresh work (fetch, decision, delivery, failure handling) is
+    /// in progress. Another refresh skips them rather than deciding concurrently,
+    /// so a failed delivery's restore can never overwrite a newer decision
+    /// (review finding R03). In-process only: production has one instance of
+    /// this service, so this covers every refresh of the user's watchlist.
+    private var inFlightShowIDs: Set<Int> = []
 
     static let catchUpMarksKey = WatchlistRowMarks.catchUpKey
     static let updatesCoveredThroughKey = "watchlistUpdatesCoveredThrough"
@@ -309,6 +317,16 @@ final class WatchlistRefreshService {
                 }
             }
 
+            // Skip, rather than wait for, a show another refresh is working on; it
+            // makes the decision and handles any delivery failure. A skipped show
+            // counts toward coverage only if its saved row proves it (`isCovered`),
+            // and a catch-up mark stays for the next refresh to consume.
+            guard inFlightShowIDs.insert(snapshot.id).inserted else {
+                AppDiagnosticsLogger.breadcrumb("watchlist_refresh_show_busy:\(snapshot.id)")
+                continue
+            }
+            defer { inFlightShowIDs.remove(snapshot.id) }
+
             do {
                 // The snapshot may be stale: a downgrade can pause a show (or the
                 // user remove it) while earlier fetches are suspended.
@@ -361,16 +379,31 @@ final class WatchlistRefreshService {
                 let evaluation = StatusChangeDetector.evaluate(
                     tracked: tracked, newStatus: newStatus, at: clock())
 
+                // Saved before scheduling, so termination in between loses the
+                // alert (accepted, R03 scenario 14) rather than risking a repeat.
                 try await repository.updateAfterRefresh(evaluation.tracked)
                 refreshedShowCount += 1
+                var delivery: NotificationDeliveryOutcome?
+                var retryPending = false
+                if let notification = evaluation.notification {
+                    delivery =
+                        deliverNotifications
+                        ? await notifications.deliver(notification) : .suppressed
+                    // Only a definite failure is retried; suppressed is consumed,
+                    // and unknown may already have alerted.
+                    if delivery == .failed {
+                        retryPending = await restoreUndelivered(
+                            evaluation.tracked,
+                            previousLastNotifiedSignature: tracked.lastNotifiedSignature)
+                    }
+                }
                 lastNotificationDecision = Self.describeNotificationDecision(
                     for: tracked.name,
                     evaluation: evaluation,
-                    deliverNotifications: deliverNotifications
+                    delivery: delivery,
+                    deliverNotifications: deliverNotifications,
+                    retryPending: retryPending
                 )
-                if deliverNotifications, let notification = evaluation.notification {
-                    await notifications.deliver(notification)
-                }
             } catch is CancellationError {
                 AppDiagnosticsLogger.logTaskCancel("watchlist_refresh_show")
                 return nil
@@ -450,22 +483,62 @@ final class WatchlistRefreshService {
         )
     }
 
-    /// Turns an evaluation into the short string shown in diagnostics outcomes.
+    /// After a definite delivery failure, makes the saved decision pending again
+    /// so the next poll retries. Returns whether the retry was set up; a failed
+    /// restore write loses the retry (accepted, R03 scenario 17) and is logged.
+    private func restoreUndelivered(
+        _ attempt: TrackedShow, previousLastNotifiedSignature: String?
+    ) async -> Bool {
+        do {
+            return try await repository.restoreUndeliveredNotification(
+                attempt, previousLastNotifiedSignature: previousLastNotifiedSignature)
+        } catch {
+            analytics.trackNonFatalError(error, context: "watchlist_restore_undelivered")
+            return false
+        }
+    }
+
+    /// Turns an evaluation and its delivery outcome into the short string shown
+    /// in diagnostics. It never claims the user received or saw an alert.
     private static func describeNotificationDecision(
         for showName: String,
         evaluation: StatusChangeDetector.Evaluation,
-        deliverNotifications: Bool
+        delivery: NotificationDeliveryOutcome?,
+        deliverNotifications: Bool,
+        retryPending: Bool
     ) -> String {
-        if let notification = evaluation.notification {
-            if deliverNotifications {
+        if let notification = evaluation.notification, let delivery {
+            switch delivery {
+            case .accepted:
                 return String(
-                    localized: "Delivered for \(showName): \(notification.body)"
+                    localized: "Notification scheduled for \(showName): \(notification.body)"
+                )
+            case .suppressed where !deliverNotifications:
+                return String(
+                    localized:
+                        "Suppressed for \(showName) (interactive refresh): \(notification.body)"
+                )
+            case .suppressed:
+                return String(
+                    localized:
+                        "Suppressed for \(showName) (alerts not permitted): \(notification.body)"
+                )
+            case .failed where retryPending:
+                return String(
+                    localized:
+                        "Scheduling failed for \(showName), will retry next refresh: \(notification.body)"
+                )
+            case .failed:
+                return String(
+                    localized:
+                        "Scheduling failed for \(showName), not retried: \(notification.body)"
+                )
+            case .unknown:
+                return String(
+                    localized:
+                        "Scheduling outcome unknown for \(showName), not retried: \(notification.body)"
                 )
             }
-            return String(
-                localized:
-                    "Suppressed for \(showName) (interactive refresh): \(notification.body)"
-            )
         }
         if evaluation.tracked.pendingChangeSignature != nil {
             return String(localized: "Pending debounce for \(showName)")

@@ -59,7 +59,15 @@ final class DiagnosticsSimulatedDataProvider: TVMazeService, Sendable {
     let showID: Int
     let showName: String
 
-    private let phase = Mutex<Phase>(.baseline)
+    /// The current phase, and the updated phase's premiere. The premiere is
+    /// fixed when the phase is entered so repeated fetches report the same
+    /// status, which lets a failed simulated alert be retried (R03).
+    private struct State {
+        var phase: Phase = .baseline
+        var updatedPremiere: Date?
+    }
+
+    private let state = Mutex(State())
     private let clock: @Sendable () -> Date
 
     init(
@@ -74,7 +82,7 @@ final class DiagnosticsSimulatedDataProvider: TVMazeService, Sendable {
 
     /// Which fake payload the next `show(id:)` call will return.
     var currentPhase: Phase {
-        phase.withLock { $0 }
+        state.withLock { $0.phase }
     }
 
     /// Localized label for the diagnostics UI (baseline vs updated payload).
@@ -89,17 +97,31 @@ final class DiagnosticsSimulatedDataProvider: TVMazeService, Sendable {
 
     /// Returns the machine to the undated baseline payload.
     func reset() {
-        phase.withLock { $0 = .baseline }
+        state.withLock { $0 = State() }
     }
 
     /// Jumps to a specific phase without waiting for `advanceAfterRun`.
     func forcePhase(_ newPhase: Phase) {
-        phase.withLock { $0 = newPhase }
+        let now = clock()
+        state.withLock { Self.enter(newPhase, in: &$0, at: now) }
     }
 
     /// Flips baseline ↔ updated after each simulated refresh step.
     func advanceAfterRun() {
-        phase.withLock { $0 = $0 == .baseline ? .updated : .baseline }
+        let now = clock()
+        state.withLock {
+            Self.enter($0.phase == .baseline ? .updated : .baseline, in: &$0, at: now)
+        }
+    }
+
+    /// Sets the phase, fixing the updated premiere two months out on entry.
+    private static func enter(_ newPhase: Phase, in state: inout State, at now: Date) {
+        state.phase = newPhase
+        state.updatedPremiere =
+            newPhase == .updated
+            ? Calendar.current.date(byAdding: .month, value: 2, to: now)
+                ?? now.addingTimeInterval(60 * 60 * 24 * 60)
+            : nil
     }
 
     func searchShows(matching query: String) async throws -> [Show] { [] }
@@ -114,7 +136,8 @@ final class DiagnosticsSimulatedDataProvider: TVMazeService, Sendable {
         guard id == showID else {
             throw TVMazeError.notFound
         }
-        return makeShow(for: currentPhase)
+        let current = state.withLock { $0 }
+        return makeShow(for: current.phase, updatedPremiere: current.updatedPremiere)
     }
 
     /// Always marks the simulated show as changed so refresh policy never skips it
@@ -123,7 +146,7 @@ final class DiagnosticsSimulatedDataProvider: TVMazeService, Sendable {
         [showID: clock()]
     }
 
-    private func makeShow(for phase: Phase) -> Show {
+    private func makeShow(for phase: Phase, updatedPremiere: Date?) -> Show {
         let referenceDate = clock()
         let airedSeasons = [
             Season(
@@ -154,7 +177,8 @@ final class DiagnosticsSimulatedDataProvider: TVMazeService, Sendable {
             )
         case .updated:
             let premiere =
-                Calendar.current.date(byAdding: .month, value: 2, to: referenceDate)
+                updatedPremiere
+                ?? Calendar.current.date(byAdding: .month, value: 2, to: referenceDate)
                 ?? referenceDate.addingTimeInterval(60 * 60 * 24 * 60)
             upcomingSeason = Season(
                 id: 3,

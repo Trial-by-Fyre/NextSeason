@@ -131,6 +131,27 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         }
     }
 
+    /// One guarded write inside `performWrite`, so a failed restore is rolled back
+    /// like any other write (R03 scenario 17). Touches only the two signatures.
+    @discardableResult
+    func restoreUndeliveredNotification(
+        _ attempt: TrackedShow, previousLastNotifiedSignature: String?
+    ) async throws -> Bool {
+        AppDiagnosticsLogger.logger(for: .persistence)
+            .notice("watchlist_write_restore_undelivered show_id=\(attempt.id, privacy: .public)")
+        AppDiagnosticsLogger.breadcrumb("watchlist_restore_undelivered:\(attempt.id)")
+        var restored = false
+        try performWrite {
+            guard let entity = try entity(for: attempt.id),
+                StatusChangeDetector.isStillCurrent(domain(entity), decidedBy: attempt)
+            else { return }
+            entity.lastNotifiedSignature = previousLastNotifiedSignature
+            entity.pendingChangeSignature = attempt.lastNotifiedSignature
+            restored = true
+        }
+        return restored
+    }
+
     /// Runs one logical write and saves it. If any step throws (a failed save, or
     /// `apply` failing partway), rolls the context back so later reads do not see
     /// the failed change and a later save cannot commit it.

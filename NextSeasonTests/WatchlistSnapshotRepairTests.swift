@@ -50,7 +50,10 @@ private final class RepairTVMaze: TVMazeService {
 @MainActor
 private final class RecordingNotifications: NotificationDelivering {
     private(set) var delivered: [SeasonNotificationContent] = []
-    func deliver(_ content: SeasonNotificationContent) async { delivered.append(content) }
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+        delivered.append(content)
+        return .accepted
+    }
 }
 
 private let now = TVMazeDate.dateOnly("2026-06-14")!

@@ -30,13 +30,17 @@ struct NotificationStatusModelTests {
         }
 
         func requestAuthorizationIfNeeded() async -> Bool { canDeliver }
-        func deliver(_ content: SeasonNotificationContent) async {}
-        func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async {}
+        func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+            .accepted
+        }
+        func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async
+            -> NotificationDeliveryOutcome
+        { .accepted }
         func deliverAfterDelay(
             _ content: SeasonNotificationContent,
             requestIdentifier: String,
             delay: TimeInterval
-        ) async {}
+        ) async -> NotificationDeliveryOutcome { .accepted }
     }
 
     @Test("Refreshing after an enablement action updates the presentation model")
@@ -103,11 +107,15 @@ private final class ReentrantNotificationManaging: NotificationManaging {
     func openNotificationSettings() {}
     func enableNotificationsFromSettingsEntryPoint() async {}
     func requestAuthorizationIfNeeded() async -> Bool { canDeliver }
-    func deliver(_ content: SeasonNotificationContent) async {}
-    func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async {}
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+        .accepted
+    }
+    func deliver(_ content: SeasonNotificationContent, requestIdentifier: String) async
+        -> NotificationDeliveryOutcome
+    { .accepted }
     func deliverAfterDelay(
         _ content: SeasonNotificationContent,
         requestIdentifier: String,
         delay: TimeInterval
-    ) async {}
+    ) async -> NotificationDeliveryOutcome { .accepted }
 }

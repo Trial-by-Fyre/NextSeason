@@ -17,8 +17,9 @@ struct WatchlistRefreshServiceTests {
     private final class RecordingNotificationService: NotificationDelivering {
         private(set) var delivered: [SeasonNotificationContent] = []
 
-        func deliver(_ content: SeasonNotificationContent) async {
+        func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
             delivered.append(content)
+            return .accepted
         }
     }
 

@@ -44,7 +44,10 @@ struct SubscriptionDowngradeTests {
 
     private final class RecordingNotifications: NotificationDelivering {
         private(set) var delivered: [SeasonNotificationContent] = []
-        func deliver(_ content: SeasonNotificationContent) async { delivered.append(content) }
+        func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+            delivered.append(content)
+            return .accepted
+        }
     }
 
     /// Show with season data so `WatchlistTracking.add` does not need a TVMaze fetch.

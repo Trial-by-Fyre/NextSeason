@@ -21,6 +21,26 @@
   safe completion, stop and ask rather than guessing.
 - After completing a task, follow the concise reporting guidance below.
 
+## Testing Boundaries
+
+- During implementation and review, run focused tests for the behavior being changed.
+  Use the smallest relevant selection of tests or suites.
+- The product owner controls full-suite testing before committing. Do not start a
+  full-suite run unless the product owner explicitly requests it, even when a
+  handoff or verification plan calls for one. Report that verification as pending;
+  this boundary defers the run, not the verification requirement.
+- Once relevant checks pass, repeat or broaden them only when subsequent changes,
+  failures, or a specific unresolved concern justify it. Reuse existing results
+  when they still apply to the current code.
+- For an unexpected failure, briefly explain what failed and investigate within a
+  bounded scope. If it remains unresolved, report the evidence and proposed next
+  step before expanding into repeated reruns, baseline comparisons, unrelated
+  fixes, or a broader testing cycle. Do not assume an intermittent failure is
+  pre-existing merely because it passes when rerun.
+- Keep test reports brief: what the run established, any remaining failures, and
+  what verification is still pending. Do not repeat passing tests merely to seek
+  additional reassurance.
+
 ## User-facing Reporting
 
 - Default to a 50–150 word, outcome-focused completion summary; simple tasks may need

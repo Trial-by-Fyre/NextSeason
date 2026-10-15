@@ -36,11 +36,35 @@ protocol WatchlistRepository: AnyObject {
     func updateAfterRefresh(_ tracked: TrackedShow) async throws
     /// Sets `isPaused` on the given saved rows; missing IDs are ignored.
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws
+    /// After `attempt`'s notification definitely failed to schedule (review
+    /// finding R03), restores `previousLastNotifiedSignature` and makes the
+    /// undelivered signature pending, so the next poll that sees the same status
+    /// announces it. Applies only while the stored row passes
+    /// `StatusChangeDetector.isStillCurrent`. Returns whether it applied.
+    @discardableResult
+    func restoreUndeliveredNotification(
+        _ attempt: TrackedShow, previousLastNotifiedSignature: String?
+    ) async throws -> Bool
 }
 
 extension WatchlistRepository {
     /// Default derived from `all()`; production overrides with a direct query.
     func activeShowIDs() async throws -> Set<Int> {
         Set(try await all().filter { !$0.isPaused }.map(\.id))
+    }
+
+    /// Default for test doubles, composed from a read and a refresh write. The
+    /// app's repositories implement it as a single write.
+    @discardableResult
+    func restoreUndeliveredNotification(
+        _ attempt: TrackedShow, previousLastNotifiedSignature: String?
+    ) async throws -> Bool {
+        guard var stored = try await trackedShow(showID: attempt.id),
+            StatusChangeDetector.isStillCurrent(stored, decidedBy: attempt)
+        else { return false }
+        stored.lastNotifiedSignature = previousLastNotifiedSignature
+        stored.pendingChangeSignature = attempt.lastNotifiedSignature
+        try await updateAfterRefresh(stored)
+        return true
     }
 }

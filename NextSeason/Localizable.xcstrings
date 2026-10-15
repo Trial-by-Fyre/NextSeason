@@ -473,6 +473,7 @@
       }
     },
     "Delivered for %@: %@" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1414,6 +1415,16 @@
         }
       }
     },
+    "Notification scheduled for %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Notification scheduled for %1$@: %2$@"
+          }
+        }
+      }
+    },
     "Notification test actions require alert permission. Enable notifications in Settings, then return here." : {
       "localizations" : {
         "en" : {
@@ -1726,6 +1737,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Schedule Pipeline Test Notification"
+          }
+        }
+      }
+    },
+    "Scheduling failed for %@, not retried: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scheduling failed for %1$@, not retried: %2$@"
+          }
+        }
+      }
+    },
+    "Scheduling failed for %@, will retry next refresh: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scheduling failed for %1$@, will retry next refresh: %2$@"
+          }
+        }
+      }
+    },
+    "Scheduling outcome unknown for %@, not retried: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Scheduling outcome unknown for %1$@, not retried: %2$@"
           }
         }
       }
@@ -2063,6 +2104,16 @@
     "Support NextSeason" : {
 
     },
+    "Suppressed for %@ (alerts not permitted): %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Suppressed for %1$@ (alerts not permitted): %2$@"
+          }
+        }
+      }
+    },
     "Suppressed for %@ (interactive refresh): %@" : {
       "localizations" : {
         "en" : {
@@ -2084,6 +2135,15 @@
       }
     },
     "Terms of Use" : {
+
+    },
+    "Test notification for %@ could not be scheduled" : {
+
+    },
+    "Test notification for %@: unknown whether it was scheduled" : {
+
+    },
+    "Test notification not scheduled for %@: alerts are off" : {
 
     },
     "Test notification scheduled for %@: %@" : {

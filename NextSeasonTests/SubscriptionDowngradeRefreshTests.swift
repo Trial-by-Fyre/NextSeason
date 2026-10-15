@@ -91,7 +91,10 @@ private final class GatedTVMazeService: TVMazeService {
 @MainActor
 private final class RecordingNotifications: NotificationDelivering {
     private(set) var delivered: [SeasonNotificationContent] = []
-    func deliver(_ content: SeasonNotificationContent) async { delivered.append(content) }
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+        delivered.append(content)
+        return .accepted
+    }
     var showIDs: [Int] { delivered.map(\.showID) }
 }
 
@@ -390,15 +393,21 @@ struct SubscriptionDowngradeRefreshTests {
         let ordinary = Task { await harness.refresh.refreshAll() }
         await harness.tvMaze.waitUntilGatedFetchStarts()
 
-        // Catch-up completes meanwhile and clears show 4's mark.
+        // Catch-up runs meanwhile. It skips show 4, which the ordinary refresh is
+        // working on (R03), so the mark stays for that refresh to consume.
         await harness.refresh.catchUp(showIDs: [4])
-        #expect(harness.refresh.catchUpShowIDs.isEmpty)
+        #expect(harness.tvMaze.fetchedShowIDs.filter { $0 == 4 }.count == 1)
+        #expect(harness.refresh.catchUpShowIDs == [4])
 
         harness.tvMaze.releaseGatedFetch()
         _ = await ordinary.value
+        #expect(harness.refresh.catchUpShowIDs.isEmpty)
         #expect(harness.notifications.showIDs == [1], "Show 4's history is not announced")
     }
 
+    /// Restructured for R03: a refresh now skips a show another refresh is working
+    /// on, so the ordinary refresh can no longer consume the mark while the
+    /// catch-up's request is held. The catch-up runs after it instead.
     @Test("A delayed catch-up still announces a new update found after its mark was consumed")
     func delayedCatchUpAnnouncesNewUpdate() async throws {
         let harness = try await Harness(showIDs: [1, 2, 3, 4], plus: false, runsCatchUp: false)
@@ -406,20 +415,14 @@ struct SubscriptionDowngradeRefreshTests {
         harness.publish(4, .scheduled(upcomingPremiere))  // History while paused.
         #expect(await harness.restorePlusAndCatchUp() == .resumed([4]))
 
-        // Catch-up's request is held; it reaches TVMaze only on release.
-        harness.tvMaze.gateNextFetch(of: 4)
-        let catchUp = Task { await harness.refresh.catchUp(showIDs: [4]) }
-        await harness.tvMaze.waitUntilGatedFetchStarts()
-
         // An ordinary refresh baselines the history and consumes the mark.
         await harness.refresh.refreshAll()
         #expect(harness.refresh.catchUpShowIDs.isEmpty)
         #expect(harness.notifications.delivered.isEmpty)
 
-        // A genuinely new premiere appears before the delayed catch-up's response.
+        // A genuinely new premiere appears before the delayed catch-up runs.
         harness.publish(4, .scheduled(laterPremiere))
-        harness.tvMaze.releaseGatedFetch()
-        await catchUp.value
+        await harness.refresh.catchUp(showIDs: [4])
 
         #expect(harness.notifications.showIDs == [4], "New update is announced")
         let newer = try #require(harness.tvMaze.showByID[4])
@@ -430,7 +433,11 @@ struct SubscriptionDowngradeRefreshTests {
         #expect(harness.notifications.showIDs == [4], "Announced once")
     }
 
-    @Test("An older response arriving late cannot overwrite a newer baseline")
+    /// Restructured for R03: the catch-up now skips the show while the ordinary
+    /// refresh holds its older response, so the two can no longer apply responses
+    /// out of order. (The older-response guard itself is still covered by
+    /// `WatchlistRefreshCoverageTests.olderResponseKeepsCoverage`.)
+    @Test("A held older response is applied as a silent baseline, never announced")
     func staleResponseIsRejected() async throws {
         let harness = try await Harness(showIDs: [1, 2, 3, 4], plus: false, runsCatchUp: false)
         _ = await harness.reconciler.reconcile()
@@ -442,18 +449,20 @@ struct SubscriptionDowngradeRefreshTests {
         let ordinary = Task { await harness.refresh.refreshAll() }
         await harness.tvMaze.waitUntilGatedFetchStarts()
 
-        // Response B (newer version, later premiere) is applied by catch-up.
+        // Version B is published; the catch-up skips the busy show.
         harness.publish(4, .scheduled(laterPremiere))
         await harness.refresh.catchUp(showIDs: [4])
-        let baseline = try #require(try await harness.row(4))
+        #expect(harness.tvMaze.fetchedShowIDs.filter { $0 == 4 }.count == 1)
 
         harness.tvMaze.releaseGatedFetch()
         _ = await ordinary.value
 
         let after = try #require(try await harness.row(4))
-        #expect(after.nextSeason == baseline.nextSeason, "A did not overwrite B")
-        #expect(after.sourceUpdatedAt == baseline.sourceUpdatedAt)
-        #expect(after.lastNotifiedSignature == baseline.lastNotifiedSignature)
+        let responseA = show(4, .scheduled(upcomingPremiere))
+        #expect(after.nextSeason == NextSeasonCalculator.status(for: responseA))
+        #expect(
+            after.lastNotifiedSignature == StatusChangeDetector.signature(for: after.nextSeason))
+        #expect(harness.refresh.catchUpShowIDs.isEmpty)
         #expect(harness.notifications.delivered.isEmpty, "No historical announcement")
     }
 

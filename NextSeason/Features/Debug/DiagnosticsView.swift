@@ -395,6 +395,11 @@ struct DiagnosticsView: View {
 
     private func prepareSimulatedUpdateRunner(using template: TrackedShow?) {
         guard betaValidationAvailable, let betaRefreshDiagnostics else { return }
+        // Keep the runner for the same show, so its scenario state (the next step,
+        // or a failed alert awaiting retry) carries over between taps.
+        if let simulatedUpdateRunner, simulatedUpdateRunner.showID == template?.id {
+            return
+        }
         simulatedUpdateRunner = DiagnosticsSimulatedUpdateRunner(
             pipelineTemplate: template,
             notifications: notificationService,
@@ -448,16 +453,29 @@ struct DiagnosticsView: View {
         let content = DiagnosticsSimulatedData.notificationContent(from: tracked)
         // System-scheduled delivery is more reliable than an immediate (nil-trigger)
         // request, especially when backgrounding the app to verify the alert.
-        await notificationService.deliverAfterDelay(
+        // Reports the real outcome; a test notification never sets up a retry.
+        let outcome = await notificationService.deliverAfterDelay(
             content,
             requestIdentifier: "debug-test-\(UUID().uuidString)",
             delay: Self.testNotificationDelaySeconds
         )
-        betaRefreshDiagnostics?.recordSimulatedScenarioSummary(
-            String(
-                localized: "Test notification scheduled for \(tracked.name): \(content.body)"
-            )
-        )
+        let summary =
+            switch outcome {
+            case .accepted:
+                String(
+                    localized: "Test notification scheduled for \(tracked.name): \(content.body)")
+            case .suppressed:
+                String(
+                    localized:
+                        "Test notification not scheduled for \(tracked.name): alerts are off")
+            case .failed:
+                String(localized: "Test notification for \(tracked.name) could not be scheduled")
+            case .unknown:
+                String(
+                    localized:
+                        "Test notification for \(tracked.name): unknown whether it was scheduled")
+            }
+        betaRefreshDiagnostics?.recordSimulatedScenarioSummary(summary)
         refreshReportText()
 
         isSendingTestNotification = false

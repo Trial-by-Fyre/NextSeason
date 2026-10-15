@@ -66,7 +66,10 @@ private final class HoldingTVMazeService: TVMazeService {
 @MainActor
 private final class RecordingNotifications: NotificationDelivering {
     private(set) var delivered: [SeasonNotificationContent] = []
-    func deliver(_ content: SeasonNotificationContent) async { delivered.append(content) }
+    func deliver(_ content: SeasonNotificationContent) async -> NotificationDeliveryOutcome {
+        delivered.append(content)
+        return .accepted
+    }
 }
 
 private let baseUpdatedAt = Date(timeIntervalSince1970: 1_700_000_000)

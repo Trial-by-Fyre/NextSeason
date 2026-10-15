@@ -58,6 +58,9 @@ final class DiagnosticsSimulatedUpdateRunner {
         )
     }
 
+    /// The simulated show's ID (the template show's, when one was given).
+    var showID: Int { dataProvider.showID }
+
     var dataPhaseLabel: String {
         dataProvider.phaseLabel
     }
@@ -108,6 +111,12 @@ final class DiagnosticsSimulatedUpdateRunner {
         )
 
         diagnostics.recordSimulatedScenarioSummary(summary)
+
+        // A failed alert left pending: stay on the updated step so the next tap
+        // retries it, as a real refresh would (R03).
+        if phase == .updated, hasPendingRetry {
+            return summary
+        }
         dataProvider.advanceAfterRun()
 
         // Completed the "updated" step — clear so the next tap starts from seed again.
@@ -116,6 +125,12 @@ final class DiagnosticsSimulatedUpdateRunner {
         }
 
         return summary
+    }
+
+    /// True when the simulated show has a pending signature, which in this
+    /// dated scenario means a failed delivery is waiting to be retried.
+    private var hasPendingRetry: Bool {
+        repository.show(id: dataProvider.showID)?.pendingChangeSignature != nil
     }
 
     /// Seeds fake data with a dated new season, runs the real refresh + notification
@@ -137,10 +152,14 @@ final class DiagnosticsSimulatedUpdateRunner {
             )
         }
 
-        resetScenario()
-        repository.seed(makeInitialTracked(at: clock()))
-        dataProvider.forcePhase(.updated)
-        isSeeded = true
+        // A failed alert from the previous run is still pending: run again on
+        // the same data so it is retried, instead of starting over (R03).
+        if !hasPendingRetry {
+            resetScenario()
+            repository.seed(makeInitialTracked(at: clock()))
+            dataProvider.forcePhase(.updated)
+            isSeeded = true
+        }
 
         let delay = TimeInterval.random(in: delayRange)
         let delayedNotifications = DiagnosticsDelayedNotificationDelivering(
@@ -171,7 +190,9 @@ final class DiagnosticsSimulatedUpdateRunner {
         )
 
         diagnostics.recordSimulatedScenarioSummary(summary)
-        resetScenario()
+        if !hasPendingRetry {
+            resetScenario()
+        }
 
         return summary
     }
@@ -244,6 +265,19 @@ private final class SimulatedWatchlistRepository: WatchlistRepository {
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
+
+    /// Same guard as the app's repositories, so simulations retry the same way.
+    @discardableResult
+    func restoreUndeliveredNotification(
+        _ attempt: TrackedShow, previousLastNotifiedSignature: String?
+    ) async throws -> Bool {
+        guard let stored = shows[attempt.id],
+            StatusChangeDetector.isStillCurrent(stored, decidedBy: attempt)
+        else { return false }
+        shows[attempt.id]?.lastNotifiedSignature = previousLastNotifiedSignature
+        shows[attempt.id]?.pendingChangeSignature = attempt.lastNotifiedSignature
+        return true
     }
 }
 

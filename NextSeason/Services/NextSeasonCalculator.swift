@@ -58,6 +58,12 @@ nonisolated enum NextSeasonCalculator {
         {
             if let date = episode.airdate {
                 if TVMazeDate.isAfter(date, at) {
+                    // Only episode 1's date is the premiere. A later episode or a
+                    // special (no number) proves the season exists, not when it
+                    // starts (review finding R09).
+                    guard episode.number == 1 else {
+                        return .announcedUndated(season: season)
+                    }
                     return .scheduled(season: season, premiere: date)
                 }
                 // A concrete airdate on or before today means the new season is underway.

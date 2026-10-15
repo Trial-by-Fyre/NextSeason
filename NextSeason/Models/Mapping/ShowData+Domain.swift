@@ -38,7 +38,8 @@ extension ShowData {
             averageRuntime: averageRuntime,
             seasons: (embedded?.seasons ?? []).map { $0.toDomain() },
             nextEpisode: embedded?.nextepisode.map {
-                NextEpisode(season: $0.season, airdate: TVMazeDate.dateOnly($0.airdate))
+                NextEpisode(
+                    season: $0.season, number: $0.number, airdate: TVMazeDate.dateOnly($0.airdate))
             },
             // Unix seconds from TVMaze; absent → sentinel so "never updated" sorts earliest.
             updatedAt: updated.map { Date(timeIntervalSince1970: TimeInterval($0)) } ?? .distantPast

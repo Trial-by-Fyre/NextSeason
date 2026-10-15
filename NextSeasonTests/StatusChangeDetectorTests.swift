@@ -158,6 +158,31 @@ struct StatusChangeDetectorTests {
         #expect(reverted.tracked.pendingChangeSignature == nil)
     }
 
+    /// Review finding R09: a watchlist row saved with a later episode's date as
+    /// its premiere is corrected to announced silently, and the real premiere
+    /// date still notifies when it appears.
+    @Test("Correcting a wrong premiere to announced is silent; the real premiere notifies")
+    func correctedPremiereIsSilentThenRealPremiereNotifies() {
+        let wrong = NextSeasonStatus.scheduled(season: 2, premiere: premiere)
+        let show = tracked(
+            nextSeason: wrong,
+            lastNotifiedSignature: StatusChangeDetector.signature(for: wrong)
+        )
+
+        let corrected = StatusChangeDetector.evaluate(
+            tracked: show, newStatus: .announcedUndated(season: 2), at: now)
+        #expect(corrected.notification == nil)
+        #expect(corrected.tracked.nextSeason == .announcedUndated(season: 2))
+        #expect(corrected.tracked.pendingChangeSignature == nil)
+
+        let real = StatusChangeDetector.evaluate(
+            tracked: corrected.tracked,
+            newStatus: .scheduled(season: 2, premiere: laterPremiere),
+            at: now
+        )
+        #expect(real.notification != nil)
+    }
+
     @Test("Cosmetic status churn that is not a meaningful delta does not notify")
     func nonMeaningfulChangeDoesNotNotify() {
         let show = tracked(nextSeason: .unknown)

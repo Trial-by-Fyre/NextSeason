@@ -137,11 +137,44 @@ struct NextSeasonCalculatorTests {
     func nextEpisodeSignalsScheduledSeason() throws {
         let show = makeShow(
             seasons: [season(1, premiere: "2025-01-01", end: "2025-03-01")],
-            nextEpisode: NextEpisode(season: 2, airdate: TVMazeDate.dateOnly("2026-08-01"))
+            nextEpisode: NextEpisode(
+                season: 2, number: 1, airdate: TVMazeDate.dateOnly("2026-08-01"))
         )
         let expected = NextSeasonStatus.scheduled(
             season: 2, premiere: try #require(TVMazeDate.dateOnly("2026-08-01")))
         #expect(NextSeasonCalculator.status(for: show, at: now) == expected)
+    }
+
+    /// Review finding R09: with season 2's row undated, a dated later episode
+    /// (or a special, which has no number) used to become the season premiere.
+    @Test(
+        "Only episode 1 of an undated new season counts as its premiere",
+        arguments: [(1, true), (8, false), (nil, false)] as [(Int?, Bool)]
+    )
+    func onlyEpisodeOneIsPremiere(number: Int?, isPremiere: Bool) throws {
+        let airdate = try #require(TVMazeDate.dateOnly("2026-08-01"))
+        let show = makeShow(
+            seasons: [
+                season(1, premiere: "2025-01-01", end: "2025-03-01"),
+                season(2, premiere: nil),
+            ],
+            nextEpisode: NextEpisode(season: 2, number: number, airdate: airdate)
+        )
+        let expected: NextSeasonStatus =
+            isPremiere
+            ? .scheduled(season: 2, premiere: airdate)
+            : .announcedUndated(season: 2)
+        #expect(NextSeasonCalculator.status(for: show, at: now) == expected)
+    }
+
+    @Test("A dated later episode of a new season with no season row is announced, not scheduled")
+    func laterEpisodeWithoutSeasonRowIsAnnounced() {
+        let show = makeShow(
+            seasons: [season(1, premiere: "2025-01-01", end: "2025-03-01")],
+            nextEpisode: NextEpisode(
+                season: 2, number: 8, airdate: TVMazeDate.dateOnly("2026-08-01"))
+        )
+        #expect(NextSeasonCalculator.status(for: show, at: now) == .announcedUndated(season: 2))
     }
 
     @Test("A season whose end date is today is still reported as airing")
@@ -169,7 +202,7 @@ struct NextSeasonCalculatorTests {
     func nextEpisodeWithNoAirdate() {
         let show = makeShow(
             seasons: [season(1, premiere: "2025-01-01", end: "2025-03-01")],
-            nextEpisode: NextEpisode(season: 2, airdate: nil)
+            nextEpisode: NextEpisode(season: 2, number: 1, airdate: nil)
         )
         #expect(NextSeasonCalculator.status(for: show, at: now) == .announcedUndated(season: 2))
     }
@@ -181,7 +214,7 @@ struct NextSeasonCalculatorTests {
                 season(1, premiere: "2025-01-01", end: "2025-03-01"),
                 season(2, premiere: nil),
             ],
-            nextEpisode: NextEpisode(season: 2, airdate: nil)
+            nextEpisode: NextEpisode(season: 2, number: 1, airdate: nil)
         )
         #expect(NextSeasonCalculator.status(for: show, at: now) == .announcedUndated(season: 2))
     }

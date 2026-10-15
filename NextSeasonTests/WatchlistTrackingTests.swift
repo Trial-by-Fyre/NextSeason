@@ -187,6 +187,7 @@ struct WatchlistTrackingTests {
             ],
             nextEpisode: NextEpisode(
                 season: 17,
+                number: 6,
                 airdate: utcDayOffset(4, from: now)
             ),
             updatedAt: now

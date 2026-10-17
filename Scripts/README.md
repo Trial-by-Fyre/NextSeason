@@ -17,7 +17,8 @@ Output directories (`.instruments/`) are gitignored.
 | `DEVICE_UDID` | Most device scripts | xctrace device UDID. Auto-detected when omitted (except where noted). |
 | `SKIP_BUILD=1` | Build-aware scripts | Skip the Release build step; app must already exist. |
 | `APP_PATH` | Performance suite scripts | Explicit path to `NextSeason.app` instead of auto-resolution. |
-| `USE_SUDO=1` | Log capture scripts | Retry `log collect` with sudo if device log access fails. |
+| `DEVICE_LOG_CAPTURE_BACKEND=native` | Performance suite scripts | Opt into native device log capture instead of exporting `os_log` from the recorded trace. |
+| `USE_SUDO=1` | Native log capture | Retry `log collect` with sudo; attached-device collection requires administrator privileges. |
 
 ---
 
@@ -46,9 +47,30 @@ SKIP_BUILD=1 ./Scripts/profile-performance-suite.sh
 
 **Output:** `.instruments/<timestamp>/` (traces in `traces/`, report at `report.md`)
 
+Each recording has a watchdog: its time limit plus 45 seconds for startup and saving.
+A timeout stops the recorder, exits with status 124, and leaves that run out of the manifest.
+Ctrl-C also stops the active recorder and cleans up log capture.
+
+To continue a session interrupted during any phase (including core flows):
+
+```bash
+SESSION_DIR=.instruments/<timestamp> DEVICE_UDID=... bash ./Scripts/profile-performance-suite.sh
+```
+
+The suite uses the session manifest's `runs_per_flow` (default 5 for older sessions).
+It skips only exact trace paths recorded in the manifest that still exist, preserving
+completed traces and logs. An unlisted partial trace is replaced when retried.
+
+If the Instruments Network recorder crashes, add `SKIP_NETWORK=1` to finish the
+other phases. Missing network runs remain incomplete in the report; skipping
+them does not establish beta readiness.
+
+
 ---
 
 ### `resume-performance-suite.sh`
+
+This older helper resumes only network/stress phases. Prefer the `SESSION_DIR` option above for recovery during core flows or individual repeated launches.
 
 Resumes an interrupted performance suite session. Skips flows already recorded in the session's `manifest.json` or with existing trace files, then finishes network captures, stress loops, and analysis.
 
@@ -130,6 +152,10 @@ Parses `.trace` files from a performance suite session and emits aggregated metr
 - Exports data from each trace via `xctrace export`
 - Aggregates wall-clock time, memory, CPU, hangs, leaks, network, and console issues per flow
 - Writes `report.json` and `report.md` with pass/fail/warn verdicts
+- Checks evidence completeness: missing traces, failed exports, missing required tables, missing flow timing (the `flow.<name>` signpost, or time to first frame for launches), missing CPU samples, missing or empty console logs, missing or invalid HAR files, and fewer runs than expected (from the manifest's `runs_per_flow`) mark a flow **INCOMPLETE**. Unmeasured values show as “—”, not zero. Any incomplete flow makes beta readiness **not established**, unless a measured failure already makes it **Not ready**
+- Reads modern `OSSignpostIntervals` and the Allocations/Leaks track details; resolves shared XML values and rejects unfinished flow intervals
+- Uses the physical-footprint memory column and a 15-second post-first-frame CPU window for launch flows; other flows use all CPU samples
+- Live View/ViewModel allocation counts are a retention heuristic, not proof of a leak; console capture failures are printed instead of hidden
 
 **Usage:**
 
@@ -154,7 +180,7 @@ python3 Scripts/analyze-uninstrumented-logs.py \
   --flows search,showDetails,addToWishlist
 ```
 
-Normally invoked automatically by `run-profile-flows-uninstrumented.sh`.
+Normally invoked automatically by `run-profile-flows-uninstrumented.sh`. A flow with no user-facing timing is reported as “Unknown” under “Feels slow?”.
 
 ---
 
@@ -215,4 +241,34 @@ These are sourced by other scripts, not run directly.
 | File | Purpose |
 |---|---|
 | `lib/performance-suite-common.sh` | Device detection, app path resolution, build, and install helpers for performance scripts |
-| `lib/device-log-capture.sh` | Unified device log capture during Instruments runs (stream or polled `log collect`) |
+| `lib/device-log-capture.sh` | Device console capture: suite scripts default to exporting `os_log` from the saved trace; native mode streams or polls `log collect`. Call begin/end in the script's own shell, not in `$(...)`; the cleanup trap stops a stream on failure or Ctrl-C |
+
+## Script tests (`tests/`)
+
+Hermetic Python `unittest` checks using fake commands; no device needed. Run each with `python3 Scripts/tests/<file>.py`.
+
+| File | Covers |
+|---|---|
+| `tests/test-complimentary-plus-build.py` | Complimentary Plus build-configuration guard |
+| `tests/test-performance-evidence.py` | Incomplete profiling evidence never establishes readiness |
+| `tests/test-device-log-capture.py` | Both suite scripts' log capture (stream and fallback), including failure and interruption |
+
+### Short stress-driver comparison
+
+After repairing the repeated-search driver, compare two fresh 60-second captures of the same 20 empty searches: Time Profiler alone, then Time Profiler with Allocations, Leaks, and Activity Monitor. Keep the physical phone connected, unlocked, and its screen on throughout. From the repository root:
+
+```bash
+DEVELOPER_DIR="/Applications/Xcode-27.0.0.app/Contents/Developer" \
+DEVICE_UDID=00008160-001E1DE204C1400A \
+bash ./Scripts/profile-stress-comparison.sh
+```
+
+The script builds and installs the current Profile app, uses `/usr/bin/python3`, and writes a new `.instruments/stress-comparison-*` folder. Each capture gets a unique run identifier. The copied app outcomes must contain an ordered start, all 20 successful iterations, and one completion for that identifier; a failure stops the second capture. Both trace exports must also contain completed flow timing, usable CPU samples, and readable hang evidence with matching capture thresholds. Read `comparison.md` in the session folder. A missing measurement makes the comparison incomplete. This comparison neither replaces the full suite nor establishes beta readiness.
+
+### Capture repairs verified October 16
+
+The suite and resume scripts now add `os_log` to their recordings and export readable app-process events into each run’s console file. This avoids administrator-only attached-device `log collect`. A missing, unreadable, or empty app log remains missing evidence; exporter diagnostics go only to stderr. Native capture remains available with `DEVICE_LOG_CAPTURE_BACKEND=native`.
+
+Network runs now combine Time Profiler with HTTP Traffic instead of the Network template: the latter crashed in Apple’s `NetworkConnectionStatsModeling`. A physical-phone trial of the replacement finished and exported 47 HTTP requests. `export-performance-evidence.py` exports HAR into a temporary directory, as required by this Xcode, validates the generated files, and merges their entries into the run’s expected `.har` artifact. HAR files can contain credentials and response data; keep these local, gitignored artifacts out of shared reports.
+
+Timed captures pass `-ProfileRequireSignposts`; the driver waits up to 10 seconds for signpost recording before beginning the flow. This repaired the missing Begin event in a second paired physical run. Uninstrumented and Network-only callers need not request this timing handshake. The completed pair recorded zero hangs with Time Profiler alone and one 1.20 s hang with the memory instruments, at the same 250 ms threshold. This supports an instrumentation contribution, without establishing cause or beta readiness.

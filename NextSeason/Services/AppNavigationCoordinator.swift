@@ -36,7 +36,26 @@ final class AppNavigationCoordinator {
     /// `ProfileFlowRunner` polls this after pushing onto `searchPath`.
     private(set) var automationDetailLoadedToken = 0
 
-    func notifyAutomationSearchSettled() {
+    private(set) var automationSearchRequestID = 0
+    private(set) var automationSearchError: String?
+
+    @discardableResult
+    func requestAutomationSearch(_ query: String) -> Int {
+        let baseline = automationSearchSettledToken
+        automationSearchError = nil
+        automationSearchQuery = query
+        automationSearchRequestID &+= 1
+        return baseline
+    }
+
+    func cancelAutomationSearch() {
+        automationSearchQuery = nil
+        // The modifier's task is keyed by request identity, not query text.
+        automationSearchRequestID &+= 1
+    }
+
+    func notifyAutomationSearchSettled(error: String? = nil) {
+        automationSearchError = error
         automationSearchSettledToken &+= 1
     }
 

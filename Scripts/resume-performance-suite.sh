@@ -18,6 +18,8 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 source "${ROOT}/Scripts/lib/device-log-capture.sh"
 # shellcheck source=lib/performance-suite-common.sh
 source "${ROOT}/Scripts/lib/performance-suite-common.sh"
+device_log_capture_install_cleanup_trap
+DEVICE_LOG_CAPTURE_BACKEND="${DEVICE_LOG_CAPTURE_BACKEND:-trace}"
 SUBSYSTEM="com.TrialByFyre.NextSeason"
 
 if [[ ! -d "${SESSION}" ]]; then
@@ -69,9 +71,8 @@ start_log() {
 }
 
 stop_log() {
-    local _marker="$1"
-    local window="${2:-2m}"
-    device_log_capture_end "${window}"
+    local window="${1:-2m}"
+    device_log_capture_end "${window}" "${2:-}"
 }
 
 already_ran() {
@@ -112,12 +113,12 @@ PY
     fi
     HAR="${SESSION}/har/${net_flow}.har"
     LOG="${SESSION}/logs/network-${net_flow}.log"
-    LPID="$(start_log "${LOG}")"
-    xcrun xctrace record --template "Network" --device "${DEVICE}" \
+    start_log "${LOG}"
+    xcrun xctrace record --template "Time Profiler" --instrument "HTTP Traffic" --instrument os_log --device "${DEVICE}" \
         --output "${TRACE}" --time-limit "35s" --no-prompt \
         --launch -- "${APP}" -ProfileFlow "${net_flow}" || true
-    xcrun xctrace export --input "${TRACE}" --har --output "${HAR}" 2>/dev/null || true
-    stop_log "${LPID}" "45s"
+    "${PROFILE_PYTHON:-/usr/bin/python3}" "${ROOT}/Scripts/export-performance-evidence.py" "${TRACE}" --har "${HAR}" || true
+    stop_log "45s" "${TRACE}"
     append_manifest "network-${net_flow}" "traces/network-${net_flow}.trace" "logs/network-${net_flow}.log" "har/${net_flow}.har"
     echo "  network ${net_flow} done"
 done
@@ -132,12 +133,12 @@ for item in "stressSearchDetailsBack:200s" "stressAddRemoveWishlist:120s" "stres
     echo ">> ${stress}"
     TRACE="${SESSION}/traces/${stress}.trace"
     LOG="${SESSION}/logs/${stress}.log"
-    LPID="$(start_log "${LOG}")"
-    xcrun xctrace record --template "Time Profiler" \
+    start_log "${LOG}"
+    xcrun xctrace record --template "Time Profiler" --instrument os_log \
         --instrument "Allocations" --instrument "Leaks" --instrument "Activity Monitor" \
         --device "${DEVICE}" --output "${TRACE}" --time-limit "${limit}" --no-prompt \
-        --launch -- "${APP}" -ProfileFlow "${stress}" || true
-    stop_log "${LPID}" "${limit}"
+        --launch -- "${APP}" -ProfileRequireSignposts -ProfileFlow "${stress}" || true
+    stop_log "${limit}" "${TRACE}"
     append_manifest "${stress}" "traces/${stress}.trace" "logs/${stress}.log"
     echo "  ${stress} done"
 done
@@ -147,12 +148,12 @@ if [[ "$(already_ran stress-launch-with-data)" != "yes" ]]; then
     for run in $(seq 1 10); do
         TRACE="${SESSION}/traces/stress-launch-with-data-run${run}.trace"
         LOG="${SESSION}/logs/stress-launch-with-data-run${run}.log"
-        LPID="$(start_log "${LOG}")"
-        xcrun xctrace record --template "App Launch" \
+        start_log "${LOG}"
+        xcrun xctrace record --template "App Launch" --instrument os_log \
             --instrument "Allocations" --instrument "Activity Monitor" \
             --device "${DEVICE}" --output "${TRACE}" --time-limit "25s" --no-prompt \
-            --launch -- "${APP}" -ProfileFlow "launchWithData" || true
-        stop_log "${LPID}" "35s"
+            --launch -- "${APP}" -ProfileRequireSignposts -ProfileFlow "launchWithData" || true
+        stop_log "35s" "${TRACE}"
         append_manifest "stress-launch-with-data" "traces/stress-launch-with-data-run${run}.trace" "logs/stress-launch-with-data-run${run}.log"
         echo "  launch ${run}/10 done"
     done

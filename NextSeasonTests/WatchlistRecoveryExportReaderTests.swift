@@ -74,6 +74,7 @@ struct WatchlistRecoveryExportReaderTests {
         #expect(byID[1]?.name == "Good Show")
         #expect(byID[2]?.name == "Damaged Show")
         #expect(byID[1]?.nextSeason == good.nextSeason)
+        #expect(byID[2]?.nextSeason == .unknown)
     }
 
     @Test("SQLite fallback reads name and ID when SwiftData cannot open the file")
@@ -109,10 +110,10 @@ struct WatchlistRecoveryExportReaderTests {
         #expect(byID[2]?.name == "Fallback Only")
     }
 
-    /// Writes shows through SwiftData, then drops the container so later
-    /// readers can open the same URL (and its WAL sidecars).
+    /// Releases SwiftData's autoreleased storage objects before SQLite opens
+    /// the saved fixture directly (including its WAL sidecars).
     private func seedStore(at storeURL: URL, shows: [TrackedShow]) throws {
-        try {
+        try autoreleasepool {
             let container = try NextSeasonModelContainer.make(
                 configuration: ModelConfiguration(url: storeURL)
             )
@@ -121,20 +122,23 @@ struct WatchlistRecoveryExportReaderTests {
                 context.insert(try TrackedShowEntity(tracked: show))
             }
             try context.save()
-        }()
+        }
     }
 
     /// Overwrites one row's `nextSeasonSnapshot` so SwiftData `toDomain()` fails
     /// and SQLite must still recover name and TVMaze ID.
     private func corruptNextSeasonSnapshot(storeURL: URL, tvMazeID: Int) throws {
+        // Validate the saved fixture before opening the connection that will
+        // deliberately corrupt it.
+        let sqliteResult = WatchlistRecoveryExportReader.loadViaSQLite(storeURL: storeURL)
+        try #require(sqliteResult.foundWatchlistTable)
+        try #require(sqliteResult.shows.contains { $0.id == tvMazeID })
+
         var db: OpaquePointer?
         guard sqlite3_open(storeURL.path, &db) == SQLITE_OK, let db else {
             throw RecoveryExportReadError.storeMissing
         }
         defer { sqlite3_close(db) }
-
-        let sqliteResult = WatchlistRecoveryExportReader.loadViaSQLite(storeURL: storeURL)
-        #expect(sqliteResult.foundWatchlistTable)
 
         let (table, idColumn, snapshotColumn) = try #require(watchlistSnapshotColumns(db: db))
         let garbage = Data("not-json".utf8)
@@ -151,6 +155,7 @@ struct WatchlistRecoveryExportReaderTests {
             guard sqlite3_step(statement) == SQLITE_DONE else {
                 throw RecoveryExportReadError.storeMissing
             }
+            try #require(sqlite3_changes(db) == 1)
         }
     }
 

@@ -39,7 +39,7 @@ struct DiagnosticsView: View {
     @State private var isShowingEmptyWatchlistAlert = false
     @State private var isSchedulingDelayedPipelineNotification = false
     @State private var isRunningSimulation = false
-    @State private var simulatedUpdateRunner: DiagnosticsSimulatedUpdateRunner?
+    @State private var simulations: DiagnosticsSimulations?
     @State private var betaBuildAvailability = BetaBuildAvailability.shared
     @State private var isShowingDocumentation = false
     #if DEBUG
@@ -393,19 +393,21 @@ struct DiagnosticsView: View {
         try? await repository.all().first
     }
 
-    private func prepareSimulatedUpdateRunner(using template: TrackedShow?) {
-        guard betaValidationAvailable, let betaRefreshDiagnostics else { return }
-        // Keep the runner for the same show, so its scenario state (the next step,
-        // or a failed alert awaiting retry) carries over between taps.
-        if let simulatedUpdateRunner, simulatedUpdateRunner.showID == template?.id {
-            return
+    /// Created once per screen, so scenario state (the next step, or a failed
+    /// alert awaiting retry) carries over between taps.
+    private func availableSimulations() -> DiagnosticsSimulations? {
+        guard betaValidationAvailable, let betaRefreshDiagnostics else { return nil }
+        if let simulations { return simulations }
+        let created = DiagnosticsSimulations { [notificationService, analytics] template in
+            DiagnosticsSimulatedUpdateRunner(
+                pipelineTemplate: template,
+                notifications: notificationService,
+                diagnostics: betaRefreshDiagnostics,
+                analytics: analytics
+            )
         }
-        simulatedUpdateRunner = DiagnosticsSimulatedUpdateRunner(
-            pipelineTemplate: template,
-            notifications: notificationService,
-            diagnostics: betaRefreshDiagnostics,
-            analytics: analytics
-        )
+        simulations = created
+        return created
     }
 
     private func recordMissingWatchlistTestShow() {
@@ -490,8 +492,7 @@ struct DiagnosticsView: View {
             isSchedulingDelayedPipelineNotification = false
             return
         }
-        prepareSimulatedUpdateRunner(using: tracked)
-        _ = await simulatedUpdateRunner?.runDelayedNewSeasonNotification()
+        await availableSimulations()?.runDelayedNewSeasonNotification(using: tracked)
         isSchedulingDelayedPipelineNotification = false
     }
 
@@ -504,8 +505,7 @@ struct DiagnosticsView: View {
             isRunningSimulation = false
             return
         }
-        prepareSimulatedUpdateRunner(using: tracked)
-        _ = await simulatedUpdateRunner?.runNextStep()
+        await availableSimulations()?.runNextStep(using: tracked)
         isRunningSimulation = false
     }
 

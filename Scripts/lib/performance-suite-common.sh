@@ -133,12 +133,23 @@ run_xctrace_record() {
         --no-prompt \
         "$@" &
     local pid=$!
+    local previous_int previous_term
+    previous_int="$(trap -p INT)"
+    previous_term="$(trap -p TERM)"
+    # The asynchronous recorder can ignore Ctrl-C. Stop it explicitly before
+    # exiting through the caller's EXIT trap (which cleans up log capture).
+    trap 'kill -9 "${pid}" 2>/dev/null || true; wait "${pid}" 2>/dev/null || true; exit 130' INT
+    trap 'kill -9 "${pid}" 2>/dev/null || true; wait "${pid}" 2>/dev/null || true; exit 143' TERM
     local elapsed=0
 
     while kill -0 "${pid}" 2>/dev/null && ((elapsed < watchdog)); do
         sleep 2
         elapsed=$((elapsed + 2))
     done
+
+    trap - INT TERM
+    [[ -z "${previous_int}" ]] || eval "${previous_int}"
+    [[ -z "${previous_term}" ]] || eval "${previous_term}"
 
     if kill -0 "${pid}" 2>/dev/null; then
         echo "error: xctrace hung after ${watchdog}s (requested limit ${time_limit})." >&2

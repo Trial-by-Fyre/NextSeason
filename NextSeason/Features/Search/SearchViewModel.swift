@@ -95,7 +95,7 @@ final class SearchViewModel {
 
     /// Runs the current `query`. Intended to be driven by `.task(id: query)`,
     /// which cancels the previous run when the text changes, giving us debounce.
-    func search() async {
+    func search(force: Bool = false) async {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             searchGeneration += 1
@@ -114,7 +114,7 @@ final class SearchViewModel {
 
         // `.task(id: query)` runs again when returning from show detail; keep
         // existing results instead of flashing the loading placeholder.
-        if trimmed == displayedQuery, isShowingSearchOutcome {
+        if !force, trimmed == displayedQuery, isShowingSearchOutcome {
             return
         }
 
@@ -185,6 +185,18 @@ final class SearchViewModel {
                 )
             )
             analytics.trackNonFatalError(error, context: "search")
+        }
+    }
+
+    /// Profiling owns its search task and must exercise even an unchanged query.
+    /// Normal typing still uses `search()` and its already-displayed shortcut.
+    func runProfilingSearch(_ query: String) async -> String? {
+        self.query = query
+        await search(force: true)
+        switch state {
+        case .results, .empty: return nil
+        case .failed(let message): return message
+        default: return "Profiling search did not reach a settled outcome"
         }
     }
 

@@ -58,7 +58,7 @@ profile_flow() {
     run_xctrace_record "${time_limit}" "${output}" \
         --template "Time Profiler" \
         --device "${device}" \
-        --launch -- "${app}" -ProfileFlow "${flow}"
+        --launch -- "${app}" -ProfileRequireSignposts -ProfileFlow "${flow}"
 }
 
 seed_watchlist() {

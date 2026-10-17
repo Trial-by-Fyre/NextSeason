@@ -1344,6 +1344,8 @@
 		};
 		E1PROF0023024001007F7098 /* Profile */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = E1672FC6302BE7B9007F7098 /* Config */;
+			baseConfigurationReferenceRelativePath = Base.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

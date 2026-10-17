@@ -13,24 +13,22 @@ import SwiftUI
 /// bump settlement tokens even though `ContentView` always installs the hooks.
 struct SearchAutomationModifier: ViewModifier {
     @Environment(\.automationSearchQuery) private var automationSearchQuery
+    @Environment(\.automationSearchRequestID) private var automationSearchRequestID
     @Environment(\.onAutomationSearchSettled) private var onAutomationSearchSettled
     @Bindable var viewModel: SearchViewModel
 
     func body(content: Content) -> some View {
         content
-            .onChange(of: automationSearchQuery.wrappedValue) { _, query in
-                guard let query, !query.isEmpty else { return }
-                viewModel.query = query
+            .task(id: automationSearchRequestID) {
+                guard ProfileFlowConfiguration.isEnabled,
+                    let query = automationSearchQuery.wrappedValue, !query.isEmpty
+                else { return }
+                let error = await viewModel.runProfilingSearch(query)
+                guard !Task.isCancelled else { return }
+                // Clear before signaling: the runner may immediately enqueue the
+                // identical query again after observing completion.
                 automationSearchQuery.wrappedValue = nil
-            }
-            .onChange(of: viewModel.state) { _, state in
-                guard ProfileFlowConfiguration.isEnabled else { return }
-                switch state {
-                case .results, .empty, .failed:
-                    onAutomationSearchSettled?()
-                default:
-                    break
-                }
+                onAutomationSearchSettled?(error)
             }
     }
 }

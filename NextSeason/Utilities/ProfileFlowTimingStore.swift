@@ -27,6 +27,25 @@ enum ProfileFlowTimingStore {
         if let phase {
             payload["phase"] = phase
         }
+        appendPayload(payload)
+    }
+
+    /// Explicit outcomes let scripts distinguish a completed stress scenario
+    /// from a trace that merely reached its recording time limit.
+    nonisolated static func appendOutcome(
+        flow: String, status: String, iteration: Int? = nil, error: String? = nil
+    ) {
+        var payload: [String: Any] = ["flow": flow, "status": status]
+        let arguments = ProcessInfo.processInfo.arguments
+        if let index = arguments.firstIndex(of: "-ProfileRunID"), index + 1 < arguments.count {
+            payload["run_id"] = arguments[index + 1]
+        }
+        if let iteration { payload["iteration"] = iteration }
+        if let error { payload["error"] = error }
+        appendPayload(payload)
+    }
+
+    private nonisolated static func appendPayload(_ payload: [String: Any]) {
         guard let data = try? JSONSerialization.data(withJSONObject: payload),
             let line = String(data: data, encoding: .utf8)
         else { return }

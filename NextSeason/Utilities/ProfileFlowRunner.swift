@@ -28,54 +28,78 @@ struct ProfileFlowRunner {
     let analytics: any AnalyticsTracking
 
     func run() async {
-        let flowStart = Date.now
-        let interval = beginFlowInterval()
-        defer {
+        ProfileFlowTimingStore.clear()
+        ProfileFlowTimingStore.appendOutcome(flow: flow.rawValue, status: "started")
+        do {
+            // Instruments can enable signposts after launch. Starting earlier
+            // loses the Begin event while still recording a later End.
+            if ProcessInfo.processInfo.arguments.contains("-ProfileRequireSignposts") {
+                try await ProfileFlowWait.until(
+                    "signpost recording", timeout: .seconds(10),
+                    isSatisfied: { Self.signposter.isEnabled }
+                )
+            }
+            let start = Date.now
+            let interval = beginFlowInterval()
+            try await runScenario()
+            try Task.checkCancellation()
             endFlowInterval(interval)
             AppDiagnosticsLogger.logProfileFlowTiming(
                 flow: flow.rawValue,
-                durationMs: max(0, Int(Date.now.timeIntervalSince(flowStart) * 1000))
+                durationMs: max(0, Int(Date.now.timeIntervalSince(start) * 1000))
+            )
+            ProfileFlowTimingStore.appendOutcome(flow: flow.rawValue, status: "completed")
+        } catch is CancellationError {
+            coordinator.cancelAutomationSearch()
+            ProfileFlowTimingStore.appendOutcome(flow: flow.rawValue, status: "cancelled")
+        } catch {
+            coordinator.cancelAutomationSearch()
+            analytics.trackNonFatalError(error, context: "profile_flow_" + flow.rawValue)
+            ProfileFlowTimingStore.appendOutcome(
+                flow: flow.rawValue, status: "failed", error: error.localizedDescription
             )
         }
+        // Failed/cancelled flows intentionally leave the interval unfinished;
+        // an end-of-recording duration must not masquerade as a successful run.
+    }
 
+    private func runScenario() async throws {
         if flow.isSetupOnly {
-            try? await Task.sleep(for: .milliseconds(500))
-            await runSeedWatchlist()
+            try await Task.sleep(for: .milliseconds(500))
+            try await runSeedWatchlist()
             return
         }
 
-        ProfileFlowTimingStore.clear()
-
         // Allow the root SwiftUI hierarchy to appear before driving navigation.
-        try? await Task.sleep(for: .milliseconds(750))
+        try await Task.sleep(for: .milliseconds(750))
 
         switch flow {
         case .seedWatchlist:
             break
         case .search:
-            await runSearch()
+            try await runSearch()
         case .searchEmpty:
-            await runSearchEmpty()
+            try await runSearchEmpty()
         case .showDetails:
-            await runShowDetails()
+            try await runShowDetails()
         case .viewWishlist:
-            await runViewWishlist()
+            try await runViewWishlist()
         case .addToWishlist:
-            await runAddToWishlist()
+            try await runAddToWishlist()
         case .removeFromWishlist:
-            await runRemoveFromWishlist()
+            try await runRemoveFromWishlist()
         case .stressSearchDetailsBack:
-            await runStressSearchDetailsBack()
+            try await runStressSearchDetailsBack()
         case .stressAddRemoveWishlist:
-            await runStressAddRemoveWishlist()
+            try await runStressAddRemoveWishlist()
         case .stressSearchEmpty:
-            await runStressSearchEmpty()
+            try await runStressSearchEmpty()
         case .launchWithData:
-            await runLaunchWithDataIdle()
+            try await runLaunchWithDataIdle()
         }
 
         // Keep the process alive briefly so xctrace can capture post-flow work.
-        try? await Task.sleep(for: .seconds(2))
+        try await Task.sleep(for: .seconds(2))
     }
 
     private func beginFlowInterval() -> OSSignpostIntervalState {
@@ -132,13 +156,11 @@ struct ProfileFlowRunner {
         }
     }
 
-    /// Sets the search query; SearchView’s `.task(id:)` performs the network work.
-    private func runSearch() async {
+    /// Requests a distinct profiling search, even when its query is unchanged.
+    private func runSearch() async throws {
         let phaseStart = Date.now
         let interval = Self.signposter.beginInterval("search.query")
-        coordinator.selectedTab = .search
-        coordinator.automationSearchQuery = FirstRunCopy.exampleSearchQuery
-        await waitForSearchResults()
+        try await performSearch(FirstRunCopy.exampleSearchQuery)
         Self.signposter.endInterval("search.query", interval)
         AppDiagnosticsLogger.logProfileFlowTiming(
             flow: flow.rawValue,
@@ -147,34 +169,34 @@ struct ProfileFlowRunner {
         )
     }
 
-    private func runSearchEmpty() async {
+    private func runSearchEmpty() async throws {
         let interval = Self.signposter.beginInterval("search.empty")
-        coordinator.selectedTab = .search
-        coordinator.automationSearchQuery = ProfileFlowConfiguration.SearchQuery.emptyResults
-        await waitForSearchResults()
+        try await performSearch(ProfileFlowConfiguration.SearchQuery.emptyResults)
         Self.signposter.endInterval("search.empty", interval)
     }
 
     /// Populates the watchlist from fixed queries (setup before other flows).
-    private func runSeedWatchlist() async {
+    private func runSeedWatchlist() async throws {
         let interval = Self.signposter.beginInterval("watchlist.seed")
         for query in ProfileFlowConfiguration.SeedData.watchlistSearchQueries {
-            guard let show = await resolveShow(matching: query) else { continue }
-            if (try? await repository.contains(showID: show.id)) == true { continue }
+            try Task.checkCancellation()
+            let show = try await resolveShow(matching: query)
+            if try await repository.contains(showID: show.id) { continue }
             do {
                 try await repository.add(show)
             } catch {
                 analytics.trackNonFatalError(error, context: "profile_flow_seed")
+                throw error
             }
         }
         coordinator.notifyWatchlistDataChanged()
-        try? await Task.sleep(for: .seconds(1))
+        try await Task.sleep(for: .seconds(1))
         Self.signposter.endInterval("watchlist.seed", interval)
     }
 
     /// Push show detail, wait for load, then pop — captures retention after dismiss.
-    private func runShowDetails() async {
-        guard let show = await resolveExampleShow() else { return }
+    private func runShowDetails() async throws {
+        let show = try await resolveExampleShow()
 
         let phaseStart = Date.now
         let interval = Self.signposter.beginInterval("showDetails.load")
@@ -182,8 +204,8 @@ struct ProfileFlowRunner {
         coordinator.selectedTab = .search
         coordinator.searchPath.append(show)
         analytics.track(.showDetailViewed(showID: show.id))
-        await waitForDetailLoaded(since: detailToken)
-        try? await Task.sleep(for: .milliseconds(300))
+        try await waitForDetailLoaded(since: detailToken)
+        try await Task.sleep(for: .milliseconds(300))
         Self.signposter.endInterval("showDetails.load", interval)
         AppDiagnosticsLogger.logProfileFlowTiming(
             flow: flow.rawValue,
@@ -193,31 +215,28 @@ struct ProfileFlowRunner {
 
         let retentionInterval = Self.signposter.beginInterval("showDetails.retentionCheck")
         coordinator.showSearchRoot()
-        try? await Task.sleep(for: .seconds(1))
+        try await Task.sleep(for: .seconds(1))
         Self.signposter.endInterval("showDetails.retentionCheck", retentionInterval)
     }
 
-    private func runViewWishlist() async {
+    private func runViewWishlist() async throws {
         let interval = Self.signposter.beginInterval("watchlist.view")
         coordinator.selectedTab = .watchlist
         coordinator.notifyWatchlistDataChanged()
-        try? await Task.sleep(for: .seconds(1))
+        try await Task.sleep(for: .seconds(1))
         Self.signposter.endInterval("watchlist.view", interval)
     }
 
-    private func runAddToWishlist() async {
-        guard let show = await resolveExampleShow() else { return }
+    private func runAddToWishlist() async throws {
+        let show = try await resolveExampleShow()
 
         let phaseStart = Date.now
         let interval = Self.signposter.beginInterval("watchlist.add")
-        if (try? await repository.contains(showID: show.id)) == true {
-            try? await repository.remove(showID: show.id)
+        if try await repository.contains(showID: show.id) {
+            try await repository.remove(showID: show.id)
         }
 
-        coordinator.selectedTab = .search
-        let searchToken = coordinator.automationSearchSettledToken
-        coordinator.automationSearchQuery = FirstRunCopy.exampleSearchQuery
-        await waitForSearchResults(since: searchToken)
+        try await performSearch(FirstRunCopy.exampleSearchQuery)
 
         do {
             try await repository.add(show)
@@ -225,6 +244,7 @@ struct ProfileFlowRunner {
             coordinator.notifyWatchlistDataChanged()
         } catch {
             analytics.trackNonFatalError(error, context: "profile_flow_add")
+            throw error
         }
         Self.signposter.endInterval("watchlist.add", interval)
         AppDiagnosticsLogger.logProfileFlowTiming(
@@ -234,18 +254,18 @@ struct ProfileFlowRunner {
         )
     }
 
-    private func runRemoveFromWishlist() async {
-        guard let show = await resolveExampleShow() else { return }
+    private func runRemoveFromWishlist() async throws {
+        let show = try await resolveExampleShow()
 
         let interval = Self.signposter.beginInterval("watchlist.remove")
-        if (try? await repository.contains(showID: show.id)) != true {
-            try? await repository.add(show)
+        if try await repository.contains(showID: show.id) == false {
+            try await repository.add(show)
             coordinator.notifyWatchlistDataChanged()
         }
 
         coordinator.selectedTab = .watchlist
         coordinator.notifyWatchlistDataChanged()
-        try? await Task.sleep(for: .milliseconds(500))
+        try await Task.sleep(for: .milliseconds(500))
 
         do {
             try await repository.remove(showID: show.id)
@@ -253,69 +273,72 @@ struct ProfileFlowRunner {
             coordinator.notifyWatchlistDataChanged()
         } catch {
             analytics.trackNonFatalError(error, context: "profile_flow_remove")
+            throw error
         }
         Self.signposter.endInterval("watchlist.remove", interval)
     }
 
-    private func resolveExampleShow() async -> Show? {
-        await resolveShow(matching: FirstRunCopy.exampleSearchQuery)
+    private func resolveExampleShow() async throws -> Show {
+        try await resolveShow(matching: FirstRunCopy.exampleSearchQuery)
     }
 
-    private func resolveShow(matching query: String) async -> Show? {
-        do {
-            let shows = try await tvMaze.searchShows(matching: query)
-            return shows.first { $0.name.localizedCaseInsensitiveContains(query) } ?? shows.first
-        } catch {
-            analytics.trackNonFatalError(error, context: "profile_flow_search")
-            return nil
+    private func resolveShow(matching query: String) async throws -> Show {
+        let shows = try await tvMaze.searchShows(matching: query)
+        let matching = shows.first { $0.name.localizedCaseInsensitiveContains(query) }
+        guard let show = matching ?? shows.first else {
+            throw NSError(
+                domain: "ProfileFlow", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "No show found for " + query]
+            )
+        }
+        return show
+    }
+
+    private func performSearch(_ query: String) async throws {
+        try Task.checkCancellation()
+        coordinator.selectedTab = .search
+        let baseline = coordinator.requestAutomationSearch(query)
+        try await ProfileFlowWait.until("search " + query, timeout: .seconds(15)) {
+            coordinator.automationSearchSettledToken > baseline
+        }
+        if let message = coordinator.automationSearchError {
+            throw NSError(
+                domain: "ProfileFlow", code: 2, userInfo: [NSLocalizedDescriptionKey: message]
+            )
         }
     }
 
-    /// Polls until SearchView bumps `automationSearchSettledToken`, or times out.
-    private func waitForSearchResults(since startToken: Int? = nil) async {
-        let baseline = startToken ?? coordinator.automationSearchSettledToken
-        let deadline = Date.now.addingTimeInterval(15)
-        while Date.now < deadline {
-            if coordinator.automationSearchSettledToken > baseline {
-                return
-            }
-            try? await Task.sleep(for: .milliseconds(50))
-        }
-    }
-
-    /// Polls until ShowDetailView bumps `automationDetailLoadedToken`, or times out.
-    private func waitForDetailLoaded(since startToken: Int) async {
-        let deadline = Date.now.addingTimeInterval(12)
-        while Date.now < deadline {
-            if coordinator.automationDetailLoadedToken > startToken {
-                return
-            }
-            try? await Task.sleep(for: .milliseconds(50))
+    private func waitForDetailLoaded(since startToken: Int) async throws {
+        try await ProfileFlowWait.until("show detail", timeout: .seconds(12)) {
+            coordinator.automationDetailLoadedToken > startToken
         }
     }
 
     /// Repeated search → detail → back to stress navigation / retention.
-    private func runStressSearchDetailsBack() async {
-        guard let show = await resolveExampleShow() else { return }
+    private func runStressSearchDetailsBack() async throws {
+        let show = try await resolveExampleShow()
 
         let interval = Self.signposter.beginInterval("stress.searchDetailsBack")
-        for _ in 1...20 {
-            coordinator.selectedTab = .search
-            coordinator.automationSearchQuery = FirstRunCopy.exampleSearchQuery
-            await waitForSearchResults()
+        for iteration in 1...20 {
+            try await performSearch(FirstRunCopy.exampleSearchQuery)
+            let detailToken = coordinator.automationDetailLoadedToken
             coordinator.searchPath.append(show)
-            try? await Task.sleep(for: .milliseconds(500))
+            try await waitForDetailLoaded(since: detailToken)
             coordinator.showSearchRoot()
-            try? await Task.sleep(for: .milliseconds(200))
+            try await Task.sleep(for: .milliseconds(200))
+            ProfileFlowTimingStore.appendOutcome(
+                flow: flow.rawValue, status: "iteration_completed", iteration: iteration
+            )
         }
         Self.signposter.endInterval("stress.searchDetailsBack", interval)
     }
 
-    private func runStressAddRemoveWishlist() async {
-        guard let show = await resolveExampleShow() else { return }
+    private func runStressAddRemoveWishlist() async throws {
+        let show = try await resolveExampleShow()
 
         let interval = Self.signposter.beginInterval("stress.addRemoveWishlist")
-        for _ in 1...50 {
+        for iteration in 1...50 {
+            try Task.checkCancellation()
             do {
                 try await repository.add(show)
                 coordinator.notifyWatchlistDataChanged()
@@ -323,28 +346,33 @@ struct ProfileFlowRunner {
                 coordinator.notifyWatchlistDataChanged()
             } catch {
                 analytics.trackNonFatalError(error, context: "profile_flow_stress_add_remove")
+                throw error
             }
-            try? await Task.sleep(for: .milliseconds(100))
+            try await Task.sleep(for: .milliseconds(100))
+            ProfileFlowTimingStore.appendOutcome(
+                flow: flow.rawValue, status: "iteration_completed", iteration: iteration
+            )
         }
         Self.signposter.endInterval("stress.addRemoveWishlist", interval)
     }
 
-    private func runStressSearchEmpty() async {
+    private func runStressSearchEmpty() async throws {
         let interval = Self.signposter.beginInterval("stress.searchEmpty")
-        for _ in 1...20 {
-            coordinator.selectedTab = .search
-            coordinator.automationSearchQuery = ProfileFlowConfiguration.SearchQuery.emptyResults
-            await waitForSearchResults()
+        for iteration in 1...20 {
+            try await performSearch(ProfileFlowConfiguration.SearchQuery.emptyResults)
+            ProfileFlowTimingStore.appendOutcome(
+                flow: flow.rawValue, status: "iteration_completed", iteration: iteration
+            )
         }
         Self.signposter.endInterval("stress.searchEmpty", interval)
     }
 
     /// Exercises a populated watchlist at idle after launch (seed data must exist).
-    private func runLaunchWithDataIdle() async {
+    private func runLaunchWithDataIdle() async throws {
         let interval = Self.signposter.beginInterval("launchWithData.idle")
         coordinator.selectedTab = .watchlist
         coordinator.notifyWatchlistDataChanged()
-        try? await Task.sleep(for: .seconds(3))
+        try await Task.sleep(for: .seconds(3))
         Self.signposter.endInterval("launchWithData.idle", interval)
     }
 }

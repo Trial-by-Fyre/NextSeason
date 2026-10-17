@@ -17,8 +17,12 @@ private struct AutomationSearchQueryKey: EnvironmentKey {
     @MainActor static let defaultValue: Binding<String?> = .constant(nil)
 }
 
+private struct AutomationSearchRequestIDKey: EnvironmentKey {
+    static let defaultValue = 0
+}
+
 private struct AutomationSearchSettledKey: EnvironmentKey {
-    @MainActor static let defaultValue: (() -> Void)? = nil
+    @MainActor static let defaultValue: ((String?) -> Void)? = nil
 }
 
 private struct AutomationDetailLoadedKey: EnvironmentKey {
@@ -34,10 +38,16 @@ extension EnvironmentValues {
         set { self[AutomationSearchQueryKey.self] = newValue }
     }
 
+    /// A distinct identity for each request, including identical query strings.
+    var automationSearchRequestID: Int {
+        get { self[AutomationSearchRequestIDKey.self] }
+        set { self[AutomationSearchRequestIDKey.self] = newValue }
+    }
+
     /// Called when search reaches a settled outcome (`.results`, `.empty`, or
-    /// `.failed`). Only invoked while `-ProfileFlow` is active; see
+    /// `.failed`); the argument is nil on success, or the failure message. Only invoked while `-ProfileFlow` is active; see
     /// `SearchAutomationModifier`. Default is `nil` (no-op).
-    @MainActor var onAutomationSearchSettled: (() -> Void)? {
+    @MainActor var onAutomationSearchSettled: ((String?) -> Void)? {
         get { self[AutomationSearchSettledKey.self] }
         set { self[AutomationSearchSettledKey.self] = newValue }
     }

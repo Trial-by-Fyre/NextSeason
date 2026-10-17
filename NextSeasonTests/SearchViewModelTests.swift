@@ -498,6 +498,32 @@ struct SearchViewModelTests {
         #expect(counter.value == 1)
     }
 
+    @Test("Profiling repeats the same empty query twenty times without the display shortcut")
+    func profilingRepeatsEmptySearch() async {
+        let counter = CallCounter()
+        let viewModel = makeViewModel(
+            search: MockSearchService { _, offset in
+                counter.increment()
+                return Self.page([], hasMore: false, offset: offset)
+            }
+        )
+        for _ in 1...20 {
+            let error = await viewModel.runProfilingSearch("no-results")
+            #expect(error == nil)
+            #expect(viewModel.state == .empty)
+        }
+        #expect(counter.value == 20)
+        await viewModel.search()
+        #expect(counter.value == 20, "Normal searches retain the display shortcut")
+    }
+
+    @Test("Profiling surfaces a failed search instead of signaling success")
+    func profilingReportsSearchFailure() async {
+        let viewModel = makeViewModel(search: MockSearchService { _, _ in throw TestError() })
+        let error = await viewModel.runProfilingSearch("query")
+        #expect(error == "Something failed")
+    }
+
     @Test("Load more appends the next actionable page")
     func loadMoreAppendsNextPage() async {
         let second = TVDBSearchResult(

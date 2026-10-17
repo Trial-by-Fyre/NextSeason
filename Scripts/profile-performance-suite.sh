@@ -22,9 +22,11 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 source "${ROOT}/Scripts/lib/device-log-capture.sh"
 # shellcheck source=lib/performance-suite-common.sh
 source "${ROOT}/Scripts/lib/performance-suite-common.sh"
+device_log_capture_install_cleanup_trap
 DEVICE="${DEVICE_UDID:-}"
 RUNS="${RUNS:-5}"
 SUBSYSTEM="com.TrialByFyre.NextSeason"
+DEVICE_LOG_CAPTURE_BACKEND="${DEVICE_LOG_CAPTURE_BACKEND:-trace}"
 
 start_log_stream() {
     local device="$1"
@@ -34,9 +36,8 @@ start_log_stream() {
 }
 
 stop_log_stream() {
-    local _marker="$1"
-    local window="${2:-2m}"
-    device_log_capture_end "${window}"
+    local window="${1:-2m}"
+    device_log_capture_end "${window}" "${2:-}"
 }
 
 record_trace() {
@@ -62,12 +63,10 @@ record_trace() {
         fi
     done
 
-    local cmd=(xcrun xctrace record
+    local cmd=(
         --template "${template}"
+        --instrument "os_log"
         --device "${device}"
-        --output "${output}"
-        --time-limit "${time_limit}"
-        --no-prompt
     )
     if ((${#extra_instruments[@]} > 0)); then
         for inst in "${extra_instruments[@]}"; do
@@ -78,7 +77,7 @@ record_trace() {
     if ((${#launch_args[@]})); then
         cmd+=("${launch_args[@]}")
     fi
-    "${cmd[@]}"
+    run_xctrace_record "${time_limit}" "${output}" "${cmd[@]}"
 }
 
 record_launch() {
@@ -87,20 +86,18 @@ record_launch() {
     local output="$3"
     local profile_flow="${4:-}"
 
-    local cmd=(xcrun xctrace record
+    local cmd=(
         --template "App Launch"
+        --instrument "os_log"
         --instrument "Allocations"
         --instrument "Activity Monitor"
         --device "${device}"
-        --output "${output}"
-        --time-limit "25s"
-        --no-prompt
         --launch -- "${app}"
     )
     if [[ -n "${profile_flow}" ]]; then
-        cmd+=(-ProfileFlow "${profile_flow}")
+        cmd+=(-ProfileRequireSignposts -ProfileFlow "${profile_flow}")
     fi
-    "${cmd[@]}"
+    run_xctrace_record "25s" "${output}" "${cmd[@]}"
 }
 
 record_flow() {
@@ -112,7 +109,7 @@ record_flow() {
 
     record_trace "Time Profiler" "${device}" "${app}" "${output}" "${time_limit}" \
         "Allocations" "Leaks" "Activity Monitor" -- \
-        -ProfileFlow "${flow}"
+        -ProfileRequireSignposts -ProfileFlow "${flow}"
 }
 
 record_network() {
@@ -123,10 +120,10 @@ record_network() {
     local har_output="$5"
     local time_limit="${6:-30s}"
 
-    record_trace "Network" "${device}" "${app}" "${output}" "${time_limit}" -- \
+    record_trace "Time Profiler" "${device}" "${app}" "${output}" "${time_limit}" "HTTP Traffic" -- \
         -ProfileFlow "${flow}"
-    if [[ -f "${output}" ]]; then
-        xcrun xctrace export --input "${output}" --har --output "${har_output}" 2>/dev/null || true
+    if [[ -e "${output}" ]]; then
+        "${PROFILE_PYTHON:-/usr/bin/python3}" "${ROOT}/Scripts/export-performance-evidence.py" "${output}" --har "${har_output}" || true
     fi
 }
 
@@ -147,8 +144,22 @@ if "${log_rel}":
     entry["log"] = "${log_rel}"
 if "${har_rel}":
     entry["har"] = "${har_rel}"
+data["runs"] = [r for r in data["runs"] if r.get("trace") != entry["trace"]]
 data["runs"].append(entry)
 p.write_text(json.dumps(data, indent=2))
+PY
+}
+
+# A trace directory alone may be an interrupted recording. Only skip a run
+# after capture finished and its exact trace was added to the manifest.
+run_completed() {
+    python3 - "${MANIFEST}" "$1" "${SESSION}" <<'PY'
+import json
+import sys
+from pathlib import Path
+manifest, trace, session = sys.argv[1:]
+complete = any(r.get("trace") == trace for r in json.loads(Path(manifest).read_text())["runs"])
+sys.exit(0 if complete and (Path(session) / trace).exists() else 1)
 PY
 }
 
@@ -159,8 +170,20 @@ main() {
         exit 1
     fi
 
-    STAMP="$(date +%Y%m%d-%H%M%S)"
-    SESSION="${ROOT}/.instruments/${STAMP}"
+    if [[ -n "${SESSION_DIR:-}" ]]; then
+        SESSION="$(cd "${SESSION_DIR}" && pwd)"
+        [[ -f "${SESSION}/manifest.json" ]] || { echo "error: session manifest missing" >&2; exit 1; }
+        RUNS="$(python3 - "${SESSION}/manifest.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+print(json.loads(Path(sys.argv[1]).read_text()).get("runs_per_flow", 5))
+PY
+        )"
+    else
+        STAMP="$(date +%Y%m%d-%H%M%S)"
+        SESSION="${ROOT}/.instruments/${STAMP}"
+    fi
     TRACE_DIR="${SESSION}/traces"
     LOG_DIR="${SESSION}/logs"
     HAR_DIR="${SESSION}/har"
@@ -172,11 +195,14 @@ main() {
         exit 1
     fi
 
-    CORE_DEVICE="$(core_device_uuid)"
-    install_app_on_device "${APP}" "${CORE_DEVICE}"
+    # Install on the same device selected for recording; a separate lookup can pick a simulator.
+    install_app_on_device "${APP}" "${DEVICE}"
 
     MANIFEST="${SESSION}/manifest.json"
-    echo '{"runs": []}' > "${MANIFEST}"
+    # runs_per_flow lets the analyzer detect missing runs.
+    if [[ -z "${SESSION_DIR:-}" ]]; then
+        echo "{\"runs\": [], \"runs_per_flow\": ${RUNS}}" > "${MANIFEST}"
+    fi
 
     echo "=== NextSeason performance suite ==="
     echo "Device: ${DEVICE}"
@@ -186,12 +212,15 @@ main() {
     echo
 
     # --- Seed watchlist once for launch-with-data ---
-    echo ">> Setup: seed watchlist"
-    LOG="${LOG_DIR}/seedWatchlist.log"
-    LPID="$(start_log_stream "${DEVICE}" "${LOG}")"
-    record_flow "seedWatchlist" "${DEVICE}" "${APP}" "${TRACE_DIR}/seedWatchlist.trace" "60s"
-    stop_log_stream "${LPID}" "90s"
-    append_manifest "${MANIFEST}" "seedWatchlist" "traces/seedWatchlist.trace" "logs/seedWatchlist.log"
+    if ! run_completed "traces/seedWatchlist.trace"; then
+        echo ">> Setup: seed watchlist"
+        LOG="${LOG_DIR}/seedWatchlist.log"
+        TRACE="${TRACE_DIR}/seedWatchlist.trace"
+        start_log_stream "${DEVICE}" "${LOG}"
+        record_flow "seedWatchlist" "${DEVICE}" "${APP}" "${TRACE}" "60s"
+        stop_log_stream "90s" "${TRACE}"
+        append_manifest "${MANIFEST}" "seedWatchlist" "traces/seedWatchlist.trace" "logs/seedWatchlist.log"
+    fi
 
     CORE_FLOWS=(
         "launch:cold"
@@ -210,18 +239,22 @@ main() {
         echo ">> Flow: ${flow_key} (${RUNS} runs)"
 
         for run in $(seq 1 "${RUNS}"); do
+            if run_completed "traces/${flow_key}-run${run}.trace"; then
+                echo "   skip ${flow_key}-run${run} (complete)"
+                continue
+            fi
             TRACE="${TRACE_DIR}/${flow_key}-run${run}.trace"
             LOG="${LOG_DIR}/${flow_key}-run${run}.log"
-            LPID="$(start_log_stream "${DEVICE}" "${LOG}")"
+            start_log_stream "${DEVICE}" "${LOG}"
 
             if [[ "${flow_key}" == "launch" || "${flow_key}" == "launch-with-data" ]]; then
                 pf=""
                 [[ "${flow_key}" == "launch-with-data" ]] && pf="${profile_flow}"
                 record_launch "${DEVICE}" "${APP}" "${TRACE}" "${pf}"
-                stop_log_stream "${LPID}" "35s"
+                stop_log_stream "35s" "${TRACE}"
             else
                 record_flow "${profile_flow}" "${DEVICE}" "${APP}" "${TRACE}" "35s"
-                stop_log_stream "${LPID}" "45s"
+                stop_log_stream "45s" "${TRACE}"
             fi
 
             append_manifest "${MANIFEST}" "${flow_key}" "traces/${flow_key}-run${run}.trace" "logs/${flow_key}-run${run}.log"
@@ -230,16 +263,24 @@ main() {
     done
 
     # --- Network captures (one run each for network-heavy flows) ---
-    echo ">> Network captures"
-    for net_flow in search showDetails addToWishlist; do
-        TRACE="${TRACE_DIR}/network-${net_flow}.trace"
-        HAR="${HAR_DIR}/${net_flow}.har"
-        LOG="${LOG_DIR}/network-${net_flow}.log"
-        LPID="$(start_log_stream "${DEVICE}" "${LOG}")"
-        record_network "${net_flow}" "${DEVICE}" "${APP}" "${TRACE}" "${HAR}" "35s"
-        stop_log_stream "${LPID}" "45s"
-        append_manifest "${MANIFEST}" "network-${net_flow}" "traces/network-${net_flow}.trace" "logs/network-${net_flow}.log" "har/${net_flow}.har"
-    done
+    if [[ "${SKIP_NETWORK:-0}" == "1" ]]; then
+        echo ">> Skipping Network captures (SKIP_NETWORK=1); network evidence remains incomplete."
+    else
+        echo ">> Network captures"
+        for net_flow in search showDetails addToWishlist; do
+            if run_completed "traces/network-${net_flow}.trace"; then
+                echo "   skip network-${net_flow} (complete)"
+                continue
+            fi
+            TRACE="${TRACE_DIR}/network-${net_flow}.trace"
+            HAR="${HAR_DIR}/${net_flow}.har"
+            LOG="${LOG_DIR}/network-${net_flow}.log"
+            start_log_stream "${DEVICE}" "${LOG}"
+            record_network "${net_flow}" "${DEVICE}" "${APP}" "${TRACE}" "${HAR}" "35s"
+            stop_log_stream "45s" "${TRACE}"
+            append_manifest "${MANIFEST}" "network-${net_flow}" "traces/network-${net_flow}.trace" "logs/network-${net_flow}.log" "har/${net_flow}.har"
+        done
+    fi
 
     # --- Stress loops ---
     echo ">> Stress loops"
@@ -250,22 +291,30 @@ main() {
             stressSearchEmpty) limit=140s ;;
             *) limit=120s ;;
         esac
+        if run_completed "traces/${stress}.trace"; then
+            echo "   skip ${stress} (complete)"
+            continue
+        fi
         TRACE="${TRACE_DIR}/${stress}.trace"
         LOG="${LOG_DIR}/${stress}.log"
-        LPID="$(start_log_stream "${DEVICE}" "${LOG}")"
+        start_log_stream "${DEVICE}" "${LOG}"
         record_flow "${stress}" "${DEVICE}" "${APP}" "${TRACE}" "${limit}"
-        stop_log_stream "${LPID}" "${limit}"
+        stop_log_stream "${limit}" "${TRACE}"
         append_manifest "${MANIFEST}" "${stress}" "traces/${stress}.trace" "logs/${stress}.log"
     done
 
     # --- Launch with existing data: 10 cold launches ---
     echo ">> Stress: launch-with-data (10 launches)"
     for run in $(seq 1 10); do
+        if run_completed "traces/stress-launch-with-data-run${run}.trace"; then
+            echo "   skip stress-launch-with-data-run${run} (complete)"
+            continue
+        fi
         TRACE="${TRACE_DIR}/stress-launch-with-data-run${run}.trace"
         LOG="${LOG_DIR}/stress-launch-with-data-run${run}.log"
-        LPID="$(start_log_stream "${DEVICE}" "${LOG}")"
+        start_log_stream "${DEVICE}" "${LOG}"
         record_launch "${DEVICE}" "${APP}" "${TRACE}" "launchWithData"
-        stop_log_stream "${LPID}" "35s"
+        stop_log_stream "35s" "${TRACE}"
         append_manifest "${MANIFEST}" "stress-launch-with-data" "traces/stress-launch-with-data-run${run}.trace" "logs/stress-launch-with-data-run${run}.log"
         echo "   launch ${run}/10 done"
     done

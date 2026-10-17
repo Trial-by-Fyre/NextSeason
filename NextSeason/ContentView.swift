@@ -49,8 +49,8 @@ struct ContentView: View {
             // needs two async completion signals that only the Search tab can
             // observe:
             //
-            // 1. Search settled — debounced `.task(id: query)` finishes and
-            //    `SearchViewModel.state` becomes `.results`, `.empty`, or `.failed`.
+            // 1. Search settled — the profiling request task finishes and
+            //    reports success or a failure message for that request.
             // 2. Detail loaded — a pushed `ShowDetailView` finishes its load task.
             //
             // Those signals travel through SwiftUI environment keys (see
@@ -63,8 +63,9 @@ struct ContentView: View {
                 \.automationSearchQuery,
                 $coordinator.automationSearchQuery
             )
-            .environment(\.onAutomationSearchSettled) {
-                coordinator.notifyAutomationSearchSettled()
+            .environment(\.automationSearchRequestID, coordinator.automationSearchRequestID)
+            .environment(\.onAutomationSearchSettled) { error in
+                coordinator.notifyAutomationSearchSettled(error: error)
             }
             .environment(\.onAutomationDetailLoaded) {
                 coordinator.notifyAutomationDetailLoaded()

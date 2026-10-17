@@ -106,6 +106,9 @@ struct SearchView: View {
                     collapseSearchKeyboard(dismissSearch: dismissSearch)
                 }
                 .task(id: viewModel.query) {
+                    // Profiling has a separate task so the same query can be
+                    // requested repeatedly without racing this typing task.
+                    guard !ProfileFlowConfiguration.isEnabled else { return }
                     await viewModel.search()
                 }
                 .onChange(of: viewModel.state) { _, newState in

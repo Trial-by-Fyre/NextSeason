@@ -147,6 +147,23 @@ struct SearchViewModelTests {
         } else {
             Issue.record("Expected failed state, got \(viewModel.state)")
         }
+        #expect(viewModel.isSearchRetryAvailable == false)
+    }
+
+    @Test("Recoverable search failures offer retry")
+    func recoverableSearchFailureAllowsRetry() async {
+        struct TestError: Error {}
+        let viewModel = makeViewModel(
+            search: MockSearchService { _, _ in throw TestError() }
+        )
+        viewModel.query = "severance"
+        await viewModel.search()
+
+        if case .failed = viewModel.state {
+            #expect(viewModel.isSearchRetryAvailable)
+        } else {
+            Issue.record("Expected failed state, got \(viewModel.state)")
+        }
     }
 
     @Test("An empty/whitespace query resets to idle without calling the service")

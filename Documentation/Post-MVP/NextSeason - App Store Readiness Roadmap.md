@@ -205,6 +205,12 @@ These tasks are listed in approximately sequential order.
     website.
 -   Use the launch Plus pricing: $1.99/month and $9.99/year.
 
+### Support website copy
+
+-   Maintain FAQ and support answers in
+    [NextSeason-Support-Website-Copy-Checklist.md](NextSeason-Support-Website-Copy-Checklist.md)
+    (season/premiere tracking vs. streaming availability).
+
 ### In Progress / Remaining
 
 -   When the pre-order listing becomes available, link the existing

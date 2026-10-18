@@ -66,7 +66,15 @@ nonisolated enum NextSeasonCalculator {
                     }
                     return .scheduled(season: season, premiere: date)
                 }
-                // A concrete airdate on or before today means the new season is underway.
+                // Only episode 1 airing on or before today means the new season
+                // is underway; a dated later episode is not premiere evidence.
+                // When the season row still has no premiere date, status may
+                // read `.airing` on episode 1's day and revert to
+                // `.announcedUndated` after TVMaze advances the next-episode
+                // pointer (see `episodeOnePremiereDayOscillatesWhenPointerAdvances`).
+                guard episode.number == 1 else {
+                    return .announcedUndated(season: season)
+                }
                 return .airing(season: season)
             }
             // Next episode exists for a new season but no date yet — announced, not airing.

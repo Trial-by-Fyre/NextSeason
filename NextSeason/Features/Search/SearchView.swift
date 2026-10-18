@@ -342,10 +342,12 @@ struct SearchView: View {
                 Text(message)
                     .appSecondaryText()
             } actions: {
-                Button("Try Again") {
-                    Task { await viewModel.search() }
+                if viewModel.isSearchRetryAvailable {
+                    Button("Try Again") {
+                        Task { await viewModel.search() }
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.borderedProminent)
             }
         }
     }

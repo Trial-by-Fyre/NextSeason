@@ -86,6 +86,13 @@ final class SearchViewModel {
     /// Cache of full TVMaze shows after an explicit open/track resolve.
     private var resolvedShowsByTVDBID: [Int: Show] = [:]
 
+    /// True when the failed state can be cleared by running `search()` again.
+    /// Local mapping bootstrap failures need an app restart, not another query.
+    var isSearchRetryAvailable: Bool {
+        guard case .failed(let message) = state else { return false }
+        return message != Self.localMappingUnavailableMessage
+    }
+
     /// Shown when the offline TVDB↔TVMaze map could not be loaded.
     static let localMappingUnavailableMessage = String(
         localized:

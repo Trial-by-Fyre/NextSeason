@@ -161,6 +161,33 @@ struct StatusChangeDetectorTests {
     /// Review finding R09: a watchlist row saved with a later episode's date as
     /// its premiere is corrected to announced silently, and the real premiere
     /// date still notifies when it appears.
+    @Test("Reverting from airing to announced when the next-episode pointer advances is silent")
+    func airingToAnnouncedWhenPointerAdvancesDoesNotNotify() {
+        let show = tracked(
+            nextSeason: .airing(season: 2),
+            lastNotifiedSignature: StatusChangeDetector.signature(for: .airing(season: 2))
+        )
+        let evaluation = StatusChangeDetector.evaluate(
+            tracked: show,
+            newStatus: .announcedUndated(season: 2),
+            at: now
+        )
+        #expect(evaluation.notification == nil)
+        #expect(evaluation.tracked.nextSeason == .announcedUndated(season: 2))
+    }
+
+    @Test("A midseason next-episode date does not trigger a now-airing alert")
+    func midseasonEpisodeDateDoesNotNotifyAiring() {
+        let show = tracked(nextSeason: .returningNoSeasonYet)
+        let evaluation = StatusChangeDetector.evaluate(
+            tracked: show,
+            newStatus: .announcedUndated(season: 2),
+            at: now
+        )
+        #expect(evaluation.notification == nil)
+        #expect(evaluation.tracked.nextSeason == .announcedUndated(season: 2))
+    }
+
     @Test("Correcting a wrong premiere to announced is silent; the real premiere notifies")
     func correctedPremiereIsSilentThenRealPremiereNotifies() {
         let wrong = NextSeasonStatus.scheduled(season: 2, premiere: premiere)

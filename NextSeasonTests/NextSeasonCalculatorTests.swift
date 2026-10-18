@@ -167,6 +167,57 @@ struct NextSeasonCalculatorTests {
         #expect(NextSeasonCalculator.status(for: show, at: now) == expected)
     }
 
+    @Test("A dated later episode on or before today stays announced, not airing")
+    func laterEpisodeOnOrBeforeTodayIsAnnounced() throws {
+        let today = try #require(TVMazeDate.dateOnly("2026-06-14"))
+        let yesterday = try #require(TVMazeDate.dateOnly("2026-06-13"))
+        let baseSeasons = [
+            season(1, premiere: "2025-01-01", end: "2025-03-01"),
+            season(2, premiere: nil),
+        ]
+        for airdate in [today, yesterday] {
+            let show = makeShow(
+                seasons: baseSeasons,
+                nextEpisode: NextEpisode(season: 2, number: 8, airdate: airdate)
+            )
+            #expect(
+                NextSeasonCalculator.status(for: show, at: now) == .announcedUndated(season: 2),
+                "Episode 8 on \(airdate) must not imply season 2 is airing"
+            )
+        }
+        let premiereDay = makeShow(
+            seasons: baseSeasons,
+            nextEpisode: NextEpisode(season: 2, number: 1, airdate: today)
+        )
+        #expect(NextSeasonCalculator.status(for: premiereDay, at: now) == .airing(season: 2))
+    }
+
+    /// Documents remaining provider-driven churn: episode 1 on premiere day
+    /// reads `.airing`, but after TVMaze moves `nextEpisode` to episode 2
+    /// (season row still undated) status reverts to `.announcedUndated`.
+    @Test("Episode 1 today can read airing, then revert to announced when the pointer advances")
+    func episodeOnePremiereDayOscillatesWhenPointerAdvances() throws {
+        let today = try #require(TVMazeDate.dateOnly("2026-06-14"))
+        let seasons = [
+            season(1, premiere: "2025-01-01", end: "2025-03-01"),
+            season(2, premiere: nil),
+        ]
+        let premiereDay = makeShow(
+            seasons: seasons,
+            nextEpisode: NextEpisode(season: 2, number: 1, airdate: today)
+        )
+        #expect(NextSeasonCalculator.status(for: premiereDay, at: now) == .airing(season: 2))
+
+        let pointerOnEpisodeTwo = makeShow(
+            seasons: seasons,
+            nextEpisode: NextEpisode(season: 2, number: 2, airdate: today)
+        )
+        #expect(
+            NextSeasonCalculator.status(for: pointerOnEpisodeTwo, at: now)
+                == .announcedUndated(season: 2)
+        )
+    }
+
     @Test("A dated later episode of a new season with no season row is announced, not scheduled")
     func laterEpisodeWithoutSeasonRowIsAnnounced() {
         let show = makeShow(

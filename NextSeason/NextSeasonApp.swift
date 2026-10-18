@@ -50,9 +50,7 @@ struct NextSeasonApp: App {
                 .environment(composition.watchlistAccessReconciler)
                 .modelContainer(composition.modelContainer)
                 .task {
-                    let count =
-                        (try? await composition.watchlistRepository.trackedShowIDs().count) ?? 0
-                    await composition.purchaseService.start(watchlistCount: count)
+                    await composition.purchaseService.start()
                 }
                 .task {
                     guard let flow = ProfileFlowConfiguration.activeFlow else { return }

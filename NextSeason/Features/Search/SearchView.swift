@@ -383,9 +383,9 @@ struct SearchView: View {
                 isPendingRemoval: resolvedID.map {
                     removalCoordinator?.pendingRemoval?.id == $0
                 } ?? false
-            ) { anchor in
+            ) {
                 Task {
-                    await trackResult(result, anchor: anchor)
+                    await trackResult(result)
                 }
             }
         }
@@ -410,7 +410,7 @@ struct SearchView: View {
     }
 
     /// Resolve TheTVDB → TVMaze, then reuse the shared watchlist toggle path.
-    private func trackResult(_ result: TVDBSearchResult, anchor: CGRect) async {
+    private func trackResult(_ result: TVDBSearchResult) async {
         let show: Show
         do {
             show = try await viewModel.resolveShow(for: result)
@@ -425,7 +425,6 @@ struct SearchView: View {
         do {
             try await watchlistTracking.handleTrackButton(
                 for: show,
-                anchor: anchor,
                 context: watchlistTrackingContext
             )
         } catch is CancellationError {

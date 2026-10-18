@@ -104,7 +104,7 @@ struct WatchlistViewModelTests {
         await viewModel.reload()
         let tracked = try #require((try await repository.all()).first)
 
-        viewModel.requestRemoval(tracked, anchor: .zero)
+        viewModel.requestRemoval(tracked)
 
         #expect(viewModel.isPendingRemoval(tracked))
         #expect(viewModel.shows.count == 1)
@@ -125,7 +125,7 @@ struct WatchlistViewModelTests {
         await viewModel.reload()
         let tracked = try #require((try await repository.all()).first)
 
-        viewModel.requestRemoval(tracked, anchor: .zero)
+        viewModel.requestRemoval(tracked)
         await viewModel.commitPendingRemovalIfNeeded()
 
         #expect(viewModel.state == .loaded)
@@ -167,7 +167,7 @@ struct WatchlistViewModelTests {
         await viewModel.reload()
         let tracked = try #require((try await repository.all()).first)
 
-        viewModel.requestRemoval(tracked, anchor: .zero)
+        viewModel.requestRemoval(tracked)
         await removalCoordinator.commitPendingRemovalIfNeeded()
 
         #expect(viewModel.shows.isEmpty)
@@ -187,7 +187,7 @@ struct WatchlistViewModelTests {
         await viewModel.reload()
         let tracked = try #require((try await repository.all()).first)
 
-        viewModel.requestRemoval(tracked, anchor: .zero)
+        viewModel.requestRemoval(tracked)
         await viewModel.undoPendingRemoval()
 
         #expect(viewModel.shows.count == 1)
@@ -230,8 +230,7 @@ struct WatchlistViewModelTests {
 
         viewModel.deleteImmediately(
             at: IndexSet(integer: 0),
-            in: [tracked],
-            rowAnchors: [tracked.id: .zero]
+            in: [tracked]
         )
 
         // The failed remove and the row restore both run in tasks the view model
@@ -264,8 +263,8 @@ struct WatchlistViewModelTests {
         let first = try #require(viewModel.shows.first { $0.id == firstShow.id })
         let second = try #require(viewModel.shows.first { $0.id == secondShow.id })
 
-        viewModel.requestRemoval(first, anchor: .zero)
-        viewModel.requestRemoval(second, anchor: .zero)
+        viewModel.requestRemoval(first)
+        viewModel.requestRemoval(second)
 
         #expect(viewModel.pendingRemoval?.id == second.id)
 
@@ -295,13 +294,11 @@ struct WatchlistViewModelTests {
 
         viewModel.deleteImmediately(
             at: IndexSet(integer: 0),
-            in: [tracked],
-            rowAnchors: [tracked.id: CGRect(x: 0, y: 120, width: 300, height: 60)]
+            in: [tracked]
         )
 
         #expect(viewModel.shows.isEmpty)
         #expect(removalCoordinator.pendingRemoval?.id == tracked.id)
-        #expect(removalCoordinator.toastAnchor?.minY == 120)
 
         // The immediate remove runs on the coordinator's own task, which emits
         // the outcome after the remove is saved; wait for it, not a fixed time.
@@ -325,13 +322,11 @@ struct WatchlistViewModelTests {
         try await repository.add(sampleShow)
         await viewModel.reload()
         let tracked = try #require((try await repository.all()).first)
-        let anchor = CGRect(x: 0, y: 120, width: 300, height: 60)
 
-        viewModel.deleteImmediately(tracked, rowAnchor: anchor)
+        viewModel.deleteImmediately(tracked)
 
         #expect(viewModel.shows.isEmpty)
         #expect(removalCoordinator.pendingRemoval?.id == tracked.id)
-        #expect(removalCoordinator.toastAnchor == anchor)
 
         // Same immediate-remove path as swipe; wait for the emitted outcome.
         try await waitUntil { removalCoordinator.lastOutcome != nil }
@@ -353,7 +348,7 @@ struct WatchlistViewModelTests {
         await viewModel.reload()
         let tracked = try #require((try await repository.all()).first)
 
-        viewModel.requestRemoval(tracked, anchor: .zero)
+        viewModel.requestRemoval(tracked)
         await viewModel.undoPendingRemoval()
 
         #expect(viewModel.pendingRemoval == nil)

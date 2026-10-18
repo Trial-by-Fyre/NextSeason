@@ -12,7 +12,6 @@ import SwiftUI
 @MainActor
 final class WatchlistViewModel {
     enum State: Equatable {
-        case loading
         case loaded
         case failed(String)
     }
@@ -116,9 +115,8 @@ final class WatchlistViewModel {
         }
     }
 
-    /// Re-reads the watchlist from persistence without flashing the loading
-    /// spinner, so `.task(id:)` cancellations cannot strand the list in
-    /// `.loading` when the reload token bumps in quick succession.
+    /// Re-reads the watchlist from persistence without flashing a loading
+    /// spinner when the reload token bumps in quick succession.
     /// Concurrent reloads keep only the newest result so a slower older fetch
     /// cannot overwrite fresher data.
     func reload() async {
@@ -151,14 +149,9 @@ final class WatchlistViewModel {
     /// until the removal is committed or the user confirms with OK.
     func requestRemoval(
         _ tracked: TrackedShow,
-        anchor: CGRect,
         source: WatchlistActionSource = .watchlist
     ) {
-        removalCoordinator.requestRemoval(
-            tracked,
-            anchor: anchor,
-            source: source
-        )
+        removalCoordinator.requestRemoval(tracked, source: source)
     }
 
     /// Swipe-to-delete: drops rows from the list immediately, then persists and
@@ -166,27 +159,22 @@ final class WatchlistViewModel {
     /// `.onDelete` so `List` item counts stay consistent.
     func deleteImmediately(
         at offsets: IndexSet,
-        in sectionShows: [TrackedShow],
-        rowAnchors: [Int: CGRect]
+        in sectionShows: [TrackedShow]
     ) {
         let targets = offsets.compactMap { index -> TrackedShow? in
             sectionShows.indices.contains(index) ? sectionShows[index] : nil
         }
         for tracked in targets {
-            deleteImmediately(tracked, rowAnchor: rowAnchors[tracked.id] ?? .zero)
+            deleteImmediately(tracked)
         }
     }
 
     /// Immediate delete shared by swipe-to-delete and the VoiceOver row action.
     /// Drops the row from the list synchronously, then persists and shows an
     /// informational undo toast. Distinct from star-button `requestRemoval`.
-    func deleteImmediately(_ tracked: TrackedShow, rowAnchor: CGRect) {
+    func deleteImmediately(_ tracked: TrackedShow) {
         removeShow(showID: tracked.id)
-        removalCoordinator.requestImmediateRemoval(
-            tracked,
-            anchor: rowAnchor,
-            source: .watchlist
-        )
+        removalCoordinator.requestImmediateRemoval(tracked, source: .watchlist)
     }
 
     func undoPendingRemoval() async {

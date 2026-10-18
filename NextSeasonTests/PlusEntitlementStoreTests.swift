@@ -211,7 +211,7 @@ struct PlusEntitlementStoreTests {
                 userDefaults: defaults, persistence: persistence),
             complimentaryGrantEligibility: { true }
         )
-        await purchases.start(watchlistCount: count)
+        await purchases.start()
         #expect(purchases.isComplimentary)
         #expect(purchases.isStoreEntitled == false)
         #expect(await purchases.canAddToWatchlist(currentCount: 100))
@@ -242,7 +242,7 @@ struct PlusEntitlementStoreTests {
                 )
             }
         )
-        await beta.start(watchlistCount: 0)
+        await beta.start()
         #expect(beta.isComplimentary)
         #expect(beta.isStoreEntitled == false)
         #expect(persistence.entitled)
@@ -253,7 +253,7 @@ struct PlusEntitlementStoreTests {
             entitlementStore: PlusEntitlementStore(
                 userDefaults: defaults(), persistence: persistence)
         )
-        await normal.start(watchlistCount: 0)
+        await normal.start()
         #expect(normal.isComplimentary)
         #expect(normal.isStoreEntitled == false)
         #expect(await normal.canAddToWatchlist(currentCount: 100))
@@ -269,7 +269,7 @@ struct PlusEntitlementStoreTests {
                 userDefaults: defaults(), persistence: MemoryComplimentaryPlusPersistence()),
             complimentaryGrantEligibility: { true }
         )
-        let startTask = Task { await purchases.start(watchlistCount: 0) }
+        let startTask = Task { await purchases.start() }
         for _ in 0..<200 {
             if client.entitlementWaiterCount > 0 { break }
             await Task.yield()
@@ -291,7 +291,7 @@ struct PlusEntitlementStoreTests {
                 userDefaults: defaults(), persistence: MemoryComplimentaryPlusPersistence()),
             complimentaryGrantEligibility: { eligibility.isEligible }
         )
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
         #expect(purchases.isComplimentary == false)
         eligibility.isEligible = true
         await purchases.handleSceneBecameActive()

@@ -178,13 +178,11 @@ struct ShowRowTrackButton: View {
     /// reaches the star; undo is also on the toast and row rotor action.
     var isPendingRemoval: Bool = false
     var trackButtonIdentifier: String = AccessibilityID.Search.trackButton
-    let action: (CGRect) -> Void
-
-    @State private var buttonFrame: CGRect = .zero
+    let action: () -> Void
 
     var body: some View {
         Button {
-            action(buttonFrame)
+            action()
         } label: {
             Group {
                 if isUpdating {
@@ -204,26 +202,6 @@ struct ShowRowTrackButton: View {
         .accessibilityLabel(trackAccessibilityLabel)
         .accessibilityIdentifier("\(trackButtonIdentifier).\(showID)")
         .accessibilityHint(String(localized: "Adds or removes this show from your watchlist"))
-        .background {
-            GeometryReader { geometry in
-                Color.clear
-                    .onAppear {
-                        updateFrame(from: geometry)
-                    }
-                    .onChange(of: geometry.frame(in: .global)) { _, _ in
-                        updateFrame(from: geometry)
-                    }
-                    .onChange(of: geometry.size) { _, _ in
-                        updateFrame(from: geometry)
-                    }
-            }
-        }
-    }
-
-    private func updateFrame(from geometry: GeometryProxy) {
-        let frame = geometry.frame(in: .global)
-        guard frame.width > 0, frame.height > 0 else { return }
-        buttonFrame = frame
     }
 
     private var trackAccessibilityLabel: String {
@@ -252,7 +230,7 @@ struct ShowRowTrackButton: View {
                     showName: Show.preview.name,
                     isTracked: true,
                     isUpdating: false
-                ) { _ in }
+                ) {}
             }
         }
     }

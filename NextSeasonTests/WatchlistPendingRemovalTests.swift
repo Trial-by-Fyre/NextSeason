@@ -62,11 +62,10 @@ struct WatchlistPendingRemovalTests {
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
         coordinator.requestRemoval(
-            tracked, anchor: CGRect(x: 10, y: 20, width: 44, height: 44), source: .watchlist
+            tracked, source: .watchlist
         )
 
         #expect(coordinator.pendingRemoval?.id == tracked.id)
-        #expect(coordinator.toastAnchor == CGRect(x: 10, y: 20, width: 44, height: 44))
         #expect(try await repository.contains(showID: tracked.id))
         #expect(outcomes.isEmpty)
 
@@ -87,13 +86,12 @@ struct WatchlistPendingRemovalTests {
 
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
 
         coordinator.confirmPendingRemoval()
 
         // Toast presentation must clear on the button-action turn, not after remove.
         #expect(coordinator.pendingRemoval == nil)
-        #expect(coordinator.toastAnchor == nil)
 
         await repository.waitUntilRemoveBegan()
         repository.resumeRemove()
@@ -116,7 +114,7 @@ struct WatchlistPendingRemovalTests {
 
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
         _ = await coordinator.undoRemoval()
 
         #expect(outcomes == [.undone(showID: tracked.id)])
@@ -132,7 +130,7 @@ struct WatchlistPendingRemovalTests {
 
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
         coordinator.dismissPendingRemovalForNavigation()
 
         #expect(outcomes == [.cancelled(showID: tracked.id)])
@@ -151,8 +149,8 @@ struct WatchlistPendingRemovalTests {
 
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
-        coordinator.requestRemoval(first, anchor: .zero, source: .watchlist)
-        coordinator.requestRemoval(second, anchor: .zero, source: .detail)
+        coordinator.requestRemoval(first, source: .watchlist)
+        coordinator.requestRemoval(second, source: .detail)
 
         // The replaced outcome is emitted by a task the coordinator starts itself;
         // wait for it rather than a fixed time.
@@ -169,12 +167,11 @@ struct WatchlistPendingRemovalTests {
         try await repository.add(sampleShow)
         let tracked = try #require((try await repository.all()).first)
 
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
         let restored = await coordinator.undoRemoval()
 
         #expect(restored?.id == tracked.id)
         #expect(coordinator.pendingRemoval == nil)
-        #expect(coordinator.toastAnchor == nil)
         #expect(try await repository.contains(showID: tracked.id))
     }
 
@@ -218,7 +215,7 @@ struct WatchlistPendingRemovalTests {
         let removed = try #require(try await repository.trackedShow(showID: 1))
 
         coordinator.addOutcomeHandler { _ in }
-        coordinator.requestImmediateRemoval(removed, anchor: .zero, source: .watchlist)
+        coordinator.requestImmediateRemoval(removed, source: .watchlist)
         try await waitUntil { coordinator.lastOutcome != nil }
 
         try await repository.add(numberedShow(4))
@@ -241,7 +238,7 @@ struct WatchlistPendingRemovalTests {
         for id in 1...3 { try await repository.add(numberedShow(id)) }
         let removed = try #require(try await repository.trackedShow(showID: 1))
 
-        coordinator.requestImmediateRemoval(removed, anchor: .zero, source: .watchlist)
+        coordinator.requestImmediateRemoval(removed, source: .watchlist)
         try await waitUntil { coordinator.lastOutcome != nil }
 
         try await repository.add(numberedShow(4))
@@ -265,7 +262,7 @@ struct WatchlistPendingRemovalTests {
             store: store,
             initialStoreEntitlement: .loading,
             simulationAvailability: { false })
-        let startTask = Task { await purchases.start(watchlistCount: 3) }
+        let startTask = Task { await purchases.start() }
         for _ in 0..<200 {
             if store.entitlementWaiterCount > 0 { break }
             await Task.yield()
@@ -279,7 +276,7 @@ struct WatchlistPendingRemovalTests {
         for id in 1...3 { try await repository.add(numberedShow(id)) }
         let removed = try #require(try await repository.trackedShow(showID: 1))
 
-        coordinator.requestImmediateRemoval(removed, anchor: .zero, source: .watchlist)
+        coordinator.requestImmediateRemoval(removed, source: .watchlist)
         try await waitUntil { coordinator.lastOutcome != nil }
         try await repository.add(numberedShow(4))
         #expect(try await repository.activeShowIDs() == [2, 3, 4])
@@ -308,7 +305,7 @@ struct WatchlistPendingRemovalTests {
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
         coordinator.requestImmediateRemoval(
-            tracked, anchor: CGRect(x: 10, y: 40, width: 100, height: 44), source: .watchlist
+            tracked, source: .watchlist
         )
 
         // The immediate remove runs on the coordinator's own task, which emits
@@ -318,7 +315,6 @@ struct WatchlistPendingRemovalTests {
         #expect(try await repository.contains(showID: tracked.id) == false)
         #expect(outcomes == [.committed(showID: tracked.id)])
         #expect(coordinator.pendingRemoval?.id == tracked.id)
-        #expect(coordinator.toastAnchor == CGRect(x: 10, y: 40, width: 100, height: 44))
 
         let restored = await coordinator.undoRemoval()
         #expect(restored?.id == tracked.id)
@@ -342,7 +338,7 @@ struct WatchlistPendingRemovalTests {
         try await repository.add(sampleShow)
         let tracked = try #require((try await repository.all()).first)
 
-        coordinator.requestImmediateRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestImmediateRemoval(tracked, source: .watchlist)
 
         // Wait for the immediate remove's emitted outcome, not a fixed time.
         try await waitUntil { coordinator.lastOutcome != nil }
@@ -363,8 +359,8 @@ struct WatchlistPendingRemovalTests {
         let first = try #require((try await repository.all()).first { $0.id == sampleShow.id })
         let second = try #require((try await repository.all()).first { $0.id == secondShow.id })
 
-        coordinator.requestRemoval(first, anchor: .zero, source: .watchlist)
-        coordinator.requestRemoval(second, anchor: .zero, source: .detail)
+        coordinator.requestRemoval(first, source: .watchlist)
+        coordinator.requestRemoval(second, source: .detail)
 
         #expect(coordinator.pendingRemoval?.id == second.id)
 
@@ -385,7 +381,7 @@ struct WatchlistPendingRemovalTests {
         try await repository.add(sampleShow)
         let tracked = try #require((try await repository.all()).first)
 
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
         #expect(coordinator.pendingRemoval?.id == tracked.id)
 
         await coordinator.commitPendingRemovalIfNeeded()
@@ -405,7 +401,7 @@ struct WatchlistPendingRemovalTests {
 
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
         await coordinator.commitPendingRemovalIfNeeded()
 
         #expect(try await repository.contains(showID: tracked.id))
@@ -441,7 +437,7 @@ struct WatchlistPendingRemovalTests {
 
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
 
         // The undo timer commits on its own task, emitting the outcome after the
         // remove is saved; wait for that outcome rather than a fixed time.
@@ -470,7 +466,7 @@ struct WatchlistPendingRemovalTests {
 
         var outcomes: [PendingRemovalOutcome] = []
         coordinator.addOutcomeHandler { outcomes.append($0) }
-        coordinator.requestRemoval(tracked, anchor: .zero, source: .watchlist)
+        coordinator.requestRemoval(tracked, source: .watchlist)
 
         let commitTask = Task {
             await coordinator.commitPendingRemovalIfNeeded()

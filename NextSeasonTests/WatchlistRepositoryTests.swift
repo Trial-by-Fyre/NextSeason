@@ -77,4 +77,52 @@ struct WatchlistRepositoryTests {
         try await repository.remove(showID: show.id)
         #expect(try await repository.all().isEmpty)
     }
+
+    @Test("Refresh update is a no-op when the row was removed")
+    func updateAfterRefreshNoOpsWhenMissing() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let show = sampleShow
+        try await repository.add(show)
+        let tracked = try #require(try await repository.trackedShow(showID: show.id))
+        try await repository.remove(showID: show.id)
+
+        try await repository.updateAfterRefresh(tracked)
+
+        #expect(try await repository.all().isEmpty)
+    }
+
+    @Test("Refresh update preserves the stored pause flag")
+    func updateAfterRefreshPreservesPauseFlag() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let show = sampleShow
+        try await repository.add(show)
+        try await repository.setPaused(true, showIDs: [show.id])
+        var refreshed = try #require(try await repository.trackedShow(showID: show.id))
+        refreshed.isPaused = false
+        refreshed.name = "Updated Name"
+
+        try await repository.updateAfterRefresh(refreshed)
+
+        let stored = try #require(try await repository.trackedShow(showID: show.id))
+        #expect(stored.isPaused)
+        #expect(stored.name == "Updated Name")
+    }
+
+    @Test("Refresh update copies dateAdded from the incoming row")
+    func updateAfterRefreshCopiesDateAdded() async throws {
+        let storedDate = Date(timeIntervalSince1970: 1_700_000_000)
+        let incomingDate = Date(timeIntervalSince1970: 1_800_000_000)
+        let storedRow = TrackedShow(from: sampleShow, at: storedDate)
+        let repository = InMemoryWatchlistRepository(seed: [storedRow])
+
+        var incoming = storedRow
+        incoming.dateAdded = incomingDate
+        incoming.name = "Renamed on refresh"
+
+        try await repository.updateAfterRefresh(incoming)
+
+        let after = try #require(try await repository.trackedShow(showID: sampleShow.id))
+        #expect(after.dateAdded == incomingDate)
+        #expect(after.name == "Renamed on refresh")
+    }
 }

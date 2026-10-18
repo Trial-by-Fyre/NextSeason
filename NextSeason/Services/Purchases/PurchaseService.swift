@@ -203,7 +203,7 @@ final class PurchaseService {
     ///
     /// `Transaction.updates` is observed before the first entitlement read so
     /// unfinished or delayed transactions are not missed during startup.
-    func start(watchlistCount: Int) async {
+    func start() async {
         startObservingTransactionsIfNeeded()
         await refreshComplimentaryEntitlement()
         await refreshEntitlements()

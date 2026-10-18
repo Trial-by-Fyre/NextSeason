@@ -94,7 +94,6 @@ struct WatchlistTrackingTests {
         let outcome = try await WatchlistTracking.toggle(
             sampleShow,
             isTracked: true,
-            anchor: .zero,
             source: .search,
             repository: repository,
             tvMaze: tvMaze,
@@ -125,7 +124,6 @@ struct WatchlistTrackingTests {
         let first = try await WatchlistTracking.toggle(
             sampleShow,
             isTracked: true,
-            anchor: .zero,
             source: .detail,
             repository: repository,
             tvMaze: tvMaze,
@@ -142,7 +140,6 @@ struct WatchlistTrackingTests {
         let second = try await WatchlistTracking.toggle(
             sampleShow,
             isTracked: false,
-            anchor: .zero,
             source: .detail,
             repository: repository,
             tvMaze: tvMaze,
@@ -172,7 +169,7 @@ struct WatchlistTrackingTests {
         let tvMaze = MockTVMazeService()
         for id in 1...3 { try await repository.add(show(id: id)) }
         let pending = try #require(try await repository.trackedShow(showID: 1))
-        removalCoordinator.requestRemoval(pending, anchor: .zero, source: .detail)
+        removalCoordinator.requestRemoval(pending, source: .detail)
 
         #expect(
             try await WatchlistTrackingState.isTracked(
@@ -244,7 +241,6 @@ struct WatchlistTrackingTests {
         let outcome = try await WatchlistTracking.toggle(
             sampleShow,
             isTracked: false,
-            anchor: .zero,
             source: .search,
             repository: repository,
             tvMaze: tvMaze,
@@ -293,7 +289,6 @@ struct WatchlistTrackingTests {
         let outcome = try await WatchlistTracking.toggle(
             detailedShow,
             isTracked: false,
-            anchor: .zero,
             source: .detail,
             repository: repository,
             tvMaze: tvMaze,
@@ -323,7 +318,6 @@ struct WatchlistTrackingTests {
         let outcome = try await WatchlistTracking.toggle(
             sampleShow,
             isTracked: false,
-            anchor: .zero,
             source: .search,
             repository: repository,
             tvMaze: tvMaze,
@@ -369,7 +363,6 @@ struct WatchlistTrackingTests {
         let outcome = try await WatchlistTracking.toggle(
             detailed,
             isTracked: false,
-            anchor: .zero,
             source: .detail,
             repository: repository,
             tvMaze: MockTVMazeService(),
@@ -417,7 +410,7 @@ struct WatchlistTrackingTests {
             initialStoreEntitlement: .loading
         )
 
-        let startTask = Task { await purchases.start(watchlistCount: 3) }
+        let startTask = Task { await purchases.start() }
         await waitUntilEntitlementIsHeld(store)
 
         var outcome: WatchlistTracking.ToggleOutcome?
@@ -461,7 +454,7 @@ struct WatchlistTrackingTests {
             entitlementStore: entitlementStore,
             initialStoreEntitlement: .resolved(isEntitled: true)
         )
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         try await repository.add(show(id: 1))
         try await repository.add(show(id: 2))

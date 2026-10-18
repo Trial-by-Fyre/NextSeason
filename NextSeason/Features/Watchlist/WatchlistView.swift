@@ -53,9 +53,6 @@ struct WatchlistView: View {
     /// Sections the user has collapsed. Missing IDs are treated as expanded.
     /// Restored from UserDefaults on first appearance; saved whenever it changes.
     @State private var collapsedSections: Set<WatchlistSection>
-    /// Global frames for watchlist rows, used to anchor the swipe-delete toast
-    /// near the deleted row instead of the bottom of the screen.
-    @State private var rowFrames: [Int: CGRect] = [:]
     /// Whether the navigation-bar search drawer is visible (toggled from the toolbar).
     @State private var isSearchPresented = false
 
@@ -293,27 +290,12 @@ struct WatchlistView: View {
                 isUpdating: false,
                 isPendingRemoval: isPending,
                 trackButtonIdentifier: AccessibilityID.Watchlist.trackButton
-            ) { anchor in
+            ) {
                 if isPending {
                     Task { await viewModel.undoPendingRemoval() }
                 } else {
-                    viewModel.requestRemoval(
-                        tracked,
-                        anchor: anchor,
-                        source: .watchlist
-                    )
+                    viewModel.requestRemoval(tracked, source: .watchlist)
                 }
-            }
-        }
-        .background {
-            GeometryReader { geometry in
-                Color.clear
-                    .onAppear {
-                        updateRowFrame(tracked.id, from: geometry)
-                    }
-                    .onChange(of: geometry.frame(in: .global)) { _, _ in
-                        updateRowFrame(tracked.id, from: geometry)
-                    }
             }
         }
     }
@@ -321,12 +303,8 @@ struct WatchlistView: View {
     /// VoiceOver row action: same immediate-delete path as swipe-to-delete.
     private func deleteImmediately(_ tracked: TrackedShow, viewModel: WatchlistViewModel) {
         withAnimation(.easeInOut(duration: 0.35)) {
-            viewModel.deleteImmediately(
-                tracked,
-                rowAnchor: rowFrames[tracked.id] ?? .zero
-            )
+            viewModel.deleteImmediately(tracked)
         }
-        rowFrames[tracked.id] = nil
     }
 
     /// Swipe-to-delete for one rendered section's rows.
@@ -337,11 +315,7 @@ struct WatchlistView: View {
     ) {
         // Avoid notifyWatchlistDataChanged here — bumping the
         // reload token mid-delete jumps list scroll position.
-        viewModel.deleteImmediately(at: offsets, in: shows, rowAnchors: rowFrames)
-        for index in offsets {
-            guard shows.indices.contains(index) else { continue }
-            rowFrames[shows[index].id] = nil
-        }
+        viewModel.deleteImmediately(at: offsets, in: shows)
     }
 
     @ViewBuilder
@@ -349,9 +323,6 @@ struct WatchlistView: View {
         @Bindable var viewModel = viewModel
 
         switch viewModel.state {
-        case .loading:
-            ProgressView("Loading watchlist…")
-                .controlSize(.large)
         case .loaded:
             // The List is kept mounted even when empty (empty state is an overlay)
             // so removing the last row doesn't tear the List down mid-animation,
@@ -517,12 +488,6 @@ struct WatchlistView: View {
                 }
             }
         )
-    }
-
-    private func updateRowFrame(_ showID: Int, from geometry: GeometryProxy) {
-        let frame = geometry.frame(in: .global)
-        guard frame.width > 0, frame.height > 0 else { return }
-        rowFrames[showID] = frame
     }
 }
 

@@ -19,7 +19,7 @@ struct PurchaseServiceTests {
         defaults.removePersistentDomain(forName: suiteName)
 
         let purchases = PurchaseService.stub(userDefaults: defaults)
-        await purchases.start(watchlistCount: 5)
+        await purchases.start()
 
         #expect(purchases.isComplimentary == false)
         #expect(purchases.isUnlimitedWatchlist == false)
@@ -35,7 +35,7 @@ struct PurchaseServiceTests {
         arguments: [StoreProductID.plusMonthly, .plusAnnual])
     func purchasingSubscriptionUnlocksPlus(_ productID: StoreProductID) async throws {
         let purchases = PurchaseService.stub()
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
         #expect(purchases.isUnlimitedWatchlist == false)
 
         let product = StoreProduct(productID)
@@ -51,7 +51,7 @@ struct PurchaseServiceTests {
         arguments: [StoreProductID.tipTrailer, .tipPilot, .tipHitShow])
     func tipsDoNotGrantPlus(_ productID: StoreProductID) async throws {
         let purchases = PurchaseService.stub()
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
         let tip = try #require(purchases.tipProducts.first { $0.productID == productID.rawValue })
 
         let outcome = await purchases.purchase(tip)
@@ -80,7 +80,7 @@ struct PurchaseServiceTests {
         #expect(purchases.storeEntitlement == .loading)
         #expect(purchases.hasResolvedStoreEntitlement == false)
 
-        let startTask = Task { await purchases.start(watchlistCount: 0) }
+        let startTask = Task { await purchases.start() }
         await waitUntilEntitlementIsHeld(store)
 
         #expect(purchases.storeEntitlement == .loading)
@@ -98,7 +98,7 @@ struct PurchaseServiceTests {
         store.delayEntitlementResolution = true
         let purchases = makePurchases(store: store)
 
-        let startTask = Task { await purchases.start(watchlistCount: 0) }
+        let startTask = Task { await purchases.start() }
         await waitUntilEntitlementIsHeld(store)
 
         var decided: Bool?
@@ -126,7 +126,7 @@ struct PurchaseServiceTests {
         store.delayEntitlementResolution = true
         let purchases = makePurchases(store: store)
 
-        let startTask = Task { await purchases.start(watchlistCount: 0) }
+        let startTask = Task { await purchases.start() }
         await waitUntilEntitlementIsHeld(store)
 
         var decided: Bool?
@@ -167,7 +167,7 @@ struct PurchaseServiceTests {
         store.loadError = StubStoreError.loadFailed
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
 
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         #expect(purchases.hasCompletedProductLoad)
         #expect(purchases.lastErrorMessage != nil)
@@ -193,7 +193,7 @@ struct PurchaseServiceTests {
             products: [StoreProduct(productID)]
         )
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         #expect(
             (purchases.annualProduct ?? purchases.monthlyProduct)?.productID == productID.rawValue)
@@ -212,7 +212,7 @@ struct PurchaseServiceTests {
             ]
         )
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         #expect(purchases.annualProduct == nil)
         #expect(purchases.monthlyProduct == nil)
@@ -226,7 +226,7 @@ struct PurchaseServiceTests {
     func restorePurchasesActivatesEntitlement() async {
         let store = StubPurchaseStoreClient(isStoreEntitled: false)
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
         #expect(purchases.isStoreEntitled == false)
 
         store.isStoreEntitled = true
@@ -241,7 +241,7 @@ struct PurchaseServiceTests {
     func pendingPlusCompletesThroughTransactionUpdate() async throws {
         let store = StubPurchaseStoreClient(purchaseOutcome: .pending)
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         let annual = try #require(purchases.annualProduct)
         #expect(await purchases.purchase(annual) == .pending)
@@ -262,7 +262,7 @@ struct PurchaseServiceTests {
     func pendingTipCompletesThroughTransactionUpdate() async throws {
         let store = StubPurchaseStoreClient(purchaseOutcome: .pending)
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         let tip = try #require(purchases.tipProducts.first)
         #expect(await purchases.purchase(tip) == .pending)
@@ -284,7 +284,7 @@ struct PurchaseServiceTests {
     func duplicateTipUpdateDoesNotShowThankYouAgain() async throws {
         let store = StubPurchaseStoreClient()
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         let tip = try #require(purchases.tipProducts.first)
         #expect(await purchases.purchase(tip) == .success)
@@ -304,7 +304,7 @@ struct PurchaseServiceTests {
         store.delayEntitlementResolution = true
         let purchases = makePurchases(store: store)
 
-        let startTask = Task { await purchases.start(watchlistCount: 0) }
+        let startTask = Task { await purchases.start() }
         await waitUntilEntitlementIsHeld(store)
 
         #expect(store.observeTransactionUpdatesCallCount == 1)
@@ -335,8 +335,8 @@ struct PurchaseServiceTests {
         let store = StubPurchaseStoreClient()
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
 
-        await purchases.start(watchlistCount: 0)
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
+        await purchases.start()
 
         #expect(store.observeTransactionUpdatesCallCount == 1)
         #expect(
@@ -351,7 +351,7 @@ struct PurchaseServiceTests {
             store: store,
             initial: .resolved(isEntitled: false)
         )
-        await purchases?.start(watchlistCount: 0)
+        await purchases?.start()
         #expect(store.isObservingTransactionUpdates)
         #expect(store.stopObservingTransactionUpdatesCallCount == 0)
 
@@ -366,7 +366,7 @@ struct PurchaseServiceTests {
     func entitlementLossWhileRunning() async {
         let store = StubPurchaseStoreClient(isStoreEntitled: true)
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: true))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
         #expect(await purchases.canAddToWatchlist(currentCount: 5))
 
         store.isStoreEntitled = false
@@ -383,7 +383,7 @@ struct PurchaseServiceTests {
         store.delayEntitlementResolution = true
         let purchases = makePurchases(store: store)
 
-        let startTask = Task { await purchases.start(watchlistCount: 0) }
+        let startTask = Task { await purchases.start() }
         await waitUntilEntitlementIsHeld(store)
         #expect(store.entitlementWaiterCount == 1)
 
@@ -406,7 +406,7 @@ struct PurchaseServiceTests {
     func processesPlusPurchaseBeforeFinish(_ productID: StoreProductID) async throws {
         let store = StubPurchaseStoreClient()
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         var entitledWhenFinished = false
         store.onFinish = {
@@ -423,7 +423,7 @@ struct PurchaseServiceTests {
     func processesTipUpdateBeforeFinish() async {
         let store = StubPurchaseStoreClient()
         let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
-        await purchases.start(watchlistCount: 0)
+        await purchases.start()
 
         var thankedWhenFinished = false
         store.onFinish = {

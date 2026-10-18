@@ -150,8 +150,8 @@ struct ShowDetailView: View {
                 isPendingRemoval: removalCoordinator?.pendingRemoval?.id
                     == viewModel.displayShow.id,
                 trackButtonIdentifier: AccessibilityID.ShowDetail.trackButton
-            ) { anchor in
-                Task { await handleTrackButtonTap(viewModel: viewModel, anchor: anchor) }
+            ) {
+                Task { await handleTrackButtonTap(viewModel: viewModel) }
             }
         }
     }
@@ -170,9 +170,8 @@ struct ShowDetailView: View {
         return parts.joined(separator: ", ")
     }
 
-    private func handleTrackButtonTap(viewModel: ShowDetailViewModel, anchor: CGRect) async {
+    private func handleTrackButtonTap(viewModel: ShowDetailViewModel) async {
         await viewModel.handleTrackButton(
-            anchor: anchor,
             removalCoordinator: removalCoordinator,
             onWatchlistChanged: onWatchlistChanged,
             onPaywallRequired: { presentPlusStore?() }

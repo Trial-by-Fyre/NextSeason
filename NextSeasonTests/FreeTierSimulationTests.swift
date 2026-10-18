@@ -72,7 +72,7 @@ struct FreeTierSimulationTests {
     func verifiedSuccessfulPurchaseEndsSimulation(_ id: StoreProductID) async {
         let store = StubPurchaseStoreClient()
         let purchases = makeService(store: store, complimentary: true)
-        await purchases.start(watchlistCount: 12)
+        await purchases.start()
         purchases.setFreeTierSimulation(true)
         #expect(await purchases.purchase(StoreProduct(id)) == .success)
         #expect(purchases.isSimulatingFreeTier == false)
@@ -101,7 +101,7 @@ struct FreeTierSimulationTests {
     func renewalsAndUnrequestedPurchasesKeepSimulation(_ id: StoreProductID) async {
         let store = StubPurchaseStoreClient(isStoreEntitled: true)
         let purchases = makeService(store: store)
-        await purchases.start(watchlistCount: 3)
+        await purchases.start()
         purchases.setFreeTierSimulation(true)
 
         await store.emitVerifiedTransaction(
@@ -115,7 +115,7 @@ struct FreeTierSimulationTests {
     @Test func pendingPurchaseIgnoresRenewalAndDifferentProduct() async {
         let store = StubPurchaseStoreClient(isStoreEntitled: true, purchaseOutcome: .pending)
         let purchases = makeService(store: store)
-        await purchases.start(watchlistCount: 3)
+        await purchases.start()
         purchases.setFreeTierSimulation(true)
         #expect(await purchases.purchase(StoreProduct(.plusMonthly)) == .pending)
 
@@ -136,7 +136,7 @@ struct FreeTierSimulationTests {
     @Test func togglingClearsPendingPurchaseTracking() async {
         let store = StubPurchaseStoreClient(purchaseOutcome: .pending)
         let purchases = makeService(store: store)
-        await purchases.start(watchlistCount: 3)
+        await purchases.start()
         purchases.setFreeTierSimulation(true)
         #expect(await purchases.purchase(StoreProduct(.plusMonthly)) == .pending)
         purchases.setFreeTierSimulation(false)
@@ -151,7 +151,7 @@ struct FreeTierSimulationTests {
     @Test func pendingCompletionCannotDisableRestartedSimulationAfterAwait() async {
         let store = StubPurchaseStoreClient(purchaseOutcome: .pending)
         let purchases = makeService(store: store)
-        await purchases.start(watchlistCount: 3)
+        await purchases.start()
         purchases.setFreeTierSimulation(true)
         #expect(await purchases.purchase(StoreProduct(.plusMonthly)) == .pending)
         store.isStoreEntitled = true
@@ -178,7 +178,7 @@ struct FreeTierSimulationTests {
     @Test func delayedVerifiedSubscriptionRequiresActiveEntitlement() async {
         let store = StubPurchaseStoreClient(purchaseOutcome: .pending)
         let purchases = makeService(store: store)
-        await purchases.start(watchlistCount: 3)
+        await purchases.start()
         purchases.setFreeTierSimulation(true)
         #expect(await purchases.purchase(StoreProduct(.plusMonthly)) == .pending)
         await store.emitVerifiedTransaction(

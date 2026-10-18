@@ -166,7 +166,6 @@ struct ShowDetailViewModelTests {
         )
 
         await viewModel.handleTrackButton(
-            anchor: .zero,
             removalCoordinator: removalCoordinator,
             onWatchlistChanged: {},
             onPaywallRequired: {}
@@ -193,7 +192,6 @@ struct ShowDetailViewModelTests {
         )
 
         await viewModel.handleTrackButton(
-            anchor: .zero,
             removalCoordinator: removalCoordinator,
             onWatchlistChanged: {},
             onPaywallRequired: {}
@@ -228,7 +226,6 @@ struct ShowDetailViewModelTests {
         )
 
         await viewModel.handleTrackButton(
-            anchor: .zero,
             removalCoordinator: removalCoordinator,
             onWatchlistChanged: {},
             onPaywallRequired: {}
@@ -264,7 +261,6 @@ struct ShowDetailViewModelTests {
         #expect(viewModel.loadState == .loaded)
 
         await viewModel.handleTrackButton(
-            anchor: .zero,
             removalCoordinator: nil,
             onWatchlistChanged: {},
             onPaywallRequired: {}
@@ -303,7 +299,6 @@ struct ShowDetailViewModelTests {
         )
 
         await viewModel.handleTrackButton(
-            anchor: .zero,
             removalCoordinator: nil,
             onWatchlistChanged: {},
             onPaywallRequired: { didPresentPaywall = true }

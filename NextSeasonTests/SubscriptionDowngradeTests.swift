@@ -640,7 +640,7 @@ struct SubscriptionDowngradeTests {
             repository: repository, analytics: RecordingAnalyticsService())
         let paused = try #require(try await repository.trackedShow(showID: 4))
 
-        removal.requestImmediateRemoval(paused, anchor: .zero, source: .watchlist)
+        removal.requestImmediateRemoval(paused, source: .watchlist)
         var attempts = 0
         while try await repository.contains(showID: 4), attempts < 20 {
             attempts += 1
@@ -724,7 +724,7 @@ struct SwiftDataPausedWatchlistTests {
             removal.addOutcomeHandler { outcome in
                 if case .committed(let id) = outcome, id == 1 { committed.resume() }
             }
-            removal.requestImmediateRemoval(original, anchor: .zero, source: .watchlist)
+            removal.requestImmediateRemoval(original, source: .watchlist)
         }
         #expect(try await repository.contains(showID: 1) == false)
 

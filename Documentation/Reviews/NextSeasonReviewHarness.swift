@@ -1266,11 +1266,24 @@ final class InMemoryWatchlistRepository: WatchlistRepository {
         shows.removeValue(forKey: showID)
     }
 
-    /// Matches SwiftData: refresh writes never change the stored pause flag.
+    /// Matches SwiftData `TrackedShowEntity.apply`: no-op if the row was removed;
+    /// refresh writes copy `dateAdded` from the incoming row and never change
+    /// the stored pause flag.
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {
-        var updated = tracked
-        updated.isPaused = shows[tracked.id]?.isPaused ?? tracked.isPaused
-        shows[tracked.id] = updated
+        guard var stored = shows[tracked.id] else { return }
+        stored.dateAdded = tracked.dateAdded
+        stored.name = tracked.name
+        stored.posterMediumURL = tracked.posterMediumURL
+        stored.summaryHTML = tracked.summaryHTML
+        stored.tvMazeURL = tracked.tvMazeURL
+        stored.status = tracked.status
+        stored.nextSeason = tracked.nextSeason
+        stored.sourceUpdatedAt = tracked.sourceUpdatedAt
+        stored.lastCheckedAt = tracked.lastCheckedAt
+        stored.lastNotifiedSignature = tracked.lastNotifiedSignature
+        stored.pendingChangeSignature = tracked.pendingChangeSignature
+        stored.isStale = tracked.isStale
+        shows[tracked.id] = stored
     }
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
@@ -1302,7 +1315,6 @@ final class WatchlistPendingRemoval {
     }
 
     private(set) var pendingRemoval: TrackedShow?
-    private(set) var toastAnchor: CGRect?
     /// Set when deferred persistence fails after the undo window ends.
     private(set) var removalErrorMessage: String?
 
@@ -1346,7 +1358,6 @@ final class WatchlistPendingRemoval {
     /// `commitPendingRemovalIfNeeded()` runs.
     func requestRemoval(
         _ tracked: TrackedShow,
-        anchor: CGRect,
         source: WatchlistActionSource
     ) {
         commitRemovalTask?.cancel()
@@ -1359,7 +1370,7 @@ final class WatchlistPendingRemoval {
 
         pendingMode = .deferred
         pendingRemovalSource = source
-        performRequestRemoval(tracked, anchor: anchor)
+        performRequestRemoval(tracked)
     }
 
     /// Persists removal immediately, then shows the undo toast. Undo restores
@@ -1369,7 +1380,6 @@ final class WatchlistPendingRemoval {
     /// `List` + `.onDelete` stay consistent.
     func requestImmediateRemoval(
         _ tracked: TrackedShow,
-        anchor: CGRect,
         source: WatchlistActionSource
     ) {
         commitRemovalTask?.cancel()
@@ -1381,7 +1391,6 @@ final class WatchlistPendingRemoval {
         pendingMode = .immediate
         pendingRemovalSource = source
         pendingRemoval = tracked
-        toastAnchor = anchor
 
         AppDiagnosticsLogger.logTaskStart("immediate_removal")
         commitRemovalTask = Task { [weak self] in
@@ -1493,12 +1502,8 @@ final class WatchlistPendingRemoval {
         // Immediate replacements are already persisted; nothing to do.
     }
 
-    private func performRequestRemoval(
-        _ tracked: TrackedShow,
-        anchor: CGRect
-    ) {
+    private func performRequestRemoval(_ tracked: TrackedShow) {
         pendingRemoval = tracked
-        toastAnchor = anchor
 
         AppDiagnosticsLogger.logTaskStart("undo_removal_timer")
         commitRemovalTask = Task { [weak self] in
@@ -1609,7 +1614,6 @@ final class WatchlistPendingRemoval {
 
     private func clearPendingPresentation() {
         pendingRemoval = nil
-        toastAnchor = nil
         pendingRemovalSource = nil
         pendingMode = .deferred
     }
@@ -2626,7 +2630,7 @@ struct OverflowSearch: TheTVDBService {
         let tracked = try await repo.trackedShow(showID: 1)!
         await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
             removal.addOutcomeHandler { if $0 == .committed(showID: 1) { done.resume() } }
-            removal.requestImmediateRemoval(tracked, anchor: .zero, source: .watchlist)
+            removal.requestImmediateRemoval(tracked, source: .watchlist)
         }
         try await repo.add(fixtureShow(4))
         _ = await removal.undoRemoval()

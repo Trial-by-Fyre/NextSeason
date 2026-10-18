@@ -204,7 +204,7 @@ struct WatchlistAdmissionTests {
             removal.addOutcomeHandler { outcome in
                 if case .committed(let id) = outcome, id == 1 { committed.resume() }
             }
-            removal.requestImmediateRemoval(row, anchor: .zero, source: .watchlist)
+            removal.requestImmediateRemoval(row, source: .watchlist)
         }
 
         // An add sees two active shows and suspends fetching details.

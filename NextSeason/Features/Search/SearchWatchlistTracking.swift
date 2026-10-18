@@ -63,7 +63,6 @@ final class SearchWatchlistTracking {
     /// Handles a search-row track / untrack tap.
     func handleTrackButton(
         for show: Show,
-        anchor: CGRect,
         context: Context
     ) async throws {
         guard !updatingShowIDs.contains(show.id) else { return }
@@ -87,7 +86,6 @@ final class SearchWatchlistTracking {
             let outcome = try await WatchlistTracking.toggle(
                 show,
                 isTracked: isTracked,
-                anchor: anchor,
                 source: .search,
                 repository: context.repository,
                 tvMaze: context.tvMaze,

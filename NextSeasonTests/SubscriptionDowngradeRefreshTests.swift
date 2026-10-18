@@ -501,7 +501,7 @@ struct SubscriptionDowngradeRefreshTests {
             removal.addOutcomeHandler { outcome in
                 if case .committed(let id) = outcome, id == 4 { committed.resume() }
             }
-            removal.requestImmediateRemoval(row, anchor: .zero, source: .watchlist)
+            removal.requestImmediateRemoval(row, source: .watchlist)
         }
         _ = await removal.undoRemoval()
         #expect(try await harness.row(4)?.dateAdded == row.dateAdded)
@@ -527,7 +527,7 @@ struct SubscriptionDowngradeRefreshTests {
             removal.addOutcomeHandler { outcome in
                 if case .committed(let id) = outcome, id == 4 { committed.resume() }
             }
-            removal.requestImmediateRemoval(row, anchor: .zero, source: .watchlist)
+            removal.requestImmediateRemoval(row, source: .watchlist)
         }
 
         // 3. An automatic refresh runs while the row is deleted.
@@ -574,7 +574,7 @@ struct SubscriptionDowngradeStarStateTests {
 
         var paywallShown = false
         await viewModel.handleTrackButton(
-            anchor: .zero, removalCoordinator: removal, onWatchlistChanged: {},
+            removalCoordinator: removal, onWatchlistChanged: {},
             onPaywallRequired: { paywallShown = true })
         #expect(paywallShown, "Three active shows: star leads to the paywall")
         #expect(try await harness.row(4)?.isPaused == true)
@@ -586,7 +586,7 @@ struct SubscriptionDowngradeStarStateTests {
         // The star now removes (undoable), and a later access change keeps the
         // pending removal excluded.
         await viewModel.handleTrackButton(
-            anchor: .zero, removalCoordinator: removal, onWatchlistChanged: {},
+            removalCoordinator: removal, onWatchlistChanged: {},
             onPaywallRequired: {})
         #expect(removal.pendingRemoval?.id == 4)
         await viewModel.refreshTrackedState(removalCoordinator: removal)
@@ -609,7 +609,7 @@ struct SubscriptionDowngradeStarStateTests {
         #expect(viewModel.isTracked == false)
 
         await viewModel.handleTrackButton(
-            anchor: .zero, removalCoordinator: nil, onWatchlistChanged: {},
+            removalCoordinator: nil, onWatchlistChanged: {},
             onPaywallRequired: {})
         #expect(viewModel.isTracked)
         #expect(try await harness.row(4)?.isPaused == false)
@@ -640,7 +640,7 @@ struct SubscriptionDowngradeStarStateTests {
 
         // Pending removal of show 1 survives the access-change refreshes below.
         let showOne = try #require(try await harness.row(1))
-        removal.requestRemoval(showOne, anchor: .zero, source: .search)
+        removal.requestRemoval(showOne, source: .search)
 
         #expect(await harness.setPlus(false) == .paused([4]))
         await refreshStars()
@@ -649,7 +649,7 @@ struct SubscriptionDowngradeStarStateTests {
         // An undoable removal is not persisted yet, so show 1 still holds a slot:
         // tapping paused 4's empty star leads to the paywall, not reactivation.
         try await tracking.handleTrackButton(
-            for: show(4, .returning), anchor: .zero, context: context)
+            for: show(4, .returning), context: context)
         #expect(paywallShown)
         #expect(try await harness.row(4)?.isPaused == true)
 

@@ -94,7 +94,7 @@ struct WatchlistTrackingStateTests {
             analytics: RecordingAnalyticsService()
         )
         let tracked = try #require(await repository.trackedShow(showID: show.id))
-        removalCoordinator.requestRemoval(tracked, anchor: .zero, source: .search)
+        removalCoordinator.requestRemoval(tracked, source: .search)
 
         #expect(
             try await WatchlistTrackingState.isTracked(

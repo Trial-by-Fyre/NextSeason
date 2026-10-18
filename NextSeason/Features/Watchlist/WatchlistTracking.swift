@@ -76,7 +76,6 @@ enum WatchlistTracking {
     static func toggle(
         _ show: Show,
         isTracked: Bool,
-        anchor: CGRect,
         source: WatchlistActionSource,
         repository: any WatchlistRepository,
         tvMaze: any TVMazeService,
@@ -96,11 +95,7 @@ enum WatchlistTracking {
             guard let tracked = try await repository.trackedShow(showID: show.id) else {
                 return .ignored
             }
-            removalCoordinator.requestRemoval(
-                tracked,
-                anchor: anchor,
-                source: source
-            )
+            removalCoordinator.requestRemoval(tracked, source: source)
             return .removalRequested
         }
 

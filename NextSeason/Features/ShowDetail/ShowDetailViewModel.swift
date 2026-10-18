@@ -130,7 +130,6 @@ final class ShowDetailViewModel {
     /// When the free-tier cap blocks an add, invokes `onPaywallRequired` so the
     /// view can present the Plus store.
     func handleTrackButton(
-        anchor: CGRect,
         removalCoordinator: WatchlistPendingRemoval?,
         onWatchlistChanged: @escaping () -> Void,
         onPaywallRequired: @escaping () -> Void
@@ -158,7 +157,6 @@ final class ShowDetailViewModel {
             let outcome = try await WatchlistTracking.toggle(
                 show,
                 isTracked: wasTracked,
-                anchor: anchor,
                 source: .detail,
                 repository: repository,
                 tvMaze: service,

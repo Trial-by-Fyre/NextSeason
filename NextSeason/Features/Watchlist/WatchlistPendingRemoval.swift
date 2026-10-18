@@ -22,7 +22,6 @@ final class WatchlistPendingRemoval {
     }
 
     private(set) var pendingRemoval: TrackedShow?
-    private(set) var toastAnchor: CGRect?
     /// Set when deferred persistence fails after the undo window ends.
     private(set) var removalErrorMessage: String?
 
@@ -72,7 +71,6 @@ final class WatchlistPendingRemoval {
     /// `commitPendingRemovalIfNeeded()` runs.
     func requestRemoval(
         _ tracked: TrackedShow,
-        anchor: CGRect,
         source: WatchlistActionSource
     ) {
         commitRemovalTask?.cancel()
@@ -85,7 +83,7 @@ final class WatchlistPendingRemoval {
 
         pendingMode = .deferred
         pendingRemovalSource = source
-        performRequestRemoval(tracked, anchor: anchor)
+        performRequestRemoval(tracked)
     }
 
     /// Persists removal immediately, then shows the undo toast. Undo restores
@@ -95,7 +93,6 @@ final class WatchlistPendingRemoval {
     /// `List` + `.onDelete` stay consistent.
     func requestImmediateRemoval(
         _ tracked: TrackedShow,
-        anchor: CGRect,
         source: WatchlistActionSource
     ) {
         commitRemovalTask?.cancel()
@@ -107,7 +104,6 @@ final class WatchlistPendingRemoval {
         pendingMode = .immediate
         pendingRemovalSource = source
         pendingRemoval = tracked
-        toastAnchor = anchor
 
         AppDiagnosticsLogger.logTaskStart("immediate_removal")
         commitRemovalTask = Task { [weak self] in
@@ -219,12 +215,8 @@ final class WatchlistPendingRemoval {
         // Immediate replacements are already persisted; nothing to do.
     }
 
-    private func performRequestRemoval(
-        _ tracked: TrackedShow,
-        anchor: CGRect
-    ) {
+    private func performRequestRemoval(_ tracked: TrackedShow) {
         pendingRemoval = tracked
-        toastAnchor = anchor
 
         AppDiagnosticsLogger.logTaskStart("undo_removal_timer")
         commitRemovalTask = Task { [weak self] in
@@ -338,7 +330,6 @@ final class WatchlistPendingRemoval {
 
     private func clearPendingPresentation() {
         pendingRemoval = nil
-        toastAnchor = nil
         pendingRemovalSource = nil
         pendingMode = .deferred
     }

@@ -113,7 +113,6 @@ struct SearchWatchlistTrackingTests {
         await #expect(throws: URLError.self) {
             try await tracking.handleTrackButton(
                 for: sampleShow,
-                anchor: .zero,
                 context: context(repository: repository)
             )
         }
@@ -137,7 +136,6 @@ struct SearchWatchlistTrackingTests {
         await #expect(throws: URLError.self) {
             try await tracking.handleTrackButton(
                 for: sampleShow,
-                anchor: .zero,
                 context: context(
                     repository: repository,
                     removalCoordinator: removalCoordinator

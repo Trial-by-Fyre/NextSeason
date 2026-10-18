@@ -49,11 +49,24 @@ final class InMemoryWatchlistRepository: WatchlistRepository {
         shows.removeValue(forKey: showID)
     }
 
-    /// Matches SwiftData: refresh writes never change the stored pause flag.
+    /// Matches SwiftData `TrackedShowEntity.apply`: no-op if the row was removed;
+    /// refresh writes copy `dateAdded` from the incoming row and never change
+    /// the stored pause flag.
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {
-        var updated = tracked
-        updated.isPaused = shows[tracked.id]?.isPaused ?? tracked.isPaused
-        shows[tracked.id] = updated
+        guard var stored = shows[tracked.id] else { return }
+        stored.dateAdded = tracked.dateAdded
+        stored.name = tracked.name
+        stored.posterMediumURL = tracked.posterMediumURL
+        stored.summaryHTML = tracked.summaryHTML
+        stored.tvMazeURL = tracked.tvMazeURL
+        stored.status = tracked.status
+        stored.nextSeason = tracked.nextSeason
+        stored.sourceUpdatedAt = tracked.sourceUpdatedAt
+        stored.lastCheckedAt = tracked.lastCheckedAt
+        stored.lastNotifiedSignature = tracked.lastNotifiedSignature
+        stored.pendingChangeSignature = tracked.pendingChangeSignature
+        stored.isStale = tracked.isStale
+        shows[tracked.id] = stored
     }
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {

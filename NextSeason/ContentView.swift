@@ -19,17 +19,20 @@ struct ContentView: View {
     private let searchService: any TheTVDBService
     private let tvMaze: any TVMazeService
     private let showIDMapping: any ShowIDMapping
+    private let isLocalShowIDMappingAvailable: Bool
 
     init(
         coordinator: AppNavigationCoordinator,
         searchService: any TheTVDBService,
         tvMaze: any TVMazeService,
-        showIDMapping: any ShowIDMapping
+        showIDMapping: any ShowIDMapping,
+        isLocalShowIDMappingAvailable: Bool = true
     ) {
         _coordinator = Bindable(coordinator)
         self.searchService = searchService
         self.tvMaze = tvMaze
         self.showIDMapping = showIDMapping
+        self.isLocalShowIDMappingAvailable = isLocalShowIDMappingAvailable
     }
 
     var body: some View {
@@ -39,6 +42,7 @@ struct ContentView: View {
                 searchService: searchService,
                 tvMaze: tvMaze,
                 showIDMapping: showIDMapping,
+                isLocalShowIDMappingAvailable: isLocalShowIDMappingAvailable,
                 analytics: analytics,
                 onWatchlistChanged: { coordinator.notifyWatchlistDataChanged() }
             )

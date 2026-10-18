@@ -65,7 +65,7 @@ final class SearchWatchlistTracking {
         for show: Show,
         anchor: CGRect,
         context: Context
-    ) async {
+    ) async throws {
         guard !updatingShowIDs.contains(show.id) else { return }
 
         let isTracked = trackedShowIDs.contains(show.id)
@@ -124,6 +124,7 @@ final class SearchWatchlistTracking {
                 excludingPendingRemovalFrom: context.removalCoordinator,
                 analytics: context.analytics
             )
+            throw error
         }
     }
 

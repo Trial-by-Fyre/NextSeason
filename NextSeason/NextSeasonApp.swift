@@ -32,6 +32,7 @@ struct NextSeasonApp: App {
                     searchService: composition.theTVDB,
                     tvMaze: composition.tvMaze,
                     showIDMapping: composition.showIDMapping,
+                    isLocalShowIDMappingAvailable: composition.isLocalShowIDMappingAvailable,
                     onForegroundShowIDMappingRefresh: {
                         await composition.refreshShowIDMappingIfNeeded()
                     },
@@ -94,6 +95,7 @@ private struct AppRootView: View {
     let searchService: any TheTVDBService
     let tvMaze: any TVMazeService
     let showIDMapping: any ShowIDMapping
+    let isLocalShowIDMappingAvailable: Bool
     let onForegroundShowIDMappingRefresh: @MainActor () async -> Void
     /// Per-version App Store review request after the user receives a production season notification.
     let reviewPromptCoordinator: ReviewPromptCoordinator
@@ -105,7 +107,8 @@ private struct AppRootView: View {
             coordinator: navigationCoordinator,
             searchService: theTVDBService(testing: UITestingConfiguration.isEnabled),
             tvMaze: tvMazeService(testing: UITestingConfiguration.isEnabled),
-            showIDMapping: showIDMapping
+            showIDMapping: showIDMapping,
+            isLocalShowIDMappingAvailable: isLocalShowIDMappingAvailable
         )
         .appAccentTint()
         .requestReviewAfterShowNotification(coordinator: reviewPromptCoordinator)

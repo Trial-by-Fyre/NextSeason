@@ -648,7 +648,8 @@ struct SubscriptionDowngradeStarStateTests {
 
         // An undoable removal is not persisted yet, so show 1 still holds a slot:
         // tapping paused 4's empty star leads to the paywall, not reactivation.
-        await tracking.handleTrackButton(for: show(4, .returning), anchor: .zero, context: context)
+        try await tracking.handleTrackButton(
+            for: show(4, .returning), anchor: .zero, context: context)
         #expect(paywallShown)
         #expect(try await harness.row(4)?.isPaused == true)
 

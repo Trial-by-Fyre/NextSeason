@@ -39,7 +39,9 @@ struct SearchView: View {
         WatchlistAccessReconciler?
 
     @Binding var navigationPath: NavigationPath
+    private let searchService: any TheTVDBService
     private let tvMaze: any TVMazeService
+    private let showIDMapping: any ShowIDMapping
     private let analytics: any AnalyticsTracking
     private let onWatchlistChanged: () -> Void
     @State private var viewModel: SearchViewModel
@@ -58,11 +60,14 @@ struct SearchView: View {
         searchService: any TheTVDBService,
         tvMaze: any TVMazeService,
         showIDMapping: any ShowIDMapping,
+        isLocalShowIDMappingAvailable: Bool = true,
         analytics: any AnalyticsTracking,
         onWatchlistChanged: @escaping () -> Void = {}
     ) {
         _navigationPath = navigationPath
+        self.searchService = searchService
         self.tvMaze = tvMaze
+        self.showIDMapping = showIDMapping
         self.analytics = analytics
         self.onWatchlistChanged = onWatchlistChanged
         _viewModel = State(
@@ -70,6 +75,7 @@ struct SearchView: View {
                 searchService: searchService,
                 tvMaze: tvMaze,
                 showIDMapping: showIDMapping,
+                isLocalShowIDMappingAvailable: isLocalShowIDMappingAvailable,
                 analytics: analytics
             )
         )
@@ -405,9 +411,19 @@ struct SearchView: View {
 
     /// Resolve TheTVDB → TVMaze, then reuse the shared watchlist toggle path.
     private func trackResult(_ result: TVDBSearchResult, anchor: CGRect) async {
+        let show: Show
         do {
-            let show = try await viewModel.resolveShow(for: result)
-            await watchlistTracking.handleTrackButton(
+            show = try await viewModel.resolveShow(for: result)
+        } catch is CancellationError {
+            return
+        } catch {
+            analytics.trackNonFatalError(error, context: "search_resolve_track")
+            await setResolveError(error.localizedDescription)
+            return
+        }
+
+        do {
+            try await watchlistTracking.handleTrackButton(
                 for: show,
                 anchor: anchor,
                 context: watchlistTrackingContext
@@ -415,8 +431,8 @@ struct SearchView: View {
         } catch is CancellationError {
             return
         } catch {
-            analytics.trackNonFatalError(error, context: "search_resolve_track")
-            await setResolveError(error.localizedDescription)
+            analytics.trackNonFatalError(error, context: "search_watchlist_track")
+            await setResolveError(WatchlistTracking.updateFailedMessage)
         }
     }
 

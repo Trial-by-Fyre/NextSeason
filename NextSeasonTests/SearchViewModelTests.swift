@@ -116,15 +116,37 @@ struct SearchViewModelTests {
         search: MockSearchService,
         tvMaze: some TVMazeService = MockTVMazeService(),
         mapping: InMemoryShowIDMapping? = nil,
+        isLocalShowIDMappingAvailable: Bool = true,
         analytics: any AnalyticsTracking = RecordingAnalyticsService()
     ) -> SearchViewModel {
         SearchViewModel(
             searchService: search,
             tvMaze: tvMaze,
             showIDMapping: mapping ?? showIDMapping(),
+            isLocalShowIDMappingAvailable: isLocalShowIDMappingAvailable,
             analytics: analytics,
             debounce: .zero
         )
+    }
+
+    @Test("Unavailable local mapping reports failure instead of empty results")
+    func unavailableMappingDoesNotShowEmptyResults() async {
+        let viewModel = makeViewModel(
+            search: MockSearchService { _, _ in
+                Issue.record("TheTVDB search should not run when local mapping is unavailable")
+                return Self.page([sampleResult], hasMore: false)
+            },
+            mapping: InMemoryShowIDMapping(map: [:]),
+            isLocalShowIDMappingAvailable: false
+        )
+        viewModel.query = "severance"
+        await viewModel.search()
+
+        if case .failed(let message) = viewModel.state {
+            #expect(message == SearchViewModel.localMappingUnavailableMessage)
+        } else {
+            Issue.record("Expected failed state, got \(viewModel.state)")
+        }
     }
 
     @Test("An empty/whitespace query resets to idle without calling the service")

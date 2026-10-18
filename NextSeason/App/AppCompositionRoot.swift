@@ -40,6 +40,9 @@ struct AppCompositionRoot {
     let theTVDB: any TheTVDBService
     /// Offline TheTVDB → TVMaze filter and TVMaze title/poster overlay for Search.
     let showIDMapping: any ShowIDMapping
+    /// False when the bundled mapping database could not be opened; Search must
+    /// not treat the fallback empty map as "no matches."
+    let isLocalShowIDMappingAvailable: Bool
     /// Opportunistic on-device mapping refresh; `nil` under UI tests.
     let showIDMappingRefresh: ShowIDMappingRefreshService?
     /// StoreKit purchases, Plus entitlement, and the free watchlist cap.
@@ -67,6 +70,7 @@ struct AppCompositionRoot {
             )
             // Severance preview ids used by UI tests / PreviewTheTVDBService.
             showIDMapping = InMemoryShowIDMapping(map: [371980: 44933])
+            isLocalShowIDMappingAvailable = true
             showIDMappingRefresh = nil
             // Never inherit a downgrade alert flag from an earlier simulator run.
             UserDefaults.standard.removeObject(
@@ -89,11 +93,12 @@ struct AppCompositionRoot {
                 rowMarks: WatchlistRowMarks(userDefaults: .standard),
                 analytics: analyticsService)
             // Mapping already retries from the bundled baseline. If that still
-            // fails, degrade to an empty in-memory map so Search still works
-            // and we never send the user through watchlist-destroying recovery.
+            // fails, keep an empty in-memory map for export/reverse lookup but
+            // mark Search unavailable so results are not mislabeled as misses.
             do {
                 let database = try ShowIDMappingDatabase.openDefault()
                 showIDMapping = database
+                isLocalShowIDMappingAvailable = true
                 showIDMappingRefresh = ShowIDMappingRefreshService(
                     database: database,
                     tvMaze: liveTVMaze
@@ -104,6 +109,7 @@ struct AppCompositionRoot {
                     "show_id_mapping_open_failed_using_empty_map error=\(String(describing: error), privacy: .public)"
                 )
                 showIDMapping = InMemoryShowIDMapping(map: [:])
+                isLocalShowIDMappingAvailable = false
                 showIDMappingRefresh = nil
             }
             purchaseService = PurchaseService()

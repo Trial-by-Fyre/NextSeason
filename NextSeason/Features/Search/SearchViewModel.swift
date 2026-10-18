@@ -5,6 +5,10 @@
 
 import Foundation
 
+enum SearchError: Error {
+    case localShowIDMappingUnavailable
+}
+
 /// Debounced TheTVDB title search for `SearchView`, with local show ID mapping
 /// filtering and TVMaze resolution on select.
 ///
@@ -60,6 +64,9 @@ final class SearchViewModel {
     private let searchService: any TheTVDBService
     private let tvMaze: any TVMazeService
     private let showIDMapping: any ShowIDMapping
+    /// When false, the bundled mapping database failed to open; Search must not
+    /// treat an empty map as "no matches."
+    private let isLocalShowIDMappingAvailable: Bool
     private let analytics: any AnalyticsTracking
     private let debounce: Duration
     /// Trimmed query that produced the current `.results` or `.empty` state; `nil`
@@ -79,16 +86,24 @@ final class SearchViewModel {
     /// Cache of full TVMaze shows after an explicit open/track resolve.
     private var resolvedShowsByTVDBID: [Int: Show] = [:]
 
+    /// Shown when the offline TVDB↔TVMaze map could not be loaded.
+    static let localMappingUnavailableMessage = String(
+        localized:
+            "NextSeason couldn't load its local show matching data. Search isn't available right now. Try again after restarting the app."
+    )
+
     init(
         searchService: any TheTVDBService,
         tvMaze: any TVMazeService,
         showIDMapping: any ShowIDMapping,
+        isLocalShowIDMappingAvailable: Bool = true,
         analytics: any AnalyticsTracking,
         debounce: Duration = .milliseconds(300)
     ) {
         self.searchService = searchService
         self.tvMaze = tvMaze
         self.showIDMapping = showIDMapping
+        self.isLocalShowIDMappingAvailable = isLocalShowIDMappingAvailable
         self.analytics = analytics
         self.debounce = debounce
     }
@@ -126,6 +141,25 @@ final class SearchViewModel {
         resolvedShowsByTVDBID.removeAll(keepingCapacity: true)
         let searchStarted = Date.now
         AppDiagnosticsLogger.breadcrumb("search_viewmodel_start")
+        guard isLocalShowIDMappingAvailable else {
+            displayedQuery = nil
+            nextOffset = 0
+            state = .failed(Self.localMappingUnavailableMessage)
+            let durationMs = Int(Date.now.timeIntervalSince(searchStarted) * 1000)
+            analytics.track(
+                .searchPerformed(
+                    queryLength: trimmed.count,
+                    resultCount: 0,
+                    durationMs: max(durationMs, 0),
+                    outcome: .failed
+                )
+            )
+            analytics.trackNonFatalError(
+                SearchError.localShowIDMappingUnavailable,
+                context: "search_show_id_mapping_unavailable"
+            )
+            return
+        }
         do {
             let fill = try await collectActionableResults(
                 matching: trimmed,

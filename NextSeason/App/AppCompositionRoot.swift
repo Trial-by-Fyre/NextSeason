@@ -196,8 +196,10 @@ struct AppCompositionRoot {
             // confirmed lapse first so paused shows are not refreshed or notified.
             await purchasesForBackground.refreshEntitlements()
             await reconcilerForBackground.reconcile()
-            await refreshServiceForBackground.refreshAll(recordDiagnostics: true)
+            let outcome = await refreshServiceForBackground.refreshAll(recordDiagnostics: true)
             AppDiagnosticsLogger.logTaskComplete("background_watchlist_refresh")
+            if Task.isCancelled { return false }
+            return outcome?.succeededForBackgroundTask ?? false
         }
         RefreshScheduler.scheduleNextRefresh()
     }

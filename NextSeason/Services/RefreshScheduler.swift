@@ -27,14 +27,15 @@ enum RefreshScheduler {
     static let taskIdentifier = "com.TrialByFyre.NextSeason.watchlist-refresh"
 
     /// Closure invoked when a background refresh task runs (set once at launch).
-    @MainActor private static var refreshHandler: (() async -> Void)?
+    /// Returns whether the refresh pass succeeded for `BGAppRefreshTask` (R12).
+    @MainActor private static var refreshHandler: (() async -> Bool)?
     @MainActor private static var diagnostics: BetaRefreshDiagnostics?
 
     /// Stores the work to perform when iOS delivers a background refresh.
     @MainActor
     static func configure(
         diagnostics: BetaRefreshDiagnostics? = nil,
-        refreshHandler: @escaping () async -> Void
+        refreshHandler: @escaping () async -> Bool
     ) {
         self.diagnostics = diagnostics
         self.refreshHandler = refreshHandler
@@ -76,13 +77,13 @@ enum RefreshScheduler {
 
         let work = Task { @MainActor in
             AppDiagnosticsLogger.logTaskStart("bg_app_refresh")
-            await refreshHandler?()
+            let refreshSucceeded = await refreshHandler?() ?? false
             if Task.isCancelled {
                 AppDiagnosticsLogger.logTaskCancel("bg_app_refresh")
                 completion.finish(success: false)
             } else {
                 AppDiagnosticsLogger.logTaskComplete("bg_app_refresh")
-                completion.finish(success: true)
+                completion.finish(success: refreshSucceeded)
             }
         }
 

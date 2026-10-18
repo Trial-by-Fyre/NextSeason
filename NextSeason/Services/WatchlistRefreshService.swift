@@ -6,10 +6,67 @@
 import Foundation
 import os
 
+/// Per-show work accounting for one refresh pass (R12).
+struct WatchlistRefreshCounts: Sendable, Equatable {
+    var refreshed = 0
+    var skippedUnchanged = 0
+    var failed = 0
+}
+
+/// Terminal state of a refresh pass for background-task and diagnostics policy.
+enum WatchlistRefreshCompletion: Sendable, Equatable {
+    case cancelled
+    case aborted
+    case finished(WatchlistRefreshCounts)
+}
+
 /// Human-readable summary of one refresh pass (diagnostics / beta tooling).
 struct WatchlistRefreshOutcome: Sendable, Equatable {
     let fetchResult: String
     let notificationDecision: String
+    let completion: WatchlistRefreshCompletion
+
+    /// Maps refresh results to `BGAppRefreshTask` success (R12).
+    var succeededForBackgroundTask: Bool {
+        switch completion {
+        case .cancelled, .aborted:
+            return false
+        case .finished(let counts):
+            if counts.failed > 0, counts.refreshed == 0, counts.skippedUnchanged == 0 {
+                return false
+            }
+            return true
+        }
+    }
+
+    static func formatFetchResult(counts: WatchlistRefreshCounts, force: Bool) -> String {
+        let result: String
+        if counts.refreshed == 0, counts.skippedUnchanged > 0, counts.failed == 0 {
+            result = String(
+                localized: "No TVMaze changes for \(counts.skippedUnchanged) tracked show(s)"
+            )
+        } else if counts.refreshed == 0, counts.failed > 0, counts.skippedUnchanged == 0 {
+            result = String(localized: "Failed to refresh \(counts.failed) show(s)")
+        } else if counts.refreshed == 0, counts.failed > 0 {
+            result = String(
+                localized:
+                    "No TVMaze changes for \(counts.skippedUnchanged) tracked show(s), \(counts.failed) failed"
+            )
+        } else {
+            var line = String(localized: "Refreshed \(counts.refreshed) show(s)")
+            if counts.skippedUnchanged > 0 {
+                line += String(localized: ", skipped \(counts.skippedUnchanged) unchanged")
+            }
+            if counts.failed > 0 {
+                line += String(localized: ", \(counts.failed) failed")
+            }
+            if force {
+                line += String(localized: " (forced)")
+            }
+            result = line
+        }
+        return result
+    }
 }
 
 /// Polls TVMaze for watchlist changes, updates persisted next-season status, and
@@ -212,11 +269,10 @@ final class WatchlistRefreshService {
         var lastNotificationDecision = String(
             localized: "No notification (no meaningful change)"
         )
-        var refreshedShowCount = 0
+        var counts = WatchlistRefreshCounts()
         // Shows whose not-found (stale) flag this pass actually saved; the only
         // evidence a stale row counts as covered (see `isCovered`).
         var staleSavedIDs: Set<Int> = []
-        var skippedShowCount = 0
 
         let trackedShows: [TrackedShow]
         do {
@@ -255,7 +311,8 @@ final class WatchlistRefreshService {
             )
             return WatchlistRefreshOutcome(
                 fetchResult: String(localized: "Failed to load watchlist"),
-                notificationDecision: lastNotificationDecision
+                notificationDecision: lastNotificationDecision,
+                completion: .aborted
             )
         }
 
@@ -265,7 +322,8 @@ final class WatchlistRefreshService {
             AppDiagnosticsLogger.breadcrumb("watchlist_refresh_complete")
             let outcome = WatchlistRefreshOutcome(
                 fetchResult: String(localized: "Skipped: empty watchlist"),
-                notificationDecision: lastNotificationDecision
+                notificationDecision: lastNotificationDecision,
+                completion: .finished(WatchlistRefreshCounts())
             )
             recordBackgroundDiagnosticsIfNeeded(
                 recordDiagnostics,
@@ -292,7 +350,8 @@ final class WatchlistRefreshService {
                 )
                 return WatchlistRefreshOutcome(
                     fetchResult: String(localized: "Failed to fetch TVMaze updates"),
-                    notificationDecision: lastNotificationDecision
+                    notificationDecision: lastNotificationDecision,
+                    completion: .aborted
                 )
             }
         }
@@ -312,7 +371,7 @@ final class WatchlistRefreshService {
                 // this the pending alert would wait for an unrelated server update.
                 let awaitsConfirmation = snapshot.pendingChangeSignature != nil
                 guard serverChanged || needsRecheck || awaitsConfirmation else {
-                    skippedShowCount += 1
+                    counts.skippedUnchanged += 1
                     continue
                 }
             }
@@ -362,7 +421,7 @@ final class WatchlistRefreshService {
                     try await repository.updateAfterRefresh(baseline)
                     let wasDamaged = isReportedDamaged(tracked)
                     clearCatchUp(for: tracked)
-                    refreshedShowCount += 1
+                    counts.refreshed += 1
                     lastNotificationDecision =
                         wasDamaged
                         ? String(
@@ -382,7 +441,7 @@ final class WatchlistRefreshService {
                 // Saved before scheduling, so termination in between loses the
                 // alert (accepted, R03 scenario 14) rather than risking a repeat.
                 try await repository.updateAfterRefresh(evaluation.tracked)
-                refreshedShowCount += 1
+                counts.refreshed += 1
                 var delivery: NotificationDeliveryOutcome?
                 var retryPending = false
                 if let notification = evaluation.notification {
@@ -420,17 +479,22 @@ final class WatchlistRefreshService {
                 // mark once it succeeds. Undamaged rows keep their existing behavior.
                 let repairsDamage = isReportedDamaged(tracked)
                 if repairsDamage { tracked.pendingChangeSignature = nil }
-                if (try? await repository.updateAfterRefresh(tracked)) != nil {
+                do {
+                    try await repository.updateAfterRefresh(tracked)
                     staleSavedIDs.insert(tracked.id)
                     if repairsDamage { clearCatchUp(for: tracked) }
+                    counts.refreshed += 1
+                    lastNotificationDecision = String(
+                        localized: "Marked stale: \(tracked.name) not found on TVMaze"
+                    )
+                } catch {
+                    analytics.trackNonFatalError(error, context: "watchlist_refresh_show")
+                    counts.failed += 1
                 }
-                refreshedShowCount += 1
-                lastNotificationDecision = String(
-                    localized: "Marked stale: \(tracked.name) not found on TVMaze"
-                )
             } catch {
                 // Per-show failure: leave this row alone and continue the rest.
                 analytics.trackNonFatalError(error, context: "watchlist_refresh_show")
+                counts.failed += 1
                 continue
             }
         }
@@ -442,23 +506,12 @@ final class WatchlistRefreshService {
                 updates: updates, requestTime: requestTime, staleSavedIDs: staleSavedIDs)
         }
 
-        if refreshedShowCount == 0, skippedShowCount > 0 {
-            fetchResult = String(
-                localized: "No TVMaze changes for \(skippedShowCount) tracked show(s)"
-            )
-        } else {
-            fetchResult = String(localized: "Refreshed \(refreshedShowCount) show(s)")
-            if skippedShowCount > 0 {
-                fetchResult += String(localized: ", skipped \(skippedShowCount) unchanged")
-            }
-            if force {
-                fetchResult += String(localized: " (forced)")
-            }
-        }
+        fetchResult = WatchlistRefreshOutcome.formatFetchResult(counts: counts, force: force)
 
         let outcome = WatchlistRefreshOutcome(
             fetchResult: fetchResult,
-            notificationDecision: lastNotificationDecision
+            notificationDecision: lastNotificationDecision,
+            completion: .finished(counts)
         )
         recordBackgroundDiagnosticsIfNeeded(
             recordDiagnostics,

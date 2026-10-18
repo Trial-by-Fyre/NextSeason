@@ -27,6 +27,9 @@ struct WatchlistRefreshServiceTests {
     private final class MockTVMazeService: TVMazeService, @unchecked Sendable {
         var updates: [Int: Date] = [:]
         var shows: [Int: Show] = [:]
+        var updatesError: (any Error)?
+        var showError: (any Error)?
+        var failingShowIDs: Set<Int> = []
         private(set) var fetchedShowIDs: [Int] = []
         private(set) var lastBypassCache: Bool?
         private(set) var lastUpdatePeriod: TVMazeUpdatePeriod?
@@ -38,6 +41,9 @@ struct WatchlistRefreshServiceTests {
         }
 
         func show(id: Int, bypassCache: Bool) async throws -> Show {
+            if failingShowIDs.contains(id) || showError != nil {
+                throw showError ?? URLError(.cannotConnectToHost)
+            }
             fetchedShowIDs.append(id)
             lastBypassCache = bypassCache
             guard let show = shows[id] else { throw TVMazeError.notFound }
@@ -45,6 +51,7 @@ struct WatchlistRefreshServiceTests {
         }
 
         func updatedShows(since period: TVMazeUpdatePeriod) async throws -> [Int: Date] {
+            if let updatesError { throw updatesError }
             lastUpdatePeriod = period
             return updates
         }
@@ -487,6 +494,200 @@ struct WatchlistRefreshServiceTests {
         nowBox.date = fixedNow.addingTimeInterval(16 * 60)
         await service.refreshAllIfNeeded()
         #expect(tvMaze.fetchedShowIDs.count == 2)
+    }
+
+    /// Persists normally except stale-flag writes (404 handling).
+    private final class FailingStaleSaveRepository: WatchlistRepository {
+        private let base: InMemoryWatchlistRepository
+
+        init(base: InMemoryWatchlistRepository) {
+            self.base = base
+        }
+
+        func all() async throws -> [TrackedShow] { try await base.all() }
+        func trackedShow(showID: Int) async throws -> TrackedShow? {
+            try await base.trackedShow(showID: showID)
+        }
+        func trackedShowIDs() async throws -> Set<Int> { try await base.trackedShowIDs() }
+        func contains(showID: Int) async throws -> Bool { try await base.contains(showID: showID) }
+        func add(_ show: Show) async throws { try await base.add(show) }
+        func remove(showID: Int) async throws { try await base.remove(showID: showID) }
+        func updateAfterRefresh(_ tracked: TrackedShow) async throws {
+            if tracked.isStale { throw URLError(.cannotConnectToHost) }
+            try await base.updateAfterRefresh(tracked)
+        }
+        func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+            try await base.setPaused(isPaused, showIDs: showIDs)
+        }
+        func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+            try await base.restoreRemoved(tracked, isPaused: isPaused)
+        }
+    }
+
+    private final class FailingLoadRepository: WatchlistRepository {
+        func all() async throws -> [TrackedShow] {
+            throw URLError(.cannotConnectToHost)
+        }
+
+        func trackedShow(showID: Int) async throws -> TrackedShow? { nil }
+        func trackedShowIDs() async throws -> Set<Int> { [] }
+        func contains(showID: Int) async throws -> Bool { false }
+        func add(_ show: Show) async throws {}
+        func remove(showID: Int) async throws {}
+        func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
+        func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
+        func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {}
+    }
+
+    @Test("Failed watchlist load aborts with a background failure outcome")
+    func repositoryLoadFailureAbortsRefresh() async {
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        let service = WatchlistRefreshService(
+            tvMaze: tvMaze,
+            repository: FailingLoadRepository(),
+            notifications: notifications,
+            analytics: RecordingAnalyticsService(),
+            clock: { fixedNow }
+        )
+
+        let outcome = await service.refreshAll()
+        #expect(outcome?.completion == .aborted)
+        #expect(outcome?.succeededForBackgroundTask == false)
+        #expect(outcome?.fetchResult.contains("Failed to load watchlist") == true)
+    }
+
+    @Test("Failed TVMaze updates map aborts with a background failure outcome")
+    func updatesMapFailureAbortsRefresh() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = MockTVMazeService()
+        tvMaze.updatesError = URLError(.cannotConnectToHost)
+        let notifications = RecordingNotificationService()
+        try await repository.add(show())
+
+        let outcome = await makeService(
+            repository: repository,
+            tvMaze: tvMaze,
+            notifications: notifications,
+            userDefaults: defaults(coveredFor: 3600)
+        ).refreshAll()
+
+        #expect(outcome?.completion == .aborted)
+        #expect(outcome?.succeededForBackgroundTask == false)
+        #expect(
+            outcome?.fetchResult
+                == String(localized: "Failed to fetch TVMaze updates"))
+    }
+
+    @Test("An empty watchlist still counts as a successful background refresh")
+    func emptyWatchlistRefreshSucceedsForBackgroundTask() async {
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        let outcome = await makeService(
+            repository: InMemoryWatchlistRepository(),
+            tvMaze: tvMaze,
+            notifications: notifications
+        ).refreshAll()
+
+        #expect(outcome?.completion == .finished(WatchlistRefreshCounts()))
+        #expect(outcome?.succeededForBackgroundTask == true)
+    }
+
+    @Test("A 404 whose stale save fails counts as failure, not refresh success")
+    func notFoundStaleSaveFailureReportsBackgroundFailure() async throws {
+        let base = InMemoryWatchlistRepository()
+        let repository = FailingStaleSaveRepository(base: base)
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        try await repository.add(show())
+
+        var tracked = try await repository.all()[0]
+        tracked.sourceUpdatedAt = .distantPast
+        try await repository.updateAfterRefresh(tracked)
+
+        tvMaze.updates = [showID: fixedNow]
+        tvMaze.shows = [:]
+
+        let service = WatchlistRefreshService(
+            tvMaze: tvMaze,
+            repository: repository,
+            notifications: notifications,
+            analytics: RecordingAnalyticsService(),
+            clock: { fixedNow }
+        )
+        let outcome = await service.refreshAll(force: true)
+
+        let stored = try await repository.all()[0]
+        #expect(stored.isStale == false)
+        if case .finished(let counts) = outcome?.completion {
+            #expect(counts == WatchlistRefreshCounts(refreshed: 0, skippedUnchanged: 0, failed: 1))
+        } else {
+            Issue.record("Expected finished completion")
+        }
+        #expect(outcome?.succeededForBackgroundTask == false)
+    }
+
+    @Test("When every attempted show fetch fails, the outcome reports failure")
+    func allShowFetchFailuresReportBackgroundFailure() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = MockTVMazeService()
+        tvMaze.showError = URLError(.cannotConnectToHost)
+        let notifications = RecordingNotificationService()
+        try await repository.add(show())
+        tvMaze.updates = [showID: fixedNow]
+
+        let outcome = await makeService(
+            repository: repository, tvMaze: tvMaze, notifications: notifications
+        ).refreshAll(force: true)
+
+        #expect(
+            outcome?.completion
+                == .finished(WatchlistRefreshCounts(refreshed: 0, skippedUnchanged: 0, failed: 1)))
+        #expect(outcome?.succeededForBackgroundTask == false)
+        #expect(outcome?.fetchResult.contains("Failed to refresh 1 show(s)") == true)
+    }
+
+    @Test("Partial per-show failures still succeed for the background task")
+    func partialShowFailuresStillSucceedForBackgroundTask() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        let secondID = 82
+        try await repository.add(show())
+        try await repository.add(
+            Show(
+                id: secondID,
+                name: "Other",
+                tvMazeURL: nil,
+                summaryHTML: nil,
+                posterMediumURL: nil,
+                posterOriginalURL: nil,
+                status: .running,
+                premiered: nil,
+                ended: nil,
+                network: nil,
+                genres: [],
+                averageRuntime: nil,
+                seasons: [],
+                nextEpisode: nil,
+                updatedAt: fixedNow
+            ))
+        tvMaze.shows[showID] = show()
+        tvMaze.shows[secondID] = show()
+        tvMaze.failingShowIDs = [secondID]
+
+        let outcome = await makeService(
+            repository: repository, tvMaze: tvMaze, notifications: notifications
+        ).refreshAll(force: true)
+
+        if case .finished(let counts) = outcome?.completion {
+            #expect(counts.refreshed == 1)
+            #expect(counts.failed == 1)
+        } else {
+            Issue.record("Expected finished completion")
+        }
+        #expect(outcome?.succeededForBackgroundTask == true)
+        #expect(outcome?.fetchResult.contains("1 failed") == true)
     }
 }
 

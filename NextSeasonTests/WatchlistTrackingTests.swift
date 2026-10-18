@@ -159,6 +159,48 @@ struct WatchlistTrackingTests {
         #expect(tvMaze.fetchedShowIDs.isEmpty)
     }
 
+    @Test("Deferred star removal still occupies a free-tier slot until commit")
+    func deferredRemovalStillCountsForAdmission() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let analytics = RecordingAnalyticsService()
+        let removalCoordinator = WatchlistPendingRemoval(
+            repository: repository, analytics: analytics)
+        let purchases = PurchaseService(
+            store: StubPurchaseStoreClient(isStoreEntitled: false),
+            initialStoreEntitlement: .resolved(isEntitled: false),
+            simulationAvailability: { false })
+        let tvMaze = MockTVMazeService()
+        for id in 1...3 { try await repository.add(show(id: id)) }
+        let pending = try #require(try await repository.trackedShow(showID: 1))
+        removalCoordinator.requestRemoval(pending, anchor: .zero, source: .detail)
+
+        #expect(
+            try await WatchlistTrackingState.isTracked(
+                showID: 1,
+                repository: repository,
+                removalCoordinator: removalCoordinator
+            ) == false
+        )
+        #expect(try await repository.activeShowIDs() == Set([1, 2, 3]))
+
+        let candidate = show(id: 99)
+        tvMaze.showByID[99] = candidate
+        let outcome = try await WatchlistTracking.add(
+            candidate,
+            source: .search,
+            repository: repository,
+            tvMaze: tvMaze,
+            analytics: analytics,
+            notifications: makeNotificationService(analytics: analytics),
+            prompt: WatchlistNotificationPromptState(),
+            purchases: purchases
+        )
+
+        #expect(outcome == .paywallRequired)
+        #expect(try await repository.contains(showID: 99) == false)
+        #expect(try await repository.activeShowIDs() == Set([1, 2, 3]))
+    }
+
     @Test("Tracking a search stub fetches full show data before storing next-season status")
     func addFromSearchStubStoresResolvedNextSeason() async throws {
         let repository = InMemoryWatchlistRepository()

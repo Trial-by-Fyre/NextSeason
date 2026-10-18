@@ -122,6 +122,33 @@ struct SwiftDataWatchlistRepositoryRollbackTests {
         #expect(try await storedRepository().trackedShow(showID: 1) == refreshed)
     }
 
+    @Test("restoreRemoved re-inserts a deleted row with the intended pause state")
+    func restoreRemovedAfterDelete() async throws {
+        try await repository.add(show(1))
+        let removed = try #require(try await repository.trackedShow(showID: 1))
+        try await repository.remove(showID: 1)
+        #expect(try await repository.contains(showID: 1) == false)
+
+        try await repository.restoreRemoved(removed, isPaused: true)
+        let restored = try #require(try await storedRepository().trackedShow(showID: 1))
+        #expect(restored.isPaused)
+        #expect(restored.dateAdded == removed.dateAdded)
+    }
+
+    @Test("restoreRemoved leaves an existing row unchanged")
+    func restoreRemovedNoOpWhenPresent() async throws {
+        try await repository.add(show(1))
+        let existing = try #require(try await repository.trackedShow(showID: 1))
+        var staleUndoSnapshot = existing
+        staleUndoSnapshot.name = "Stale name from undo toast"
+
+        try await repository.restoreRemoved(staleUndoSnapshot, isPaused: true)
+
+        let stored = try #require(try await storedRepository().trackedShow(showID: 1))
+        #expect(stored == existing)
+        #expect(stored.isPaused == false)
+    }
+
     @Test("A failed reactivation of a paused row leaves it paused and can be retried")
     func failedReactivation() async throws {
         try await repository.add(show(1))

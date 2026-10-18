@@ -119,6 +119,21 @@ final class SwiftDataWatchlistRepository: WatchlistRepository {
         }
     }
 
+    /// Re-inserts a row removed by immediate swipe-delete Undo (R10).
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        AppDiagnosticsLogger.logger(for: .persistence)
+            .notice(
+                "watchlist_write_restore_removed show_id=\(tracked.id, privacy: .public) paused=\(isPaused, privacy: .public)"
+            )
+        AppDiagnosticsLogger.breadcrumb("watchlist_restore_removed:\(tracked.id):\(isPaused)")
+        var row = tracked
+        row.isPaused = isPaused
+        try performWrite {
+            if try entity(for: tracked.id) != nil { return }
+            context.insert(try TrackedShowEntity(tracked: row))
+        }
+    }
+
     /// Applies refresh fields onto an existing row. No-op if the show was removed
     /// between fetch and write (e.g. user untracked during a background refresh).
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {

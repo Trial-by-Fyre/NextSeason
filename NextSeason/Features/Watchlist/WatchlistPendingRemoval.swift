@@ -36,6 +36,7 @@ final class WatchlistPendingRemoval {
 
     private let repository: any WatchlistRepository
     private let analytics: any AnalyticsTracking
+    private let purchases: PurchaseService
     private var commitRemovalTask: Task<Void, Never>?
     private var pendingRemovalSource: WatchlistActionSource?
     private var pendingMode: Mode = .deferred
@@ -48,9 +49,14 @@ final class WatchlistPendingRemoval {
         undoWindowSecondsOverride ?? Self.undoWindowSeconds
     }
 
-    init(repository: any WatchlistRepository, analytics: any AnalyticsTracking) {
+    init(
+        repository: any WatchlistRepository,
+        analytics: any AnalyticsTracking,
+        purchases: PurchaseService = .preview
+    ) {
         self.repository = repository
         self.analytics = analytics
+        self.purchases = purchases
     }
 
     /// Registers a handler invoked on every significant pending-removal transition.
@@ -319,12 +325,15 @@ final class WatchlistPendingRemoval {
     /// Re-inserts a previously tracked show, preserving next-season and refresh
     /// fields and its original `dateAdded` (so it is the same saved row again).
     private func restore(_ tracked: TrackedShow) async throws {
-        try await repository.add(Show(tracked: tracked))
-        try await repository.updateAfterRefresh(tracked)
-        // Undoing a delete of a paused show must not reactivate it (or use a slot).
-        if tracked.isPaused {
-            try await repository.setPaused(true, showIDs: [tracked.id])
-        }
+        await purchases.waitForInitialEntitlementResolution()
+        let activeCount = try await repository.activeShowIDs().count
+        let isPaused =
+            tracked.isPaused
+            || !WatchlistLimitPolicy.canAddShow(
+                currentCount: activeCount,
+                isUnlimited: purchases.isUnlimitedWatchlist
+            )
+        try await repository.restoreRemoved(tracked, isPaused: isPaused)
     }
 
     private func clearPendingPresentation() {

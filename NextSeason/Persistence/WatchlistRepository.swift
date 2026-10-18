@@ -36,6 +36,9 @@ protocol WatchlistRepository: AnyObject {
     func updateAfterRefresh(_ tracked: TrackedShow) async throws
     /// Sets `isPaused` on the given saved rows; missing IDs are ignored.
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws
+    /// Re-inserts a row removed by immediate swipe-delete Undo in one write, with
+    /// the intended pause state and preserved refresh metadata / `dateAdded`.
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws
     /// After `attempt`'s notification definitely failed to schedule (review
     /// finding R03), restores `previousLastNotifiedSignature` and makes the
     /// undelivered signature pending, so the next poll that sees the same status

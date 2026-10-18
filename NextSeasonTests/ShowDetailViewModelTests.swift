@@ -89,6 +89,8 @@ struct ShowDetailViewModelTests {
         func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
 
         func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
+
+        func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {}
     }
 
     /// Fails the removal lookup, while `contains` still reports the show as
@@ -120,6 +122,8 @@ struct ShowDetailViewModelTests {
         func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
 
         func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
+
+        func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {}
     }
 
     /// Repository whose `add` always fails so the detail view keeps loaded content.
@@ -141,6 +145,8 @@ struct ShowDetailViewModelTests {
         func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
 
         func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
+
+        func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {}
     }
 
     @Test("Stale tracked state reconciles when removal lookup finds nothing")

@@ -178,6 +178,123 @@ struct WatchlistPendingRemovalTests {
         #expect(try await repository.contains(showID: tracked.id))
     }
 
+    private func numberedShow(_ id: Int) -> Show {
+        Show(
+            id: id,
+            name: "Show \(id)",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+    }
+
+    private func freeTierPurchases() -> PurchaseService {
+        PurchaseService(
+            store: StubPurchaseStoreClient(isStoreEntitled: false),
+            initialStoreEntitlement: .resolved(isEntitled: false),
+            simulationAvailability: { false }
+        )
+    }
+
+    /// R10: delete A, add D into the slot, then Undo A must not create four active rows.
+    @Test("Undo after the freed slot is filled restores the show paused", .timeLimit(.minutes(1)))
+    func undoAfterSlotFilledRestoresPaused() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let coordinator = WatchlistPendingRemoval(
+            repository: repository,
+            analytics: RecordingAnalyticsService(),
+            purchases: freeTierPurchases())
+        for id in 1...3 { try await repository.add(numberedShow(id)) }
+        let removed = try #require(try await repository.trackedShow(showID: 1))
+
+        coordinator.addOutcomeHandler { _ in }
+        coordinator.requestImmediateRemoval(removed, anchor: .zero, source: .watchlist)
+        try await waitUntil { coordinator.lastOutcome != nil }
+
+        try await repository.add(numberedShow(4))
+        #expect(try await repository.activeShowIDs() == [2, 3, 4])
+
+        _ = await coordinator.undoRemoval()
+
+        let restored = try #require(try await repository.trackedShow(showID: 1))
+        #expect(restored.isPaused)
+        #expect(try await repository.activeShowIDs() == [2, 3, 4])
+    }
+
+    @Test("Failed restore leaves the watchlist at three active shows", .timeLimit(.minutes(1)))
+    func undoRestoreFailureDoesNotPersistFourthActiveRow() async throws {
+        let repository = FailingRestoreRepository()
+        let coordinator = WatchlistPendingRemoval(
+            repository: repository,
+            analytics: RecordingAnalyticsService(),
+            purchases: freeTierPurchases())
+        for id in 1...3 { try await repository.add(numberedShow(id)) }
+        let removed = try #require(try await repository.trackedShow(showID: 1))
+
+        coordinator.requestImmediateRemoval(removed, anchor: .zero, source: .watchlist)
+        try await waitUntil { coordinator.lastOutcome != nil }
+
+        try await repository.add(numberedShow(4))
+        #expect(try await repository.activeShowIDs() == [2, 3, 4])
+
+        let restored = await coordinator.undoRemoval()
+        #expect(restored == nil)
+        #expect(try await repository.contains(showID: 1) == false)
+        #expect(try await repository.activeShowIDs() == [2, 3, 4])
+        #expect(coordinator.removalErrorMessage != nil)
+    }
+
+    @Test(
+        "Undo waits for entitlement and restores active when Plus resolves",
+        .timeLimit(.minutes(1)))
+    func undoAfterSlotFilledRestoresActiveWhenPlusResolves() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let store = StubPurchaseStoreClient(isStoreEntitled: true)
+        store.delayEntitlementResolution = true
+        let purchases = PurchaseService(
+            store: store,
+            initialStoreEntitlement: .loading,
+            simulationAvailability: { false })
+        let startTask = Task { await purchases.start(watchlistCount: 3) }
+        for _ in 0..<200 {
+            if store.entitlementWaiterCount > 0 { break }
+            await Task.yield()
+        }
+        #expect(store.entitlementWaiterCount == 1)
+
+        let coordinator = WatchlistPendingRemoval(
+            repository: repository,
+            analytics: RecordingAnalyticsService(),
+            purchases: purchases)
+        for id in 1...3 { try await repository.add(numberedShow(id)) }
+        let removed = try #require(try await repository.trackedShow(showID: 1))
+
+        coordinator.requestImmediateRemoval(removed, anchor: .zero, source: .watchlist)
+        try await waitUntil { coordinator.lastOutcome != nil }
+        try await repository.add(numberedShow(4))
+        #expect(try await repository.activeShowIDs() == [2, 3, 4])
+
+        let undoTask = Task { await coordinator.undoRemoval() }
+        for _ in 0..<200 { await Task.yield() }
+        store.releaseEntitlementResolution()
+        await startTask.value
+        let restored = await undoTask.value
+
+        let row = try #require(restored)
+        #expect(row.isPaused == false)
+        #expect(try await repository.activeShowIDs() == Set([1, 2, 3, 4]))
+    }
+
     @Test(
         "Immediate removal persists right away and undo restores the show",
         .timeLimit(.minutes(1)))
@@ -420,6 +537,13 @@ private final class UndoDuringRemoveRepository: WatchlistRepository {
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         for id in showIDs { shows[id]?.isPaused = isPaused }
     }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
+    }
 }
 
 /// Stores shows normally but throws from `remove`.
@@ -458,6 +582,56 @@ private final class FailingRemoveRepository: WatchlistRepository {
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
+    }
+}
+
+/// Throws from `restoreRemoved` so Undo cannot leave a fourth active row persisted.
+@MainActor
+private final class FailingRestoreRepository: WatchlistRepository {
+    private var shows: [Int: TrackedShow] = [:]
+
+    func all() async throws -> [TrackedShow] {
+        shows.values.sorted { $0.dateAdded > $1.dateAdded }
+    }
+
+    func trackedShow(showID: Int) async throws -> TrackedShow? {
+        shows[showID]
+    }
+
+    func trackedShowIDs() async throws -> Set<Int> {
+        Set(shows.keys)
+    }
+
+    func contains(showID: Int) async throws -> Bool {
+        shows[showID] != nil
+    }
+
+    func add(_ show: Show) async throws {
+        guard shows[show.id] == nil else { return }
+        shows[show.id] = TrackedShow(from: show)
+    }
+
+    func remove(showID: Int) async throws {
+        shows.removeValue(forKey: showID)
+    }
+
+    func updateAfterRefresh(_ tracked: TrackedShow) async throws {
+        shows[tracked.id] = tracked
+    }
+
+    func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
+        for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        throw URLError(.cannotConnectToHost)
     }
 }
 
@@ -501,6 +675,13 @@ private final class CancellationCheckingRemoveRepository: WatchlistRepository {
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
     }
 }
 
@@ -563,5 +744,12 @@ private final class GatedCancellationAwareRemoveRepository: WatchlistRepository 
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
     }
 }

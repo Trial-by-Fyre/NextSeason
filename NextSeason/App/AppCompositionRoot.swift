@@ -119,7 +119,8 @@ struct AppCompositionRoot {
         )
         watchlistPendingRemoval = WatchlistPendingRemoval(
             repository: repository,
-            analytics: analyticsService
+            analytics: analyticsService,
+            purchases: purchaseService
         )
         reviewPromptCoordinator = ReviewPromptCoordinator()
         let purchases = purchaseService

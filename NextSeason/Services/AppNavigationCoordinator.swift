@@ -73,6 +73,9 @@ final class AppNavigationCoordinator {
     /// the list. `WatchlistView` calls `applyPendingWatchlistDetail()` once mounted.
     private(set) var pendingWatchlistDetail: TrackedShow?
 
+    /// Navigation request that owns `pendingWatchlistDetail`; stale detail is ignored.
+    private var pendingWatchlistDetailRequestID: Int?
+
     /// Whether the pending deep-link push should animate. Determined by whether the
     /// app was already foreground-active when the notification was tapped: an in-app
     /// tap animates like normal navigation, while a launch/foreground tap does not
@@ -84,6 +87,10 @@ final class AppNavigationCoordinator {
     /// `pendingWatchlistDetailAnimated` when the Watchlist push is deferred.
     private var pendingNavigationAnimated = false
 
+    /// Monotonic id for notification deep links. Only the latest request may apply
+    /// tab/path changes after an await (R14).
+    private var navigationRequestID = 0
+
     /// Guards the one-time cold-launch tab decision so foreground returns keep the
     /// user on whatever tab they were last using.
     private var didResolveInitialTab = false
@@ -92,6 +99,8 @@ final class AppNavigationCoordinator {
     /// - Parameter animated: `true` when the tap happened while the app was already
     ///   foreground-active (in-app navigation), `false` for a launch/foreground tap.
     func queueShowNavigation(showID: Int, animated: Bool = false) {
+        navigationRequestID &+= 1
+        clearDeferredWatchlistDetail()
         pendingShowID = showID
         pendingNavigationAnimated = animated
     }
@@ -102,9 +111,16 @@ final class AppNavigationCoordinator {
     /// pending show has been consumed. The animation is decided by the tap context
     /// captured in `resolvePendingNavigation`, not by which callback triggers it.
     func applyPendingWatchlistDetail() {
-        guard let tracked = pendingWatchlistDetail else { return }
-        pendingWatchlistDetail = nil
-        guard pendingWatchlistDetailAnimated else {
+        guard let tracked = pendingWatchlistDetail,
+            let requestID = pendingWatchlistDetailRequestID,
+            requestID == navigationRequestID
+        else {
+            clearDeferredWatchlistDetail()
+            return
+        }
+        let animated = pendingWatchlistDetailAnimated
+        clearDeferredWatchlistDetail()
+        guard animated else {
             // Launch / foreground: push without animation so the detail page is
             // already in place, rather than visibly sliding in.
             var transaction = Transaction()
@@ -188,14 +204,19 @@ final class AppNavigationCoordinator {
         guard let showID = pendingShowID else { return }
         // Consume the queue up front so a concurrent resolve cannot process twice.
         pendingShowID = nil
+        let requestID = navigationRequestID
+        let animated = pendingNavigationAnimated
         await prepare()
+        guard isCurrentNavigationRequest(requestID) else { return }
 
         do {
             if let tracked = try await repository.trackedShow(showID: showID) {
+                guard isCurrentNavigationRequest(requestID) else { return }
                 // A paused show (Plus lapsed) must not open detail — not even via
                 // the Search fallback below. Land on the Watchlist root, where
                 // the show appears in the Paused section.
                 if tracked.isPaused {
+                    clearDeferredWatchlistDetail()
                     selectedTab = .watchlist
                     watchlistPath = NavigationPath()
                     analytics.track(.appOpenedFromNotification(showID: showID))
@@ -205,7 +226,8 @@ final class AppNavigationCoordinator {
                 // the same update as the tab switch can drop the navigation.
                 selectedTab = .watchlist
                 pendingWatchlistDetail = tracked
-                pendingWatchlistDetailAnimated = pendingNavigationAnimated
+                pendingWatchlistDetailRequestID = requestID
+                pendingWatchlistDetailAnimated = animated
                 analytics.track(.appOpenedFromNotification(showID: showID))
                 return
             }
@@ -216,11 +238,14 @@ final class AppNavigationCoordinator {
             analytics.trackNonFatalError(error, context: "notification_navigation_watchlist_lookup")
         }
 
+        guard isCurrentNavigationRequest(requestID) else { return }
+
         // Not on the watchlist (or watchlist lookup failed): open via Search.
         do {
             let show = try await tvMaze.show(id: showID)
+            guard isCurrentNavigationRequest(requestID) else { return }
             selectedTab = .search
-            if pendingNavigationAnimated {
+            if animated {
                 searchPath.append(show)
             } else {
                 // Launch / foreground tap: land on detail without a slide-in.
@@ -237,5 +262,14 @@ final class AppNavigationCoordinator {
         } catch {
             analytics.trackNonFatalError(error, context: "notification_navigation_show_lookup")
         }
+    }
+
+    private func isCurrentNavigationRequest(_ requestID: Int) -> Bool {
+        requestID == navigationRequestID
+    }
+
+    private func clearDeferredWatchlistDetail() {
+        pendingWatchlistDetail = nil
+        pendingWatchlistDetailRequestID = nil
     }
 }

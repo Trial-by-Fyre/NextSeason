@@ -13,6 +13,64 @@ import Testing
 /// Tests call `NotificationRouting.resetForTesting()` because routing uses process-wide state.
 @MainActor
 struct AppNavigationCoordinatorTests {
+    /// Suspends `resolvePendingNavigation`'s `prepare` hook until `release()`.
+    private final class NavigationPrepareGate: @unchecked Sendable {
+        private var held: CheckedContinuation<Void, Never>?
+        private var started: CheckedContinuation<Void, Never>?
+
+        func waitUntilHeld() async {
+            if held != nil { return }
+            await withCheckedContinuation { started = $0 }
+        }
+
+        func wait() async {
+            await withCheckedContinuation { continuation in
+                held = continuation
+                started?.resume()
+                started = nil
+            }
+        }
+
+        func release() {
+            held?.resume()
+            held = nil
+        }
+    }
+
+    /// Holds the next `show(id:)` fetch until `release()` so tests can reorder completions.
+    private final class HoldingNavigationMaze: TVMazeService, @unchecked Sendable {
+        var shows: [Int: Show] = [:]
+        private var held: CheckedContinuation<Show, Never>?
+        private var started: CheckedContinuation<Void, Never>?
+
+        func waitUntilHeld() async {
+            if held != nil { return }
+            await withCheckedContinuation { started = $0 }
+        }
+
+        func release() {
+            guard let held, let show = shows[1] else { return }
+            held.resume(returning: show)
+            self.held = nil
+        }
+
+        func searchShows(matching query: String) async throws -> [Show] { [] }
+
+        func lookupShow(theTVDBID: Int) async throws -> Show {
+            throw TVMazeError.notFound
+        }
+
+        func show(id: Int, bypassCache: Bool) async throws -> Show {
+            await withCheckedContinuation { continuation in
+                held = continuation
+                started?.resume()
+                started = nil
+            }
+        }
+
+        func updatedShows(since period: TVMazeUpdatePeriod) async throws -> [Int: Date] { [:] }
+    }
+
     /// Stub TVMaze that records fetched show ids and serves preloaded shows.
     private final class MockTVMazeService: TVMazeService, @unchecked Sendable {
         var shows: [Int: Show] = [:]
@@ -231,6 +289,254 @@ struct AppNavigationCoordinatorTests {
 
         #expect(coordinator.selectedTab == .watchlist)
         #expect(coordinator.searchPath.isEmpty)
+    }
+
+    /// R14: a slow lookup for an untracked show must not override a later tap.
+    @Test("Only the latest notification navigation applies after async work")
+    func latestNotificationNavigationWins() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = HoldingNavigationMaze()
+        let analytics = RecordingAnalyticsService()
+        let coordinator = AppNavigationCoordinator()
+        let saved = Show(
+            id: 2,
+            name: "Saved",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        let unsaved = Show(
+            id: 1,
+            name: "Unsaved",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        tvMaze.shows[1] = unsaved
+        try await repository.add(saved)
+
+        coordinator.queueShowNavigation(showID: 1)
+        let first = Task {
+            await coordinator.resolvePendingNavigation(
+                repository: repository, tvMaze: tvMaze, analytics: analytics)
+        }
+        await tvMaze.waitUntilHeld()
+
+        coordinator.queueShowNavigation(showID: 2)
+        await coordinator.resolvePendingNavigation(
+            repository: repository, tvMaze: tvMaze, analytics: analytics)
+
+        #expect(coordinator.selectedTab == .watchlist)
+        #expect(coordinator.pendingWatchlistDetail?.id == 2)
+
+        tvMaze.release()
+        await first.value
+
+        #expect(coordinator.selectedTab == .watchlist)
+        #expect(coordinator.pendingWatchlistDetail?.id == 2)
+        #expect(coordinator.searchPath.isEmpty)
+    }
+
+    @Test("Superseded deferred detail is not pushed when the latest show is paused")
+    func deferredDetailNotAppliedAfterPausedNavigation() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let analytics = RecordingAnalyticsService()
+        let coordinator = AppNavigationCoordinator()
+        let active = Show(
+            id: 10,
+            name: "Active",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        let paused = Show(
+            id: 20,
+            name: "Paused",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        try await repository.add(active)
+        try await repository.add(paused)
+        try await repository.setPaused(true, showIDs: [20])
+
+        coordinator.queueShowNavigation(showID: 10)
+        await coordinator.resolvePendingNavigation(
+            repository: repository, tvMaze: MockTVMazeService(), analytics: analytics)
+        #expect(coordinator.pendingWatchlistDetail?.id == 10)
+
+        coordinator.queueShowNavigation(showID: 20)
+        await coordinator.resolvePendingNavigation(
+            repository: repository, tvMaze: MockTVMazeService(), analytics: analytics)
+
+        #expect(coordinator.pendingWatchlistDetail == nil)
+        coordinator.applyPendingWatchlistDetail()
+        #expect(coordinator.watchlistPath.isEmpty)
+    }
+
+    @Test("Deferred detail apply pushes the latest resolved saved show")
+    func applyDeferredDetailUsesLatestResolvedShow() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let analytics = RecordingAnalyticsService()
+        let coordinator = AppNavigationCoordinator()
+        let first = Show(
+            id: 10,
+            name: "First",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        let second = Show(
+            id: 30,
+            name: "Second",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        try await repository.add(first)
+        try await repository.add(second)
+
+        coordinator.queueShowNavigation(showID: 10)
+        await coordinator.resolvePendingNavigation(
+            repository: repository, tvMaze: MockTVMazeService(), analytics: analytics)
+        #expect(coordinator.pendingWatchlistDetail?.id == 10)
+
+        coordinator.queueShowNavigation(showID: 30)
+        await coordinator.resolvePendingNavigation(
+            repository: repository, tvMaze: MockTVMazeService(), analytics: analytics)
+        #expect(coordinator.pendingWatchlistDetail?.id == 30)
+
+        coordinator.applyPendingWatchlistDetail()
+        #expect(coordinator.pendingWatchlistDetail == nil)
+        #expect(coordinator.watchlistPath.count == 1)
+    }
+
+    @Test("A stale in-flight resolve cannot install deferred detail after a newer tap")
+    func staleResolveDoesNotRestoreSupersededDeferredDetail() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let analytics = RecordingAnalyticsService()
+        let coordinator = AppNavigationCoordinator()
+        let gate = NavigationPrepareGate()
+        let firstShow = Show(
+            id: 10,
+            name: "First",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        let secondShow = Show(
+            id: 30,
+            name: "Second",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
+        try await repository.add(firstShow)
+        try await repository.add(secondShow)
+
+        coordinator.queueShowNavigation(showID: 10)
+        let firstResolve = Task {
+            await coordinator.resolvePendingNavigation(
+                repository: repository,
+                tvMaze: MockTVMazeService(),
+                analytics: analytics,
+                prepare: {
+                    await gate.wait()
+                })
+        }
+        await gate.waitUntilHeld()
+
+        coordinator.queueShowNavigation(showID: 30)
+        await coordinator.resolvePendingNavigation(
+            repository: repository, tvMaze: MockTVMazeService(), analytics: analytics)
+        #expect(coordinator.pendingWatchlistDetail?.id == 30)
+
+        gate.release()
+        await firstResolve.value
+
+        #expect(coordinator.pendingWatchlistDetail?.id == 30)
+        coordinator.applyPendingWatchlistDetail()
+        #expect(coordinator.watchlistPath.count == 1)
     }
 
     @Test("Pending navigation falls back to search when the show is no longer tracked")

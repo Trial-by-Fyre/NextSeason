@@ -596,6 +596,13 @@ private final class ReentrantWatchlistRepository: WatchlistRepository {
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         for id in showIDs { shows[id]?.isPaused = isPaused }
     }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
+    }
 }
 
 /// Stores shows normally but throws from `remove`.
@@ -634,5 +641,12 @@ private final class FailingRemoveWatchlistRepository: WatchlistRepository {
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         for id in showIDs { shows[id]?.isPaused = isPaused }
+    }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
     }
 }

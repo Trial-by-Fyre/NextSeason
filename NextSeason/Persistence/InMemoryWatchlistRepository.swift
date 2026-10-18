@@ -62,6 +62,13 @@ final class InMemoryWatchlistRepository: WatchlistRepository {
         }
     }
 
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
+    }
+
     /// Same guard as SwiftData, as one write.
     @discardableResult
     func restoreUndeliveredNotification(

@@ -32,4 +32,5 @@ private final class UnconfiguredWatchlistRepository: WatchlistRepository {
     func updateAfterRefresh(_ tracked: TrackedShow) async throws { fail() }
     func activeShowIDs() async throws -> Set<Int> { fail() }
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws { fail() }
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws { fail() }
 }

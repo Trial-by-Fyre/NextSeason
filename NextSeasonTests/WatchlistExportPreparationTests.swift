@@ -120,4 +120,6 @@ private final class GatedWatchlistExportRepository: WatchlistRepository {
     func updateAfterRefresh(_ tracked: TrackedShow) async throws {}
 
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {}
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {}
 }

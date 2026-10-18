@@ -267,6 +267,13 @@ private final class SimulatedWatchlistRepository: WatchlistRepository {
         for id in showIDs { shows[id]?.isPaused = isPaused }
     }
 
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        guard shows[tracked.id] == nil else { return }
+        var row = tracked
+        row.isPaused = isPaused
+        shows[tracked.id] = row
+    }
+
     /// Same guard as the app's repositories, so simulations retry the same way.
     @discardableResult
     func restoreUndeliveredNotification(

@@ -115,6 +115,10 @@ private final class ScriptedRepository: WatchlistRepository {
     func setPaused(_ isPaused: Bool, showIDs: Set<Int>) async throws {
         try await base.setPaused(isPaused, showIDs: showIDs)
     }
+
+    func restoreRemoved(_ tracked: TrackedShow, isPaused: Bool) async throws {
+        try await base.restoreRemoved(tracked, isPaused: isPaused)
+    }
 }
 
 /// Records deliveries and can hold one, so a pass stays in flight after its save.

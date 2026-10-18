@@ -495,7 +495,9 @@ struct SubscriptionDowngradeRefreshTests {
         #expect(await harness.restorePlusAndCatchUp() == .resumed([4]))
 
         let removal = WatchlistPendingRemoval(
-            repository: harness.repository, analytics: RecordingAnalyticsService())
+            repository: harness.repository,
+            analytics: RecordingAnalyticsService(),
+            purchases: harness.purchases)
         let row = try #require(try await harness.row(4))
         await withCheckedContinuation { (committed: CheckedContinuation<Void, Never>) in
             removal.addOutcomeHandler { outcome in
@@ -505,6 +507,7 @@ struct SubscriptionDowngradeRefreshTests {
         }
         _ = await removal.undoRemoval()
         #expect(try await harness.row(4)?.dateAdded == row.dateAdded)
+        #expect(try await harness.row(4)?.isPaused == false)
 
         await harness.refresh.refreshAll()
         #expect(harness.notifications.delivered.isEmpty, "Restored row is still baselined")
@@ -521,7 +524,9 @@ struct SubscriptionDowngradeRefreshTests {
 
         // 2. Swipe-delete (persisted immediately, undoable).
         let removal = WatchlistPendingRemoval(
-            repository: harness.repository, analytics: RecordingAnalyticsService())
+            repository: harness.repository,
+            analytics: RecordingAnalyticsService(),
+            purchases: harness.purchases)
         let row = try #require(try await harness.row(4))
         await withCheckedContinuation { (committed: CheckedContinuation<Void, Never>) in
             removal.addOutcomeHandler { outcome in
@@ -559,7 +564,9 @@ struct SubscriptionDowngradeStarStateTests {
     func detailStarFollowsPauseAndResume() async throws {
         let harness = try await Harness(showIDs: [1, 2, 3, 4], plus: true)
         let removal = WatchlistPendingRemoval(
-            repository: harness.repository, analytics: RecordingAnalyticsService())
+            repository: harness.repository,
+            analytics: RecordingAnalyticsService(),
+            purchases: harness.purchases)
         let viewModel = ShowDetailViewModel(
             show: show(4, .returning), service: harness.tvMaze,
             repository: harness.repository, notifications: notificationService(),
@@ -620,7 +627,9 @@ struct SubscriptionDowngradeStarStateTests {
     func searchStarsFollowPauseAndResume() async throws {
         let harness = try await Harness(showIDs: [1, 2, 3, 4], plus: true)
         let removal = WatchlistPendingRemoval(
-            repository: harness.repository, analytics: RecordingAnalyticsService())
+            repository: harness.repository,
+            analytics: RecordingAnalyticsService(),
+            purchases: harness.purchases)
         let tracking = SearchWatchlistTracking()
         var paywallShown = false
         let context = SearchWatchlistTracking.Context(

@@ -41,6 +41,9 @@
         }
       }
     },
+    ", %lld failed" : {
+
+    },
     ", skipped %lld unchanged" : {
       "localizations" : {
         "en" : {
@@ -823,6 +826,9 @@
         }
       }
     },
+    "Failed to refresh %lld show(s)" : {
+
+    },
     "Find a Show" : {
       "localizations" : {
         "en" : {
@@ -1130,6 +1136,9 @@
     "NextSeason closed unexpectedly several times before it could finish launching. You can export diagnostics for troubleshooting and try launching again." : {
 
     },
+    "NextSeason couldn't load its local show matching data. Search isn't available right now. Try again after restarting the app." : {
+
+    },
     "NextSeason couldn't load purchase options right now." : {
 
     },
@@ -1338,6 +1347,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "No TVMaze changes for %lld tracked show(s)"
+          }
+        }
+      }
+    },
+    "No TVMaze changes for %lld tracked show(s), %lld failed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No TVMaze changes for %1$lld tracked show(s), %2$lld failed"
           }
         }
       }

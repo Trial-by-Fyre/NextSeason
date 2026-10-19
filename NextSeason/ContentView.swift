@@ -36,7 +36,7 @@ struct ContentView: View {
     }
 
     var body: some View {
-        TabView(selection: $coordinator.selectedTab) {
+        TabView(selection: tabBarSelection) {
             SearchView(
                 navigationPath: $coordinator.searchPath,
                 searchService: searchService,
@@ -118,8 +118,10 @@ struct ContentView: View {
                     await removalCoordinator?.commitPendingRemovalIfNeeded()
                     AppDiagnosticsLogger.logTaskComplete("watchlist_commit_on_leave_tab")
                 }
-                if tab == .search, oldTab != .search {
-                    coordinator.popSearchToRoot()
+                if tab == .search {
+                    // Pops only for a user selection, and not if notification
+                    // routing pushed a Search detail during the commit above.
+                    coordinator.finishManualSearchSelection()
                 }
                 if tab == .watchlist {
                     coordinator.notifyWatchlistDataChanged()
@@ -138,7 +140,8 @@ struct ContentView: View {
                 repository: repository,
                 tvMaze: tvMaze,
                 analytics: analytics,
-                prepare: reconcileBeforeNavigation
+                prepare: reconcileBeforeNavigation,
+                willLeaveWatchlist: commitPendingRemovalBeforeLeavingWatchlist
             )
         }
         .onChange(of: coordinator.pendingShowID) { _, showID in
@@ -148,10 +151,26 @@ struct ContentView: View {
                     repository: repository,
                     tvMaze: tvMaze,
                     analytics: analytics,
-                    prepare: reconcileBeforeNavigation
+                    prepare: reconcileBeforeNavigation,
+                    willLeaveWatchlist: commitPendingRemovalBeforeLeavingWatchlist
                 )
             }
         }
+    }
+
+    /// TabView writes through this binding only when the user selects a tab, so
+    /// manual return-to-root can be told apart from programmatic routing.
+    private var tabBarSelection: Binding<AppNavigationCoordinator.Tab> {
+        Binding(
+            get: { coordinator.selectedTab },
+            set: { coordinator.selectTabFromTabBar($0) }
+        )
+    }
+
+    /// Ends a pending removal's undo window synchronously (persisting a deferred
+    /// removal) before notification routing leaves Watchlist for Search detail.
+    private func commitPendingRemovalBeforeLeavingWatchlist() {
+        removalCoordinator?.confirmPendingRemoval()
     }
 
     /// Notification taps decide from reconciled pause state: wait for the first

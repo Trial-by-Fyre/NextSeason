@@ -91,6 +91,13 @@ final class AppNavigationCoordinator {
     /// tab/path changes after an await (R14).
     private var navigationRequestID = 0
 
+    /// Bumped whenever notification routing writes `searchPath`.
+    private var searchRoutingGeneration = 0
+
+    /// `searchRoutingGeneration` when the user last switched to Search, until
+    /// `finishManualSearchSelection()` consumes it.
+    private var manualSearchSelectionGeneration: Int?
+
     /// Guards the one-time cold-launch tab decision so foreground returns keep the
     /// user on whatever tab they were last using.
     private var didResolveInitialTab = false
@@ -156,6 +163,30 @@ final class AppNavigationCoordinator {
         }
     }
 
+    /// User tab-bar selection (the root `TabView` binding's setter). A manual
+    /// switch to Search is recorded here and completed by
+    /// `finishManualSearchSelection()` after the tab-change side effects, so
+    /// only user selections return Search to its root. Programmatic routing
+    /// assigns `selectedTab` directly and keeps the path it pushed.
+    func selectTabFromTabBar(_ tab: Tab) {
+        if tab == .search, selectedTab != .search {
+            manualSearchSelectionGeneration = searchRoutingGeneration
+        }
+        selectedTab = tab
+    }
+
+    /// Returns Search to its root after a manual switch, once `ContentView`'s
+    /// tab-change work (the leave-Watchlist commit) has finished. Popping before
+    /// that commit would let a re-shown detail cancel a pending removal. Skipped
+    /// when the switch was programmatic, or when notification routing has pushed
+    /// a Search detail since the user's selection (newer navigation wins).
+    func finishManualSearchSelection() {
+        guard let generation = manualSearchSelectionGeneration else { return }
+        manualSearchSelectionGeneration = nil
+        guard generation == searchRoutingGeneration else { return }
+        popSearchToRoot()
+    }
+
     /// Pops the search navigation stack to its root without changing tabs.
     /// The search query lives in `SearchViewModel`, so it is preserved.
     func popSearchToRoot() {
@@ -195,11 +226,16 @@ final class AppNavigationCoordinator {
     ///     `WatchlistAccessReconciler.reconcileWhenAccessKnown`, so a cold
     ///     launch from an old notification decides using reconciled pause state
     ///     (a show that just lost Plus is paused before it could open detail).
+    ///   - willLeaveWatchlist: Called synchronously just before the Search
+    ///     fallback switches away from the Watchlist tab. Production starts the
+    ///     pending removal's commit here, because the pushed Search detail's
+    ///     `onAppear` would otherwise cancel it before the tab-change commit runs.
     func resolvePendingNavigation(
         repository: any WatchlistRepository,
         tvMaze: any TVMazeService,
         analytics: any AnalyticsTracking,
-        prepare: @MainActor () async -> Void = {}
+        prepare: @MainActor () async -> Void = {},
+        willLeaveWatchlist: @MainActor () -> Void = {}
     ) async {
         guard let showID = pendingShowID else { return }
         // Consume the queue up front so a concurrent resolve cannot process twice.
@@ -244,6 +280,10 @@ final class AppNavigationCoordinator {
         do {
             let show = try await tvMaze.show(id: showID)
             guard isCurrentNavigationRequest(requestID) else { return }
+            if selectedTab == .watchlist {
+                willLeaveWatchlist()
+            }
+            searchRoutingGeneration &+= 1
             selectedTab = .search
             if animated {
                 searchPath.append(show)

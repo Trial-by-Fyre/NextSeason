@@ -745,6 +745,305 @@ struct SearchViewModelTests {
         #expect(viewModel.state == .results(.init(items: resultsB + moreB, hasMore: false)))
     }
 
+    // MARK: - Superseded searches (review item: stale Try Again)
+
+    /// `SearchView`'s Try Again runs `Task { await viewModel.search() }`, which a
+    /// query change does not cancel. These tests start that same task and hold it.
+
+    /// Search handler where query "a" fails once (offering Try Again), then holds
+    /// its retry at `gate` and finishes with `retryResult`; other queries return
+    /// `resultsB` with a raw cursor of 40, then `moreB`.
+    nonisolated private static func retryRace(
+        gate: PageGate,
+        retryResult: @escaping @Sendable () throws -> TheTVDBSearchPage,
+        resultsB: [TVDBSearchResult],
+        moreB: [TVDBSearchResult] = [],
+        offsetsB: OffsetRecorder? = nil,
+        moreGate: PageGate? = nil
+    ) -> MockSearchService {
+        let callsA = CallCounter()
+        return MockSearchService { query, offset in
+            if query == "a" {
+                callsA.increment()
+                if callsA.value == 1 { throw TestError() }
+                await gate.wait()
+                return try retryResult()
+            }
+            offsetsB?.append(offset)
+            if offset == 0 {
+                return Self.page(resultsB, hasMore: true, offset: offset, rawCount: 40)
+            }
+            await moreGate?.wait()
+            return Self.page(moreB, hasMore: false, offset: offset)
+        }
+    }
+
+    /// Fails query "a", then starts Try Again and waits until it is held.
+    private func startHeldRetry(
+        _ viewModel: SearchViewModel, gate: PageGate
+    ) async -> Task<Void, Never> {
+        viewModel.query = "a"
+        await viewModel.search()
+        #expect(viewModel.isSearchRetryAvailable)
+        let retry = Task { await viewModel.search() }
+        await gate.waitUntilHeld()
+        return retry
+    }
+
+    @Test(
+        "An older Try Again that succeeds after a newer query keeps the newer results and cursor",
+        .timeLimit(.minutes(1))
+    )
+    func staleRetrySuccessDoesNotReplaceNewerResults() async {
+        let resultsA = (1...5).map(Self.mappedResult)
+        let resultsB = (101...110).map(Self.mappedResult)
+        let moreB = (111...115).map(Self.mappedResult)
+        let gate = PageGate()
+        let offsetsB = OffsetRecorder()
+        let viewModel = makeViewModel(
+            search: Self.retryRace(
+                gate: gate,
+                retryResult: { Self.page(resultsA, hasMore: false) },
+                resultsB: resultsB, moreB: moreB, offsetsB: offsetsB),
+            mapping: Self.mapping(for: resultsA + resultsB + moreB)
+        )
+        let retry = await startHeldRetry(viewModel, gate: gate)
+
+        viewModel.query = "b"
+        await viewModel.search()
+        gate.open()
+        await retry.value
+
+        #expect(viewModel.state == .results(.init(items: resultsB, hasMore: true)))
+        #expect(viewModel.resolvedTVMazeID(for: resultsA[0].id) == nil)
+        // B's cursor survived: Load More continues from B's raw offset.
+        await viewModel.loadMore()
+        #expect(viewModel.state == .results(.init(items: resultsB + moreB, hasMore: false)))
+        #expect(offsetsB.values == [0, 40])
+    }
+
+    @Test(
+        "An older Try Again that fails after a newer query does not show its error",
+        .timeLimit(.minutes(1))
+    )
+    func staleRetryFailureDoesNotReplaceNewerResults() async {
+        let resultsB = (101...110).map(Self.mappedResult)
+        let gate = PageGate()
+        let analytics = RecordingAnalyticsService()
+        let viewModel = makeViewModel(
+            search: Self.retryRace(
+                gate: gate, retryResult: { throw TestError() }, resultsB: resultsB),
+            mapping: Self.mapping(for: resultsB),
+            analytics: analytics
+        )
+        let retry = await startHeldRetry(viewModel, gate: gate)
+
+        viewModel.query = "b"
+        await viewModel.search()
+        let eventsBeforeRelease = analytics.events.count
+        gate.open()
+        await retry.value
+
+        #expect(viewModel.state == .results(.init(items: resultsB, hasMore: true)))
+        #expect(viewModel.isSearchRetryAvailable == false)
+        #expect(viewModel.resolveErrorMessage == nil)
+        // The superseded search records no outcome of its own.
+        #expect(analytics.events.count == eventsBeforeRelease)
+    }
+
+    @Test(
+        "Clearing the field while Try Again is held leaves Search idle",
+        .timeLimit(.minutes(1))
+    )
+    func clearingDuringHeldRetryStaysIdle() async {
+        let resultsA = (1...5).map(Self.mappedResult)
+        let gate = PageGate()
+        let viewModel = makeViewModel(
+            search: Self.retryRace(
+                gate: gate,
+                retryResult: { Self.page(resultsA, hasMore: true) },
+                resultsB: []),
+            mapping: Self.mapping(for: resultsA)
+        )
+        let retry = await startHeldRetry(viewModel, gate: gate)
+
+        viewModel.query = ""
+        await viewModel.search()
+        gate.open()
+        await retry.value
+
+        #expect(viewModel.state == .idle)
+        #expect(viewModel.isLoadingMore == false)
+        #expect(viewModel.resolvedTVMazeID(for: resultsA[0].id) == nil)
+        await viewModel.loadMore()
+        #expect(viewModel.state == .idle, "No stale cursor or page for Load More to use")
+    }
+
+    @Test(
+        "Mapping work from a superseded search does not enter the current query's cache",
+        .timeLimit(.minutes(1))
+    )
+    func staleMappingDoesNotContaminateCache() async {
+        let resultA = Self.mappedResult(1)
+        let resultsB = (101...103).map(Self.mappedResult)
+        let mappingGate = PageGate()
+        let mapping = GatedShowIDMapping(
+            base: Self.mapping(for: [resultA] + resultsB),
+            heldTVDBID: resultA.id,
+            gate: mappingGate)
+        let viewModel = SearchViewModel(
+            searchService: MockSearchService { query, offset in
+                query == "a"
+                    ? Self.page([resultA], hasMore: false, offset: offset)
+                    : Self.page(resultsB, hasMore: false, offset: offset)
+            },
+            tvMaze: MockTVMazeService(),
+            showIDMapping: mapping,
+            analytics: RecordingAnalyticsService(),
+            debounce: .zero
+        )
+        // A's (Try Again-style) search is held inside its mapping lookup.
+        viewModel.query = "a"
+        let staleSearch = Task { await viewModel.search() }
+        await mappingGate.waitUntilHeld()
+
+        viewModel.query = "b"
+        await viewModel.search()
+        mappingGate.open()
+        await staleSearch.value
+
+        #expect(viewModel.state == .results(.init(items: resultsB, hasMore: false)))
+        #expect(viewModel.resolvedTVMazeID(for: resultA.id) == nil)
+        #expect(viewModel.resolvedTVMazeID(for: resultsB[0].id) == resultsB[0].id + 1_000)
+    }
+
+    @Test(
+        "A newer query's Load More still lands when an older Try Again finishes first",
+        .timeLimit(.minutes(1))
+    )
+    func newerLoadMoreSurvivesStaleRetry() async throws {
+        let resultsA = (1...5).map(Self.mappedResult)
+        let resultsB = (101...110).map(Self.mappedResult)
+        let moreB = (111...115).map(Self.mappedResult)
+        let gate = PageGate()
+        let moreGate = PageGate()
+        let viewModel = makeViewModel(
+            search: Self.retryRace(
+                gate: gate,
+                retryResult: { Self.page(resultsA, hasMore: false) },
+                resultsB: resultsB, moreB: moreB, moreGate: moreGate),
+            mapping: Self.mapping(for: resultsA + resultsB + moreB)
+        )
+        let retry = await startHeldRetry(viewModel, gate: gate)
+
+        viewModel.query = "b"
+        await viewModel.search()
+        let loadB = Task { await viewModel.loadMore() }
+        await moreGate.waitUntilHeld()
+
+        gate.open()
+        await retry.value
+        #expect(viewModel.isLoadingMore)
+
+        moreGate.open()
+        await loadB.value
+        #expect(viewModel.isLoadingMore == false)
+        #expect(viewModel.state == .results(.init(items: resultsB + moreB, hasMore: false)))
+    }
+
+    /// Holds only the first `search()` call inside its debounce; later calls
+    /// pass straight through.
+    private func makeViewModelHoldingFirstDebounce(
+        search: MockSearchService, gate: PageGate
+    ) -> SearchViewModel {
+        let calls = CallCounter()
+        return SearchViewModel(
+            searchService: search,
+            tvMaze: MockTVMazeService(),
+            showIDMapping: showIDMapping(),
+            analytics: RecordingAnalyticsService(),
+            debounce: .zero,
+            sleep: { _ in
+                calls.increment()
+                if calls.value == 1 { await gate.wait() }
+            }
+        )
+    }
+
+    @Test(
+        "A search still in its debounce when the field is cleared stays retired",
+        .timeLimit(.minutes(1))
+    )
+    func debouncingSearchRetiredByClearing() async {
+        let gate = PageGate()
+        let fetches = CallCounter()
+        let viewModel = makeViewModelHoldingFirstDebounce(
+            search: MockSearchService { _, offset in
+                fetches.increment()
+                return Self.page([], hasMore: false, offset: offset)
+            },
+            gate: gate)
+        viewModel.query = "a"
+        let older = Task { await viewModel.search() }
+        await gate.waitUntilHeld()
+
+        viewModel.query = ""
+        await viewModel.search()
+        gate.open()
+        await older.value
+
+        #expect(viewModel.state == .idle, "Not left loading by the retired call")
+        #expect(fetches.value == 0)
+    }
+
+    @Test(
+        "A search still in its debounce cannot take over from a newer query",
+        .timeLimit(.minutes(1))
+    )
+    func debouncingSearchCannotTakeOverNewerQuery() async {
+        let gate = PageGate()
+        let queries = QueryRecorder()
+        let viewModel = makeViewModelHoldingFirstDebounce(
+            search: MockSearchService { query, offset in
+                queries.append(query)
+                return Self.page(query == "b" ? [sampleResult] : [], hasMore: false, offset: offset)
+            },
+            gate: gate)
+        viewModel.query = "a"
+        let older = Task { await viewModel.search() }
+        await gate.waitUntilHeld()
+
+        viewModel.query = "b"
+        await viewModel.search()
+        gate.open()
+        await older.value
+
+        #expect(viewModel.state == .results(.init(items: [sampleResult], hasMore: false)))
+        #expect(queries.values == ["b"])
+    }
+
+    @Test("Try Again after a failure still loads the same query")
+    func retryAfterFailureLoadsResults() async {
+        let resultsA = (1...5).map(Self.mappedResult)
+        let gate = PageGate()
+        gate.open()
+        let viewModel = makeViewModel(
+            search: Self.retryRace(
+                gate: gate,
+                retryResult: { Self.page(resultsA, hasMore: false) },
+                resultsB: []),
+            mapping: Self.mapping(for: resultsA)
+        )
+        viewModel.query = "a"
+        await viewModel.search()
+        #expect(viewModel.isSearchRetryAvailable)
+
+        await Task { await viewModel.search() }.value
+
+        #expect(viewModel.state == .results(.init(items: resultsA, hasMore: false)))
+        #expect(viewModel.resolvedTVMazeID(for: resultsA[0].id) == resultsA[0].id + 1_000)
+    }
+
     /// A TheTVDB hit with only an id, for pagination tests.
     nonisolated private static func mappedResult(_ id: Int) -> TVDBSearchResult {
         TVDBSearchResult(
@@ -876,6 +1175,19 @@ struct SearchViewModelTests {
         }
     }
 
+    /// Records TheTVDB queries requested by a test.
+    private final class QueryRecorder: Sendable {
+        private let stored = Mutex<[String]>([])
+
+        func append(_ value: String) {
+            stored.withLock { $0.append(value) }
+        }
+
+        var values: [String] {
+            stored.withLock { $0 }
+        }
+    }
+
     /// Records TheTVDB page offsets requested during pagination tests.
     private final class OffsetRecorder: Sendable {
         private let stored = Mutex<[Int]>([])
@@ -889,21 +1201,52 @@ struct SearchViewModelTests {
         }
     }
 
+    /// Holds `record(forTVDBID:)` for one TheTVDB id at `gate`; other ids pass through.
+    private struct GatedShowIDMapping: ShowIDMapping {
+        let base: InMemoryShowIDMapping
+        let heldTVDBID: Int
+        let gate: PageGate
+
+        func record(forTVDBID id: Int) async -> ShowIDMappingRecord? {
+            if id == heldTVDBID { await gate.wait() }
+            return await base.record(forTVDBID: id)
+        }
+
+        func tvdbID(forTVMazeID id: Int) async -> Int? {
+            await base.tvdbID(forTVMazeID: id)
+        }
+    }
+
     /// Holds a mocked page request until the test opens the gate. Opening before
     /// anyone waits lets later waiters through immediately.
     private final class PageGate: Sendable {
         private struct State {
             var isOpen = false
             var waiters: [CheckedContinuation<Void, Never>] = []
+            var heldObservers: [CheckedContinuation<Void, Never>] = []
         }
 
         private let state = Mutex(State())
 
         func wait() async {
             await withCheckedContinuation { continuation in
-                let resumeNow = state.withLock { state in
-                    if state.isOpen { return true }
+                let (resumeNow, observers) = state.withLock { state in
+                    if state.isOpen { return (true, [CheckedContinuation<Void, Never>]()) }
                     state.waiters.append(continuation)
+                    defer { state.heldObservers = [] }
+                    return (false, state.heldObservers)
+                }
+                observers.forEach { $0.resume() }
+                if resumeNow { continuation.resume() }
+            }
+        }
+
+        /// Returns once a request is held at the gate.
+        func waitUntilHeld() async {
+            await withCheckedContinuation { continuation in
+                let resumeNow = state.withLock { state in
+                    if !state.waiters.isEmpty { return true }
+                    state.heldObservers.append(continuation)
                     return false
                 }
                 if resumeNow { continuation.resume() }

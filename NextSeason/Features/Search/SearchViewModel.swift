@@ -69,6 +69,8 @@ final class SearchViewModel {
     private let isLocalShowIDMappingAvailable: Bool
     private let analytics: any AnalyticsTracking
     private let debounce: Duration
+    /// Waits out `debounce`. Injectable so tests can hold one call inside it.
+    private let sleep: @Sendable (Duration) async throws -> Void
     /// Trimmed query that produced the current `.results` or `.empty` state; `nil`
     /// while idle, loading, or after a failed search.
     private var displayedQuery: String?
@@ -80,6 +82,14 @@ final class SearchViewModel {
     /// lands on a newer query. (Changing the text cancels the search task, not
     /// the button-created load-more task.)
     private var searchGeneration = 0
+    /// Incremented at the start of every `search()` call (typing, Try Again,
+    /// clearing, profiling). Only the newest call may change search state after
+    /// it suspends: the Try Again button's task is not cancelled when the text
+    /// changes, so cancellation alone cannot retire it. Claimed before the
+    /// debounce so an older call still sleeping cannot take over afterwards.
+    /// Separate from `searchGeneration` so the already-displayed shortcut does
+    /// not retire an in-flight load-more for the results it keeps.
+    private var searchRequestID = 0
     /// Cache of TheTVDB series id → TVMaze show id from the local mapping.
     /// Used for search-row stars without network prefetch.
     private var resolvedTVMazeIDsByTVDBID: [Int: Int] = [:]
@@ -105,7 +115,10 @@ final class SearchViewModel {
         showIDMapping: any ShowIDMapping,
         isLocalShowIDMappingAvailable: Bool = true,
         analytics: any AnalyticsTracking,
-        debounce: Duration = .milliseconds(300)
+        debounce: Duration = .milliseconds(300),
+        sleep: @escaping @Sendable (Duration) async throws -> Void = {
+            try await Task.sleep(for: $0)
+        }
     ) {
         self.searchService = searchService
         self.tvMaze = tvMaze
@@ -113,11 +126,14 @@ final class SearchViewModel {
         self.isLocalShowIDMappingAvailable = isLocalShowIDMappingAvailable
         self.analytics = analytics
         self.debounce = debounce
+        self.sleep = sleep
     }
 
     /// Runs the current `query`. Intended to be driven by `.task(id: query)`,
     /// which cancels the previous run when the text changes, giving us debounce.
     func search(force: Bool = false) async {
+        searchRequestID &+= 1
+        let requestID = searchRequestID
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             searchGeneration += 1
@@ -129,10 +145,11 @@ final class SearchViewModel {
         }
 
         do {
-            try await Task.sleep(for: debounce)
+            try await sleep(debounce)
         } catch {
             return  // superseded by a newer query
         }
+        guard requestID == searchRequestID else { return }
 
         // `.task(id: query)` runs again when returning from show detail; keep
         // existing results instead of flashing the loading placeholder.
@@ -174,13 +191,14 @@ final class SearchViewModel {
                 existingIDs: [],
                 targetCount: Self.actionablePageTarget
             )
-            guard !Task.isCancelled else {
+            guard !Task.isCancelled, requestID == searchRequestID else {
                 AppDiagnosticsLogger.logTaskCancel("search_viewmodel")
                 return
             }
             let durationMs = Int(Date.now.timeIntervalSince(searchStarted) * 1000)
             displayedQuery = trimmed
             nextOffset = fill.nextOffset
+            resolvedTVMazeIDsByTVDBID.merge(fill.tvMazeIDsByTVDBID) { _, new in new }
             if fill.items.isEmpty, !fill.hasMore {
                 state = .empty
                 analytics.track(
@@ -209,7 +227,7 @@ final class SearchViewModel {
             AppDiagnosticsLogger.logTaskCancel("search_viewmodel")
             return
         } catch {
-            guard !Task.isCancelled else {
+            guard !Task.isCancelled, requestID == searchRequestID else {
                 AppDiagnosticsLogger.logTaskCancel("search_viewmodel")
                 return
             }
@@ -274,6 +292,7 @@ final class SearchViewModel {
                 merged.append(result)
             }
             nextOffset = fill.nextOffset
+            resolvedTVMazeIDsByTVDBID.merge(fill.tvMazeIDsByTVDBID) { _, new in new }
             if merged.isEmpty, !fill.hasMore {
                 state = .empty
                 analytics.track(.emptySearchResultsShown)
@@ -330,6 +349,9 @@ final class SearchViewModel {
         var items: [TVDBSearchResult]
         var nextOffset: Int
         var hasMore: Bool
+        /// Mapped TVMaze ids for the kept hits. Applied to the shared cache only
+        /// by the caller that still owns the search, never during the fill.
+        var tvMazeIDsByTVDBID: [Int: Int]
     }
 
     /// Fetches TheTVDB pages and keeps only hits present in the local
@@ -345,6 +367,7 @@ final class SearchViewModel {
         targetCount: Int
     ) async throws -> ActionableFill {
         var collected: [TVDBSearchResult] = []
+        var tvMazeIDsByTVDBID: [Int: Int] = [:]
         var seen = existingIDs
         var offset = startingOffset
         var pagesFetched = 0
@@ -368,9 +391,10 @@ final class SearchViewModel {
             }
 
             let actionable = await filterActionable(page.results)
-            for result in actionable where !seen.contains(result.id) {
+            for (result, tvMazeID) in actionable where !seen.contains(result.id) {
                 seen.insert(result.id)
                 collected.append(result)
+                tvMazeIDsByTVDBID[result.id] = tvMazeID
             }
 
             // Stop when TheTVDB reports exhaustion even if under target — do not
@@ -378,21 +402,28 @@ final class SearchViewModel {
             if !page.hasMore { break }
         }
 
-        return ActionableFill(items: collected, nextOffset: offset, hasMore: tvdbHasMore)
+        return ActionableFill(
+            items: collected,
+            nextOffset: offset,
+            hasMore: tvdbHasMore,
+            tvMazeIDsByTVDBID: tvMazeIDsByTVDBID
+        )
     }
 
     /// Keeps only hits present in the local show ID mapping, overlays TVMaze
-    /// title/poster, and caches TVMaze ids for row stars / later resolve.
-    private func filterActionable(_ results: [TVDBSearchResult]) async -> [TVDBSearchResult] {
-        var actionable: [TVDBSearchResult] = []
+    /// title/poster, and returns each kept hit's TVMaze id (for row stars /
+    /// later resolve; the owning caller caches them).
+    private func filterActionable(
+        _ results: [TVDBSearchResult]
+    ) async -> [(result: TVDBSearchResult, tvMazeID: Int)] {
+        var actionable: [(result: TVDBSearchResult, tvMazeID: Int)] = []
         actionable.reserveCapacity(results.count)
 
         for result in results {
             guard let record = await showIDMapping.record(forTVDBID: result.id) else {
                 continue
             }
-            resolvedTVMazeIDsByTVDBID[result.id] = record.tvMazeID
-            actionable.append(result.overlayingTVMazeDisplayFields(record))
+            actionable.append((result.overlayingTVMazeDisplayFields(record), record.tvMazeID))
         }
 
         return actionable

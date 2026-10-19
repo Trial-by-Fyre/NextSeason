@@ -291,6 +291,93 @@ struct AppNavigationCoordinatorTests {
         #expect(coordinator.searchPath.isEmpty)
     }
 
+    @Test("A manual switch to Search pops to root only after tab effects finish")
+    func manualSearchSelectionPopsWhenFinished() {
+        let coordinator = AppNavigationCoordinator()
+        coordinator.selectedTab = .watchlist
+        coordinator.searchPath.append(navigationShow(id: 1))
+
+        coordinator.selectTabFromTabBar(.search)
+        // Popping waits for ContentView's leave-Watchlist commit.
+        #expect(coordinator.searchPath.count == 1)
+
+        coordinator.finishManualSearchSelection()
+        #expect(coordinator.selectedTab == .search)
+        #expect(coordinator.searchPath.isEmpty)
+    }
+
+    @Test("Programmatic Search selection and reselecting Search keep the path")
+    func programmaticSearchSelectionKeepsPath() {
+        let coordinator = AppNavigationCoordinator()
+        coordinator.selectedTab = .watchlist
+        coordinator.selectedTab = .search
+        coordinator.searchPath.append(navigationShow(id: 1))
+
+        coordinator.finishManualSearchSelection()
+        #expect(coordinator.searchPath.count == 1)
+
+        // Reselecting the current tab is handled by `TabBarReselectHandler`.
+        coordinator.selectTabFromTabBar(.search)
+        coordinator.finishManualSearchSelection()
+        #expect(coordinator.searchPath.count == 1)
+    }
+
+    @Test("A notification Search push after a manual selection cancels the pending pop")
+    func routedSearchPushSupersedesManualPop() async {
+        let tvMaze = MockTVMazeService()
+        tvMaze.shows[82] = navigationShow(id: 82)
+        let coordinator = AppNavigationCoordinator()
+        coordinator.selectedTab = .watchlist
+
+        coordinator.selectTabFromTabBar(.search)
+        coordinator.queueShowNavigation(showID: 82, animated: true)
+        await coordinator.resolvePendingNavigation(
+            repository: InMemoryWatchlistRepository(), tvMaze: tvMaze,
+            analytics: RecordingAnalyticsService())
+        coordinator.finishManualSearchSelection()
+
+        #expect(coordinator.searchPath.count == 1)
+
+        // The next manual switch still returns to root.
+        coordinator.selectTabFromTabBar(.watchlist)
+        coordinator.selectTabFromTabBar(.search)
+        coordinator.finishManualSearchSelection()
+        #expect(coordinator.searchPath.isEmpty)
+    }
+
+    @Test("willLeaveWatchlist runs only when the Search fallback leaves Watchlist")
+    func willLeaveWatchlistOnlyWhenLeavingWatchlist() async throws {
+        let repository = InMemoryWatchlistRepository()
+        try await repository.add(navigationShow(id: 10))
+        let tvMaze = MockTVMazeService()
+        tvMaze.shows[82] = navigationShow(id: 82)
+        let analytics = RecordingAnalyticsService()
+        let coordinator = AppNavigationCoordinator()
+        var leaveCount = 0
+
+        func resolve(_ showID: Int) async {
+            coordinator.queueShowNavigation(showID: showID)
+            await coordinator.resolvePendingNavigation(
+                repository: repository, tvMaze: tvMaze, analytics: analytics,
+                willLeaveWatchlist: { leaveCount += 1 })
+        }
+
+        coordinator.selectedTab = .watchlist
+        await resolve(82)
+        #expect(leaveCount == 1)
+        #expect(coordinator.selectedTab == .search)
+
+        // Already on Search: nothing to leave.
+        await resolve(82)
+        #expect(leaveCount == 1)
+
+        // Tracked target stays on Watchlist.
+        coordinator.selectedTab = .watchlist
+        await resolve(10)
+        #expect(leaveCount == 1)
+        #expect(coordinator.selectedTab == .watchlist)
+    }
+
     /// R14: a slow lookup for an untracked show must not override a later tap.
     @Test("Only the latest notification navigation applies after async work")
     func latestNotificationNavigationWins() async throws {
@@ -576,6 +663,26 @@ struct AppNavigationCoordinatorTests {
         #expect(coordinator.pendingShowID == nil)
         #expect(tvMaze.fetchedIDs == [82])
         #expect(analytics.events.contains(.appOpenedFromNotification(showID: show.id)))
+    }
+
+    private func navigationShow(id: Int) -> Show {
+        Show(
+            id: id,
+            name: "Show \(id)",
+            tvMazeURL: nil,
+            summaryHTML: nil,
+            posterMediumURL: nil,
+            posterOriginalURL: nil,
+            status: .running,
+            premiered: nil,
+            ended: nil,
+            network: nil,
+            genres: [],
+            averageRuntime: nil,
+            seasons: [],
+            nextEpisode: nil,
+            updatedAt: .now
+        )
     }
 
     /// Isolated `UserDefaults` for review-prompt persistence without cross-test leakage.

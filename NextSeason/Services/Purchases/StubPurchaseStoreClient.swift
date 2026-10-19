@@ -5,6 +5,12 @@
 
 import Foundation
 
+/// Per-call entitlement read script for ordering and failure tests.
+struct EntitlementCheckScript: Sendable {
+    var delayed = false
+    var result: PlusEntitlementCheck?
+}
+
 /// In-memory StoreKit double for tests, previews, and UI tests.
 @MainActor
 final class StubPurchaseStoreClient: PurchaseStoreClient {
@@ -22,8 +28,11 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     var loadError: (any Error)?
 
     /// When true, `plusEntitlementCheck()` suspends until
-    /// `releaseEntitlementResolution()`.
+    /// `releaseEntitlementResolution()` (when no script entry supplies `delayed`).
     var delayEntitlementResolution = false
+    /// When non-empty, each entitlement read consumes the next script entry so
+    /// overlapping reads can return different answers in a fixed order.
+    var entitlementCheckScripts: [EntitlementCheckScript] = []
 
     /// Invoked after a verified transaction has been delivered to the app and
     /// immediately before the stub records it as finished.
@@ -35,6 +44,8 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     private(set) var lastPurchasedTransaction: StoreTransaction?
     /// Number of continuations blocked in `plusEntitlementCheck()` when delayed.
     private(set) var entitlementWaiterCount = 0
+    /// Entitlement reads that have entered `plusEntitlementCheck()` (including suspended).
+    private(set) var startedEntitlementCheckCount = 0
     private(set) var observeTransactionUpdatesCallCount = 0
     private(set) var stopObservingTransactionUpdatesCallCount = 0
     /// Ordered record of entitlement and observer calls for test assertions.
@@ -92,13 +103,17 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     }
 
     func plusEntitlementCheck() async -> PlusEntitlementCheck {
+        startedEntitlementCheckCount += 1
         recordedCalls.append(.plusEntitlementCheck)
-        if delayEntitlementResolution {
+        let script = entitlementCheckScripts.isEmpty ? nil : entitlementCheckScripts.removeFirst()
+        let shouldDelay = script?.delayed ?? delayEntitlementResolution
+        if shouldDelay {
             await withCheckedContinuation { continuation in
                 entitlementWaiters.append(continuation)
                 entitlementWaiterCount = entitlementWaiters.count
             }
         }
+        if let result = script?.result { return result }
         if reportsUnverifiedEntitlement { return .unverified }
         return isStoreEntitled ? .active : .inactive
     }
@@ -126,7 +141,23 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
         transactionObserver != nil
     }
 
-    /// Completes any in-flight `hasActivePlusEntitlement()` waits.
+    /// Completes the next suspended entitlement read, if any.
+    func releaseNextEntitlementResolution() {
+        guard !entitlementWaiters.isEmpty else { return }
+        let waiter = entitlementWaiters.removeFirst()
+        entitlementWaiterCount = entitlementWaiters.count
+        waiter.resume()
+    }
+
+    /// Completes the most recently suspended entitlement read, if any, leaving
+    /// older reads held (models a stalled earlier scan).
+    func releaseNewestEntitlementResolution() {
+        guard let waiter = entitlementWaiters.popLast() else { return }
+        entitlementWaiterCount = entitlementWaiters.count
+        waiter.resume()
+    }
+
+    /// Completes any in-flight entitlement reads.
     func releaseEntitlementResolution() {
         delayEntitlementResolution = false
         let waiters = entitlementWaiters

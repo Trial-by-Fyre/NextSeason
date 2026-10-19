@@ -91,6 +91,13 @@ final class PurchaseService {
     private let complimentaryGrantEligibility: @MainActor () async -> Bool
     private var didStartObserving = false
     private var entitlementWaiters: [CheckedContinuation<Void, Never>] = []
+    /// Incremented on every `refreshEntitlements()` request; only the read for the
+    /// current value may commit to `storeEntitlement`. Exposed for ordering tests.
+    private(set) var entitlementRefreshEpoch: UInt = 0
+    /// `refreshEntitlements()` callers waiting for a read at or after their request
+    /// to commit. Separate from `entitlementWaiters`, which complimentary access and
+    /// simulation may resume before StoreKit has answered.
+    private var entitlementCommitWaiters: [CheckedContinuation<Void, Never>] = []
     /// Prevents duplicate tip thank-you toasts and replayed subscription updates
     /// completing a simulation when StoreKit redelivers a transaction.
     private var processedTransactionIDs: Set<UInt64> = []
@@ -378,9 +385,35 @@ final class PurchaseService {
     /// Only a verified answer changes a confirmed state. A verification failure
     /// keeps the last confirmed answer (so it cannot revoke Plus or pause shows),
     /// and on first read becomes `.unverified`.
+    ///
+    /// Overlapping requests each start their own read, and only the newest
+    /// requested read may commit, so a stale answer can never overwrite a newer
+    /// one. Callers return once a read at or after their request commits, not when
+    /// their own read finishes: purchase and restore callers then see current
+    /// access before finishing transactions or ending simulation, and a stalled
+    /// older read cannot block them. If the newest read stalls, its callers (and
+    /// any older superseded callers) wait until a later refresh commits.
     func refreshEntitlements() async {
-        let check = await store.plusEntitlementCheck()
-        if Task.isCancelled { return }
+        entitlementRefreshEpoch &+= 1
+        let generation = entitlementRefreshEpoch
+        let store = store
+        // Unstructured so cancelling a caller never abandons the commit (which
+        // would strand `waitForInitialEntitlementResolution()` waiters).
+        Task { [weak self] in
+            let check = await store.plusEntitlementCheck()
+            self?.applyEntitlementCheck(check, generation: generation)
+        }
+        // Parking is synchronous on the main actor after launching the read, so
+        // the read cannot commit before this caller is registered.
+        await withCheckedContinuation { continuation in
+            entitlementCommitWaiters.append(continuation)
+        }
+    }
+
+    /// Commits one StoreKit entitlement read when `generation` is still the newest
+    /// request; superseded results are discarded.
+    private func applyEntitlementCheck(_ check: PlusEntitlementCheck, generation: UInt) {
+        guard generation == entitlementRefreshEpoch else { return }
         switch check {
         case .active:
             storeEntitlement = .resolved(isEntitled: true)
@@ -390,7 +423,14 @@ final class PurchaseService {
             if case .resolved = storeEntitlement { break }
             storeEntitlement = .unverified
         }
+        // State is updated before resuming anyone. The newest request is the
+        // highest generation, so every parked caller is now satisfied.
         resumeEntitlementWaiters()
+        let commitWaiters = entitlementCommitWaiters
+        entitlementCommitWaiters.removeAll()
+        for waiter in commitWaiters {
+            waiter.resume()
+        }
     }
 
     /// Clears user-visible purchase feedback (errors and tip thank-you).

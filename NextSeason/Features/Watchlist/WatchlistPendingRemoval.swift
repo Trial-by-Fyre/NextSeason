@@ -22,6 +22,14 @@ final class WatchlistPendingRemoval {
     }
 
     private(set) var pendingRemoval: TrackedShow?
+
+    /// The show whose deferred removal is still in its undo window. Its row is
+    /// still saved and active, but it is about to leave, so free-tier
+    /// reconciliation must not spend one of the free slots on it.
+    var deferredRemovalShowID: Int? {
+        pendingMode == .deferred ? pendingRemoval?.id : nil
+    }
+
     /// Set when deferred persistence fails after the undo window ends.
     private(set) var removalErrorMessage: String?
 
@@ -131,6 +139,24 @@ final class WatchlistPendingRemoval {
             self.clearPendingPresentation()
             AppDiagnosticsLogger.logTaskComplete("immediate_removal")
         }
+    }
+
+    /// Switches a deferred removal to immediate mode: persists it now and keeps
+    /// the toast up, so Undo restores the show the same way it does after a swipe.
+    ///
+    /// For returning to the Watchlist after removing a show elsewhere (Show
+    /// Details, Search). Deferred mode keeps the row in place only for the screen
+    /// whose star was tapped. On the Watchlist the row would otherwise linger
+    /// until the undo window timed out. The toast restarts its full window.
+    func persistDeferredRemovalKeepingUndo() {
+        guard pendingMode == .deferred, let tracked = pendingRemoval else { return }
+        let source = pendingRemovalSource ?? .watchlist
+        commitRemovalTask?.cancel()
+        commitRemovalTask = nil
+        // Clear first so `requestImmediateRemoval` does not also finalize this
+        // same show as a replaced deferred removal.
+        clearPendingPresentation()
+        requestImmediateRemoval(tracked, source: source)
     }
 
     /// Cancels a deferred removal, or restores an immediately deleted show.

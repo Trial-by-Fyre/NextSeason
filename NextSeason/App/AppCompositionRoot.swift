@@ -131,16 +131,30 @@ struct AppCompositionRoot {
         reviewPromptCoordinator = ReviewPromptCoordinator()
         let purchases = purchaseService
         let refresh = refreshService
+        let pendingRemoval = watchlistPendingRemoval
         watchlistAccessReconciler = WatchlistAccessReconciler(
             repository: repository,
             access: { purchases.confirmedWatchlistAccess },
             waitForAccess: { await purchases.waitForInitialEntitlementResolution() },
+            // A show in its undo window is about to be deleted; it must not take
+            // one of the free slots (see `excludedShowIDs`).
+            excludedShowIDs: { pendingRemoval.deferredRemovalShowID.map { [$0] } ?? [] },
             // Resumed shows may hold months-old status. Mark them first so any
             // refresh baselines them silently, then catch up only those IDs;
             // continuously active shows keep ordinary notification behavior.
             willResume: { shows in refresh.markForCatchUp(shows) },
             refreshAfterResume: { ids in await refresh.catchUp(showIDs: ids) }
         )
+        // A row left out while its removal was pending stays saved if the
+        // removal is undone, cancelled, or fails; apply the limit to it now.
+        pendingRemoval.addOutcomeHandler { [weak watchlistAccessReconciler] outcome in
+            switch outcome {
+            case .undone, .cancelled, .failed:
+                Task { await watchlistAccessReconciler?.reconcile() }
+            case .committed, .replaced:
+                break
+            }
+        }
     }
 
     /// A paused preview show when UI tests pass `-UITestingSeedPausedShow`.

@@ -28,13 +28,6 @@ enum UITestingConfiguration {
 }
 
 extension View {
-    /// Collapses a view into one labeled accessibility element for XCUITest.
-    func uiTestMarker(_ identifier: String, label: String) -> some View {
-        accessibilityElement(children: .ignore)
-            .accessibilityLabel(label)
-            .accessibilityIdentifier(identifier)
-    }
-
     /// VoiceOver hint for list rows that push show detail.
     func showDetailLinkAccessibility() -> some View {
         accessibilityHint(String(localized: "Opens show details"))

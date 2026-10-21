@@ -20,6 +20,8 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     var isStoreEntitled: Bool
     /// When true, `plusEntitlementCheck()` reports `.unverified` (verification failure).
     var reportsUnverifiedEntitlement = false
+    /// Expiration reported with an `.active` read; `nil` models no known date.
+    var plusExpirationDate: Date?
     /// Outcome returned from `purchase`; `.success` still delivers a transaction when applicable.
     var purchaseOutcome: PurchaseOutcome
     /// When set, `restorePurchases()` throws this error.
@@ -102,7 +104,12 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
         return purchaseOutcome
     }
 
-    func plusEntitlementCheck() async -> PlusEntitlementCheck {
+    func plusEntitlementStatus() async -> PlusEntitlementStatus {
+        let check = await plusEntitlementCheck()
+        return PlusEntitlementStatus(check: check, expirationDate: plusExpirationDate)
+    }
+
+    private func plusEntitlementCheck() async -> PlusEntitlementCheck {
         startedEntitlementCheckCount += 1
         recordedCalls.append(.plusEntitlementCheck)
         let script = entitlementCheckScripts.isEmpty ? nil : entitlementCheckScripts.removeFirst()

@@ -1,6 +1,6 @@
 # NextSeason: beta regression and release testing — checklist copy
 
-Checklist copy of `NextSeason-Beta-Regression-Test.md`, synchronized October 19, 2026. Check a step after performing it and recording its result. A checked box means covered, not necessarily passed. Keep skipped or blocked steps unchecked and record why. Use a fresh copy for each build or release candidate.
+Checklist copy of `NextSeason-Beta-Regression-Test.md`, synchronized October 21, 2026. Check a step after performing it and recording its result. A checked box means covered, not necessarily passed. Keep skipped or blocked steps unchecked and record why. Use a fresh copy for each build or release candidate.
 
 This is the master test plan, not a record of tests already passed. Choose the section for your assignment:
 
@@ -9,7 +9,7 @@ This is the master test plan, not a record of tests already passed. Choose the s
 - [Assigned StoreKit testing](#assigned-storekit-testing) — detailed purchase, entitlement, and controlled-data cases; run only the assigned cases in the required environment.
 - [Release coordinator checklist — Janine only](#release-coordinator-checklist--janine-only) — release coverage and checks beyond the walkthrough.
 
-**Updated October 19, 2026.** Janine: use walkthrough 1–16 for broad coverage, the October pass for the recent fixes, and SK-01–SK-30 for the applicable purchase/lapse branches. Follow the October run order and record results against one candidate build. This is a plan; no case is pre-marked passed. A printable/checkable copy is [here](NextSeason-Beta-Regression-Checklist.md).
+**Updated October 21, 2026.** Janine: use walkthrough 1–16 for broad coverage, the October pass for the recent fixes, and SK-01–SK-30 for the applicable purchase/lapse branches. Follow the October run order and record results against one candidate build. This is a plan; no case is pre-marked passed. A printable/checkable copy is [here](NextSeason-Beta-Regression-Checklist.md).
 
 ## Beta tester walkthrough
 
@@ -22,8 +22,9 @@ Allow roughly 30–45 minutes for the main walkthrough, plus normal use over the
 - [ ] 1. Record your iPhone model, iOS version, and NextSeason version/build shown in TestFlight.
 - [ ] 2. If you already have NextSeason, note or screenshot your Watchlist **before** updating. Install the latest requested TestFlight build over the existing app.
 - [ ] 3. Start with an internet connection. Keep a note of any iPhone settings you change so you can restore them afterward.
-- [ ] 4. Use two or three temporary test shows that you don't mind removing. Try one ongoing show, one ended show, and one with a long title. Live TV information changes, so don't expect a particular premiere date from this script.
-- [ ] 5. **Do not delete the app or reset its data for this walkthrough.** Your Watchlist is stored locally. Clean-install testing is a separately assigned task.
+- [ ] 4. Record your **starting access state**. Tap **•••** at the top left of Search or Watchlist to open About. Under NextSeason Plus, **Up to 3 shows** means you are on the **Free** tier; **Unlimited** means you have **Plus** (a subscription or complimentary beta access). If you have Plus, test 9 explains how to check the free limit without cancelling anything.
+- [ ] 5. Use these temporary test shows, which you can remove afterward: **The Rookie** (ongoing, with an announced premiere), an ended show you know, and **The Woman in the House Across the Street from the Girl in the Window** (long title). On the Free tier, keep to three tracked shows in total until test 9. Live TV information changes, so don't expect a particular premiere date except where a test gives one.
+- [ ] 6. **Do not delete the app or reset its data for this walkthrough.** Your Watchlist is stored locally. Clean-install testing is a separately assigned task.
 
 Use the corresponding control if a button's wording differs slightly from this script. If you cannot find a feature, report that rather than guessing.
 
@@ -57,28 +58,29 @@ Use the corresponding control if a button's wording differs slightly from this s
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. Open an ongoing show from Search.
+- [ ] 1. Open **The Rookie** from Search.
 - [ ] 2. Scroll to the bottom and back up.
 - [ ] 3. Check its title, overview, and any displayed season or episode information.
 - [ ] 4. Open an ended show and check its status.
-- [ ] 5. Open a long-title show and check for clipped text or overlapping controls.
-- [ ] 6. If a source/details link is shown, open it, then return to NextSeason.
+- [ ] 5. Search for `The Woman in the House`, open **The Woman in the House Across the Street from the Girl in the Window**, and check its row in Search and its details for clipped text or overlapping controls.
+- [ ] 6. Tap **View on TVMaze**, then return to NextSeason.
 
-**Expected:** Each result opens the correct show. Information is readable, scrolling and back navigation work, and missing dates are presented clearly. Source links open the intended show's page. An ended show should not misleadingly promise another season.
+**Expected:** Each result opens the correct show. Information is readable, scrolling and back navigation work, and missing dates are presented clearly. The long title wraps rather than overlapping the star or other controls. View on TVMaze opens that show's TVMaze page. An ended show should not misleadingly promise another season.
 
 ## 4. Add shows and check the Watchlist
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. Add a temporary test show using its star control.
+**Start:** any access state. On the Free tier, stay within three tracked shows in total; test 9 covers the limit.
+
+- [ ] 1. Add The Rookie by tapping its empty star in Search.
 - [ ] 2. Open Watchlist and find it.
 - [ ] 3. Open its details from Watchlist.
-- [ ] 4. Return to Search and find the same show again.
-- [ ] 5. Try adding it again if the controls allow that action.
-- [ ] 6. Add other temporary test shows within your available limit.
-- [ ] 7. Scroll through the Watchlist, including past section headings.
+- [ ] 4. Return to Search and find the same show again. Its star should be filled.
+- [ ] 5. Add your other test shows, from a Search row or from Show Details.
+- [ ] 6. Scroll through the Watchlist, including past section headings.
 
-**Expected:** Added shows appear once, their stars reflect their tracked state, and the state agrees between Search, details, and Watchlist. Section headings remain readable as rows scroll beneath them. Grouping agrees with the status/date information displayed for each show.
+**Expected:** Added shows appear once, their stars reflect their tracked state, and the state agrees between Search, details, and Watchlist. Tapping a filled star never adds a duplicate. Section headings remain readable as rows scroll beneath them. Grouping agrees with the status/date information displayed for each show.
 
 ## 5. Search your Watchlist
 
@@ -95,12 +97,16 @@ Use the corresponding control if a button's wording differs slightly from this s
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. Un-star a **temporary test show**. While its Undo toast is visible, tap Undo; check its star and saved row.
-- [ ] 2. Repeat, this time tap OK (or let the toast expire), then check Watchlist and Search/details. Re-add the show.
-- [ ] 3. Swipe-delete it from Watchlist. The row disappears immediately; tap Undo and confirm it returns once.
-- [ ] 4. Repeat swipe-delete, tap OK or let the toast expire, then re-add if desired.
+On Watchlist, the star is a toggle. Tapping a filled star starts a removal: the star empties, the row stays in place, and a toast offers **Undo** and **OK** for about five seconds (twenty with VoiceOver). Until the toast ends, tapping the same star again cancels the removal.
 
-**Expected:** star removal is deferred until OK/timeout, so the saved row can remain visible in its pending state. Swipe-delete persists immediately; Undo restores it. After committed removal the show is unstarred/absent; after Undo it is saved once. Other shows are unaffected. Normal Undo lasts about five seconds, or twenty with VoiceOver. Janine's extended checks are OC-03–OC-05.
+- [ ] 1. Tap the filled star of a **temporary test show**. Check that the star empties and the toast appears. Tap the same star again; the star fills and the show stays.
+- [ ] 2. Tap the star again, then tap **Undo** in the toast. The show stays, with a filled star.
+- [ ] 3. Tap the star again, then tap **OK**, or wait for the toast to disappear. The row leaves Watchlist.
+- [ ] 4. Search for that show. Its star is empty. Tap it to re-add the show, then check that it appears on Watchlist once.
+- [ ] 5. Swipe left on the same row and delete it. The row disappears immediately. Tap **Undo**; it returns once.
+- [ ] 6. Swipe-delete it again and tap **OK** or let the toast expire. Re-add it from Search if you want to keep it.
+
+**Expected:** Star removal is only saved after OK or timeout; until then, Undo or a second star tap keeps the show. Swipe-delete removes the row immediately, and Undo restores it. After a completed removal the show is absent from Watchlist and unstarred in Search; after Undo it is saved once. Other shows are unaffected. A star removal started from Search or Show Details finishes when you next open Watchlist. Janine's extended checks are OC-03–OC-05.
 
 ## 7. Keep data between sessions
 
@@ -117,89 +123,88 @@ Use the corresponding control if a button's wording differs slightly from this s
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. Find the Watchlist export action in the app's menu.
-- [ ] 2. Start an export, then cancel the share sheet.
+- [ ] 1. Open About (**•••**) and tap **Export Watchlist**.
+- [ ] 2. Cancel the share sheet.
 - [ ] 3. Confirm that your Watchlist is unchanged.
 - [ ] 4. Export again and save the CSV to Files.
 - [ ] 5. Open it in Numbers, Excel, or another spreadsheet app, if available.
-- [ ] 6. Compare the exported show names and count with your full Watchlist. If possible, also export while a Watchlist search is active.
+- [ ] 6. Compare the exported show names and count with your full Watchlist, including any collapsed sections and paused shows.
 
-**Expected:** The share sheet works and canceling is harmless. The CSV contains the **complete stored Watchlist**, even when the on-screen list is filtered. It includes show names and TVMaze IDs, with TVDB IDs where available. Titles containing punctuation remain in their correct cells. Export does not require Plus. If you cannot open the CSV, report that part as skipped.
+**Expected:** The share sheet works and canceling is harmless. The CSV contains the **complete stored Watchlist**. It includes show names and TVMaze IDs, with TVDB IDs where available. Titles containing punctuation remain in their correct cells. Export does not require Plus. If you cannot open the CSV, report that part as skipped.
 
-## 9. Free limit and Plus — follow the applicable branch
+## 9. Free limit and Plus
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-### If you have complimentary beta Plus or an active subscription
+**Start: Free, with exactly three active shows.** Check About:
 
-- [ ] 1. Record which access state the app shows.
-- [ ] 2. Try tracking a fourth show.
-- [ ] 3. Close and reopen the app and confirm your access and shows remain.
-- [ ] 4. Open About and inspect any Plus/access information available there.
+- **Up to 3 shows:** you are already Free. Add or remove temporary shows until exactly three are on your Watchlist.
+- **Unlimited:** do not cancel anything. Open About → **Diagnostics** → **Subscription Testing** and turn on **Simulate Free Tier**. About now shows **Up to 3 shows (simulated)**. If you have more than three shows, your three oldest stay active and the rest move to **Paused — Plus Required**. Nothing is deleted. Remove temporary shows until exactly three are active.
 
-**Expected:** Plus allows more than three tracked shows. Complimentary access remains recognized. **Skip the free-limit branch; do not remove your complimentary access to test it.**
-
-### If you are using the free tier
-
-- [ ] 1. With exactly three tracked shows, try adding a fourth.
-- [ ] 2. Check the Plus screen, including monthly and annual choices, prices, and legal links.
-- [ ] 3. Dismiss it without buying and check your Watchlist.
+- [ ] 1. Try adding a fourth show from Search.
+- [ ] 2. Check the Plus screen: monthly and annual choices, their prices, and the Terms of Use and Privacy Policy links.
+- [ ] 3. Dismiss it without buying and check that your Watchlist still has the same three active shows.
 - [ ] 4. Remove one temporary show, then add a different show to return to three.
-- [ ] 5. Open Plus from About using the available upgrade control.
+- [ ] 5. Open Plus from About using **Unlock NextSeason Plus**, then dismiss it.
+- [ ] 6. If you turned on Simulate Free Tier: turn it off. About shows **Unlimited** again, paused shows return to their normal sections, and you can add a fourth show.
 
-**Expected:** Adding a fourth show opens Plus without adding the show. Dismissing leaves the original three intact. After removing one, another can be added. Both routes to Plus work. Prices and subscription periods are readable; currency may vary by region.
+**Expected:** Adding a fourth show opens Plus without adding the show. Dismissing leaves the original three intact. After removing one, another can be added. Both routes to Plus work. Prices and subscription periods are readable; currency may vary by region. Turning simulation off restores Plus without losing any shows. **End state:** Simulate Free Tier is off.
 
 ### Optional purchase tests — only if specifically assigned
 
-This is a brief purchase smoke test. Assigned purchase testers should also use [Assigned StoreKit testing](#assigned-storekit-testing), which provides setup, detailed cases, and a result sheet. Completing this smoke test does not complete StoreKit coverage.
+Purchase testing uses the short [volunteer StoreKit checklist](#volunteer-storekit-checklist). Do not buy through a public App Store listing for this test. If the purchase sheet does not clearly identify a test/sandbox purchase, stop and ask Janine before proceeding.
 
-Test the assigned subscription or tip through **the TestFlight build**. Cancel the purchase sheet first and verify that cancellation leaves the app usable. Then complete the assigned test purchase. Record the product and outcome. Use Restore Purchases if assigned.
-
-**Expected:** A completed Plus purchase unlocks tracking beyond three shows. A canceled purchase does not unlock Plus or remove data. Tips are optional and do not unlock Plus. Restoration recognizes eligible previous purchases or gives understandable feedback when none exist.
-
-If the purchase sheet does not clearly identify a test/sandbox purchase, stop and ask Janine before proceeding. Do not buy through a public App Store listing for this test. Complimentary access can mask purchase/restore failures, so report it and leave those checks to an assigned purchase tester.
-
-## 10. Notifications allowed and disabled
+## 10. Notification permission
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. In iPhone Settings, check NextSeason's notification permission. Record whether it was already allowed or denied.
-- [ ] 2. If NextSeason presents its permission request during normal use, record when it appears and your choice. Do not reinstall just to trigger it.
-- [ ] 3. With notifications allowed, open NextSeason and confirm Search and Watchlist work.
-- [ ] 4. Turn notifications off in iPhone Settings, return to NextSeason, and repeat a search and Watchlist visit.
-- [ ] 5. Restore your preferred notification setting.
+- [ ] 1. Open About and note the **Notifications** status (Enabled or Disabled).
+- [ ] 2. If NextSeason asks for notification permission during normal use, for example after you add a show, record when it appears and your choice. Do not reinstall just to trigger it.
+- [ ] 3. In iPhone Settings → Notifications → NextSeason, turn **Allow Notifications** off. Return to NextSeason.
+- [ ] 4. Check Watchlist for the **Notifications Are Off** banner and About for **Disabled**.
+- [ ] 5. Tap **Open Settings** on the banner. Turn notifications back on and return to NextSeason.
+- [ ] 6. Restore your preferred notification setting.
 
-**Expected:** Core features work with either permission setting. Denying permission does not cause a crash or repeated system permission requests. No notification banner is expected while permission is off.
+**Expected:** The banner and About status update when you return from Settings. Open Settings opens NextSeason's notification settings. Denying permission does not cause a crash or repeated system permission requests.
 
-During the next day or two, if a real show update notification arrives, screenshot it, check that the text is understandable, and tap it. Record where the app opens and whether it shows the relevant information. Report duplicate notifications or a notification for a removed show.
-
-**No notification arriving is not automatically a failure:** there may be no qualifying show change. Mark actual delivery/tap testing as skipped unless an update occurs or Janine supplies a controlled test.
-
-## 11. Background App Refresh
+## 11. Background refresh and real notifications — opportunistic
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. In iPhone Settings, note NextSeason's Background App Refresh setting.
-- [ ] 2. If available, turn it off for NextSeason.
-- [ ] 3. Open the app, search, and visit your Watchlist.
-- [ ] 4. Restore your original setting.
-- [ ] 5. With refresh enabled, use the app normally over the next day or two. Leave it in the background normally rather than repeatedly closing it from the app switcher.
-- [ ] 6. Note any displayed update times and changes in show information.
+No special steps. Leave **Background App Refresh** on for NextSeason and use the app normally over the next few days. Leave it in the background rather than repeatedly closing it from the app switcher.
 
-**Expected:** Disabling background refresh does not prevent normal foreground use or erase data. With it enabled, report what you observe; do not expect an update at an exact time. iOS controls when background work runs, and this walkthrough alone cannot prove that it ran.
+- If a show's **Updated** time changes without you refreshing, or a real show-update notification arrives, note it. For a notification, screenshot it, check that the text is understandable, tap it, and record where the app opens.
+- Report duplicate notifications or a notification for a show you removed.
+
+**Expected:** iOS decides when background work runs, and a notification needs a qualifying show change. **Nothing happening is not a failure**; mark this test skipped unless you observe something.
 
 ## 12. Offline and network recovery
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. Load your Watchlist while online.
-- [ ] 2. Turn on Airplane Mode and ensure Wi-Fi is also off.
-- [ ] 3. Open Watchlist and a previously viewed show.
-- [ ] 4. Try searching for a different show.
-- [ ] 5. Restore connectivity and retry the search. Revisit Watchlist.
-- [ ] 6. If you naturally encounter a weak connection later, note any long waits or errors; you do not need to find a poor-signal location.
+Work through the three phases in order. Make sure you have at least two tracked shows.
 
-**Expected:** Stored shows remain intact. Cached information may be available; uncached information may not be. Network failures should produce understandable feedback rather than a crash or an indefinite unusable screen. After connectivity returns, the app can recover and search again.
+**Connected**
+
+- [ ] 1. Search for a show and open its details. Return to Search.
+- [ ] 2. On Watchlist, use its search to find a tracked show, then clear and close the search.
+- [ ] 3. Open a tracked show's details from Watchlist, then return.
+- [ ] 4. Pull down on Watchlist to refresh it.
+
+**Offline:** turn on Airplane Mode and make sure Wi-Fi is off.
+
+- [ ] 5. **Search:** search for a title you have not searched for today.
+- [ ] 6. **Watchlist search:** search your Watchlist for a tracked show.
+- [ ] 7. **Show details:** open a tracked show from Watchlist.
+- [ ] 8. **Pull to refresh:** pull down on Watchlist.
+
+**Recovery:** turn off Airplane Mode, or turn Wi-Fi back on, and wait for a connection.
+
+- [ ] 9. **Search:** tap **Try Again** if it is shown, or search again.
+- [ ] 10. **Show details:** reopen the show; tap **Try Again** if its Next Season section shows an error.
+- [ ] 11. **Pull to refresh:** pull down on Watchlist again.
+
+**Expected:** While connected, everything loads normally. Offline, Search shows an understandable error with Try Again, although a title you searched recently may still appear from cache. Watchlist search still works because it uses saved shows. Show details still shows the saved title, and its Next Season section either shows saved information or an error with Try Again. Pull to refresh shows a brief "Couldn't refresh your Watchlist" notice. No shows are lost, nothing crashes, and no screen stays loading indefinitely. After recovery, Search, Try Again, and pull to refresh all succeed without restarting the app.
 
 ## 13. Readability and appearance
 
@@ -207,9 +212,9 @@ During the next day or two, if a real show update notification arrives, screensh
 
 - [ ] 1. Check Search, show details, Watchlist, and About in your normal appearance.
 - [ ] 2. Switch the iPhone between Light and Dark appearance and revisit those screens.
-- [ ] 3. In Accessibility settings, increase text size to the largest accessibility size. Check those screens and Plus, if accessible.
-- [ ] 4. Try scrolling, searching, tapping stars, and dismissing sheets with large text.
-- [ ] 5. If comfortable, briefly enable Increase Contrast, Button Shapes, Reduce Transparency, and Reduce Motion, checking the main screens after changes.
+- [ ] 3. In Settings → Accessibility → Display & Text Size → Larger Text, turn on Larger Accessibility Sizes and drag to the largest size. Check those screens and Plus, if accessible.
+- [ ] 4. With large text, check that the Search field stays visible, the Search welcome text and Try an Example button scroll into view, and the first-results hint scrolls with the results. On Watchlist, a "No Matches" or empty-Watchlist message appears below the Notifications Are Off banner rather than on top of it. Also try scrolling, tapping stars, and dismissing sheets.
+- [ ] 5. If comfortable, briefly enable Increase Contrast, **Show Borders** (called Button Shapes on iOS 18), Reduce Transparency, and Reduce Motion, checking the main screens after changes.
 - [ ] 6. Restore your preferred settings.
 
 **Expected:** Text and controls remain readable and reachable. Important text does not overlap or disappear. Watchlist section headers stay readable. States such as tracked/untracked can be distinguished without relying only on color. Report confusing wording or truncated English text, including on phones using another system language.
@@ -226,27 +231,33 @@ During the next day or two, if a real show update notification arrives, screensh
 
 **Expected:** Controls have meaningful labels and their states are announced correctly. Navigation order makes sense. You can search, track a show, and return without becoming trapped. Report the exact screen/control for any unclear announcement.
 
-## 15. About and links
+## 15. About, links, and credits
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. Open About and check the displayed app information.
-- [ ] 2. Open Privacy Policy and Support, then return to the app.
-- [ ] 3. Open Write a Review and any available purchase/legal links. Do not submit a review for this test.
-- [ ] 4. If Support opens an email draft, check its destination and cancel it without sending.
+- [ ] 1. Open About and check the version and build channel.
+- [ ] 2. Under **Help & Legal**, open **Support**, **Privacy Policy**, and **Terms of Use** in turn, returning to the app each time.
+- [ ] 3. Under **Credits**, open **Show data provided by TVMaze** and **Search metadata provided by TheTVDB**.
+- [ ] 4. On Search results, scroll to the bottom and tap TheTVDB credit.
+- [ ] 5. Tap **Rate NextSeason**. Do not submit a review.
+- [ ] 6. If the Support page offers an email link, check its destination and cancel without sending.
 
-**Expected:** Website links open the intended pages. Support email, when offered, is addressed to `support@getnextseason.com`. Return navigation works. If an App Store/review link cannot resolve before launch, record the destination and error so Janine can distinguish listing availability from a broken link.
+**Expected:** Support opens the NextSeason support page on getnextseason.com, and Privacy Policy opens the NextSeason privacy policy. Terms of Use opens Apple's standard license agreement, which NextSeason uses. The TVMaze credit opens tvmaze.com, and both TheTVDB credits open thetvdb.com. Support email is addressed to `support@getnextseason.com`. Return navigation works. If an App Store/review link cannot resolve before launch, record the destination and error so Janine can distinguish listing availability from a broken link.
 
-## 16. Time-zone/date check (when a dated show is available)
+## 16. Time-zone/date check with The Rookie
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-- [ ] 1. Screenshot a show with a displayed upcoming date.
-- [ ] 2. Note your current iPhone time-zone setting, then temporarily choose a substantially different time zone. Leave the actual date/time correct.
-- [ ] 3. Reopen the app and inspect that show and its Watchlist grouping.
-- [ ] 4. Restore your original time-zone setting.
+**Show:** The Rookie, tracked. When this script was updated on October 21, 2026, TVMaze listed its season 9 premiere as **January 6, 2027** (9 PM Eastern). That date comes from TVMaze and has not been confirmed with the network. If the app shows a different date or none, record what it shows. A different date is not a failure; use the date the app shows as the expected date for this test. If no date is shown, mark this test skipped.
 
-**Expected:** a premiere date is a provider calendar day and must remain the same day after changing time zone; localized formatting may change. Actual instants such as Date Added/Updated can display differently. Status calculations use UTC days. Keep the device clock correct; restore the original time zone. Record the case skipped if no dated show is available. Janine's exact cross-surface checks are OC-10.
+- [ ] 1. Note the premiere date shown in The Rookie's details and its Watchlist row.
+- [ ] 2. In Settings → General → Date & Time, turn off **Set Automatically** and choose **Singapore**. Return to NextSeason and check The Rookie's details and Watchlist row.
+- [ ] 3. Change the time zone to **Honolulu**. Return to NextSeason and check again.
+- [ ] 4. Turn **Set Automatically** back on, and confirm the iPhone shows your correct local time.
+
+If the date doesn't change in the app until you close and reopen it, note that.
+
+**Expected:** The premiere stays on the same calendar day in both time zones, even though the episode airs on January 7 in Singapore local time. Only date formatting may change. **Updated** times are real moments and may display differently. Status calculations use UTC days. Keep the device clock correct, and restore automatic time zone. Janine's exact cross-surface checks are OC-10.
 
 ## Send your results
 
@@ -271,9 +282,26 @@ Example: **Test 5 — Problem.** Searching my Watchlist for “Trek” showed no
 
 ## Assigned StoreKit testing
 
-For assigned purchase testers and developer-assisted verification. Ordinary beta testers can complete the walkthrough above without running these cases. The setup, safeguards, and result sheet below apply to this section.
+Volunteer purchase testers: use only the [volunteer StoreKit checklist](#volunteer-storekit-checklist) below. SK-01–SK-30 are for Janine and developer-assisted verification; volunteers are not expected to exercise every subscription lifecycle case. Ordinary beta testers can complete the walkthrough above without running any of this section.
 
-Originally prepared October 11, 2026; updated October 19 to integrate the reviewed notification, Undo, date and access behavior. OC-11 adds real-device entitlement-ordering smoke checks and CV-06 identifies its deterministic verification. This document is a test plan, not a record of tests already passed.
+### Volunteer StoreKit checklist
+
+About 15 minutes, in the TestFlight build. TestFlight purchases use the sandbox and are not charged.
+
+**Start:** About shows **Up to 3 shows**, without Simulate Free Tier, and your Watchlist has exactly three shows. If About shows **Unlimited** because of complimentary beta access, purchases cannot be checked on this device. Mark the checklist **Not applicable** and stop; do not try to remove complimentary access.
+
+- [ ] 1. Try to add a fourth show. On the Plus screen, check that Monthly and Annual show a price and period, and that Terms of Use and Privacy Policy open.
+- [ ] 2. Tap Monthly or Annual, then **cancel** Apple's purchase sheet. The app stays usable, Plus is not unlocked, and the fourth show is not added.
+- [ ] 3. Buy the **same** plan and confirm Apple's sheet identifies it as a test/sandbox purchase. If it does not, stop and ask Janine. After purchase, About shows **Unlimited**; add the fourth show.
+- [ ] 4. Close NextSeason from the app switcher, reopen it, and check that About still shows Unlimited and all shows remain.
+- [ ] 5. In About, tap **Restore Purchases**. Access stays Unlimited and no shows are duplicated.
+- [ ] 6. Optionally buy one tip in About. A thank-you appears once, and access is unchanged.
+
+**Expected:** Prices come from Apple's sheet and agree with the app. Cancelling grants nothing; purchasing unlocks Plus without Restore. Tips never unlock features. Report the plan you bought, any error text, and the time. Expiration, renewal, refunds, billing problems, and offline cases are covered by Janine in SK-11–SK-21; you do not need to test them.
+
+The setup, safeguards, and result sheet below apply to SK-01–SK-30.
+
+Originally prepared October 11, 2026; updated October 19 to integrate the reviewed notification, Undo, date and access behavior, and October 21 to add the volunteer checklist. OC-11 adds real-device entitlement-ordering smoke checks and CV-06 identifies its deterministic verification. This document is a test plan, not a record of tests already passed.
 
 ### How to use this script
 
@@ -513,7 +541,7 @@ Reset purchase history using the appropriate environment; establish a genuinely 
 
 Repeat expiration while NextSeason stays visible, then switch away and return. Repeat once with the app closed before expiration, and once with an actual scheduled background refresh if your device delivers one.
 
-**Expected:** a foreground entitlement reread detects the lapse and applies the same three-show policy before ordinary watchlist refresh. The implementation does not promise a timer-driven UI transition at the exact second of expiration while continuously foregrounded. Record that timing rather than expecting it. A background run must reconcile before processing shows. If iOS never schedules a background run, mark that portion Blocked, not Pass.
+**Expected:** a foreground entitlement reread detects the lapse and applies the same three-show policy before ordinary watchlist refresh. While continuously foregrounded, the app re-checks about 5 minutes after Apple's recorded expiration and applies the same policy then; record the observed time. A renewal that arrives before then must not pause anything. A billing grace period end is detected on the next foreground return, not by this timer. A background run must reconcile before processing shows. If iOS never schedules a background run, mark that portion Blocked, not Pass.
 
 #### SK-15 — Refund/revocation
 
@@ -562,7 +590,7 @@ Repeat expiration while NextSeason stays visible, then switch away and return. R
 - [ ] 3. Induce a restore failure using local error controls or offline real-device testing, then recover and retry.
 - [ ] 4. Tap Restore rapidly twice and repeat a successful restore.
 
-**Expected:** valid access is recovered; restore does not purchase or duplicate shows. No-purchase/expired accounts remain free; no false “Plus restored” claim. Failure gets recoverable feedback and no stuck busy state. Repeating restore is harmless. Automatic entitlement detection may restore access before you tap Restore; record that as automatic detection, not proof that the button changed access.
+**Expected:** valid access is recovered; restore does not purchase or duplicate shows. No-purchase/expired accounts remain free and see a Restore Purchases alert saying no active subscription was found (in the Plus sheet or About, wherever Restore was tapped); no false “Plus restored” claim. Failure gets recoverable feedback and no stuck busy state. Repeating restore is harmless. Automatic entitlement detection may restore access before you tap Restore; record that as automatic detection, not proof that the button changed access.
 
 #### SK-19 — Reinstall and second-device distinction
 
@@ -955,12 +983,12 @@ After N5/N6/N8–N10, wait for navigation to settle, go back, revisit Watchlist 
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
-**Environment:** ordinary app; select a show with an actual displayed future premiere. Record the source calendar date, not a hard-coded expected date for a live title.
+**Environment:** ordinary app; use **The Rookie** (TVMaze 32938). On October 21, 2026, TVMaze listed its season 9 premiere as 2027-01-06 at 21:00 Eastern (airstamp 2027-01-07 02:00 UTC). That date has not been confirmed with the network. Recheck the date the app shows before testing and record it as the source date; if it has changed or disappeared, use another show with a displayed future premiere rather than this date.
 
 - [ ] 1. Compare the premiere on detail, Watchlist and a fresh CSV export. In the CSV compare the descriptive Next Season column with Next Season Premiere.
-- [ ] 2. Change time zone between America/Los_Angeles, UTC and a positive-offset zone, keeping the actual clock/date correct. Reopen detail and Watchlist, and reopen About before preparing a new export in each zone.
+- [ ] 2. Turn off Set Automatically in Date & Time and test **Singapore** (UTC+8, where the airing falls on the next local day) and **Honolulu** (UTC−10), keeping the actual clock/date correct. Reopen detail and Watchlist, and reopen About before preparing a new export in each zone.
 - [ ] 3. If the Diagnostics fictional alert contains a date, compare that same fictional date across zones separately from the real show's date. Use CV-04 for a controlled production alert matching a known provider date.
-- [ ] 4. Restore time-zone settings.
+- [ ] 4. Turn Set Automatically back on and confirm the correct local time.
 
 **Expected:** a provider premiere date retains its calendar day everywhere; only localized formatting changes. Date Added/Updated are real instants and may display differently locally. Status calculation uses UTC calendar days, so a local evening transition at UTC midnight is not itself a defect. Do not advance the real device clock to force a season transition or subscription expiration.
 
@@ -986,6 +1014,8 @@ After N5/N6/N8–N10, wait for navigation to settle, go back, revisit Watchlist 
 
 - [ ] Case performed; outcome, environment and evidence recorded.
 
+**Opportunistic:** run this alongside other sessions rather than as a scheduled test. iOS decides when background work runs.
+
 **Environment:** physical device; normal launch, network available, Background App Refresh enabled. Record Low Power Mode, Focus and alert presentation settings rather than assuming background scheduling or visible banners are guaranteed.
 
 - [ ] 1. Leave NextSeason in the background normally for a later observation; do not force-quit it while testing scheduled background work. Reopen and inspect Diagnostics' last background time, fetch result and notification decision.
@@ -993,7 +1023,7 @@ After N5/N6/N8–N10, wait for navigation to settle, go back, revisit Watchlist 
 - [ ] 3. Turn Background App Refresh off, use Search/Watchlist, then restore the setting. Separately test offline force refresh, reconnect and retry.
 - [ ] 4. Compare a background run's diagnostics, persisted Watchlist changes and any actual alerts. Record partial failures honestly. Leave a suitable installation unused for a natural long-absence follow-up only if available; use CV-05 for deterministic multi-day/month gaps.
 
-**Expected:** no lost shows, no alert burst from silently resumed rows, and no success wording concealing a total fetch failure. Scheduled time is an earliest hint, not an appointment. No background sample means **Blocked/not observed**, not a pass. A test banner scheduled for five seconds later does not prove the app performed a background fetch. Neither pull-to-refresh nor Force Refresh Now proves automatic notifying refresh behavior.
+**Expected:** no lost shows, no alert burst from silently resumed rows, and no success wording concealing a total fetch failure. Scheduled time is an earliest hint, not an appointment. No background sample means **Not observed**, not a pass or a failure. A test banner scheduled for five seconds later does not prove the app performed a background fetch. Neither pull-to-refresh nor Force Refresh Now proves automatic notifying refresh behavior.
 
 ### OC-13 — Full export after changes, filtering, pausing and offline use
 
@@ -1002,7 +1032,7 @@ After N5/N6/N8–N10, wait for navigation to settle, go back, revisit Watchlist 
 **Environment:** ordinary app; mixed active/paused shows if available, including punctuation/non-ASCII/long titles.
 
 - [ ] 1. Open About and export; save a CSV to Files. Compare the complete saved count and names, IDs, dates and URLs. Missing TVDB IDs are allowed when no mapping exists.
-- [ ] 2. Change Watchlist filtering/collapsed sections, export again, and confirm hidden/paused rows are included. Cancel the share sheet once; no saved state should change.
+- [ ] 2. Collapse Watchlist sections, export again, and confirm collapsed and paused rows are included. Cancel the share sheet once; no saved state should change.
 - [ ] 3. Add/remove a temporary show, close and reopen About to prepare a fresh export, and compare the new file. Save exports separately because the normal filename can repeat within a day.
 - [ ] 4. Repeat offline using saved rows. Reopen the resulting CSV in a spreadsheet application. Record unavailable viewers or induced export errors as Blocked where appropriate.
 
@@ -1101,7 +1131,7 @@ These are the limits of manual verification, not extra hidden UI features. For e
 
 - [Original feature-area review](../Reviews/2026-10-12-feature-area-review.md), [approved decisions/analysis](../Reviews/2026-10-12-feature-area-review-analysis.md), [R03/R13 matrix](../Reviews/2026-10-12-r03-r13-behavior-matrix.md), [R08/R11 matrix](../Reviews/2026-10-13-r08-r11-behavior-matrix.md).
 - [Entitlement ordering](../Reviews/EntitlementCheckOrderingReview-2026-10-19.md), [notification navigation](../Reviews/NotificationSearchNavigationReview-2026-10-19.md), [Search retry ownership](../Reviews/SearchRetryOwnershipReview-2026-10-19.md), [remaining follow-ups](../Reviews/2026-10-19-follow-ups.md), [known accessibility failure](../Reviews/Known-Test-Failures.md).
-- [Free-tier simulation](FreeTierSimulation.md). Diagnostics labels and behavior checked against the current app implementation on October 19, 2026. These are instructions, not test results.
+- [Free-tier simulation](FreeTierSimulation.md). Diagnostics labels and behavior checked against the current app implementation on October 19, 2026; the walkthrough, About links and time-zone instructions were rechecked on October 21, 2026. These are instructions, not test results.
 - [TVMaze API](https://www.tvmaze.com/api) documents update-map windows and propagation caching; deterministic timing/window proof uses fixtures. [Apple sandbox account controls](https://developer.apple.com/help/app-store-connect/test-in-app-purchases/manage-sandbox-apple-account-settings/) support the assigned billing scenarios; record actual account timing and available controls rather than assuming production durations.
 
 ---

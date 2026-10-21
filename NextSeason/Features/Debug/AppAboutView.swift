@@ -45,7 +45,8 @@ private struct AppAboutToolbarButtonModifier: ViewModifier {
 }
 
 /// About sheet: version, notifications, NextSeason Plus, optional tips,
-/// Rate NextSeason, watchlist export, and (in Debug / TestFlight) Diagnostics.
+/// Rate NextSeason, watchlist export, support and legal links, linked data
+/// credits, and (in Debug / TestFlight) Diagnostics.
 @MainActor
 struct AppAboutView: View {
     @Environment(\.dismiss) private var dismiss
@@ -109,9 +110,42 @@ struct AppAboutView: View {
                     Text(notificationsFooterText)
                 }
 
+                Section("Help & Legal") {
+                    Link(destination: ExternalLinks.support) {
+                        Label("Support", systemImage: "questionmark.circle")
+                    }
+                    .accessibilityHint(String(localized: "Opens the NextSeason support website."))
+                    .accessibilityIdentifier(AccessibilityID.App.support)
+
+                    // Same destinations as the Plus paywall's required legal links.
+                    if let privacy = StoreLegalLinks.privacyPolicy {
+                        Link(destination: privacy) {
+                            Label("Privacy Policy", systemImage: "hand.raised")
+                        }
+                        .accessibilityIdentifier(AccessibilityID.App.privacyPolicy)
+                    }
+                    if let terms = StoreLegalLinks.termsOfUse {
+                        Link(destination: terms) {
+                            Label("Terms of Use", systemImage: "doc.text")
+                        }
+                        .accessibilityIdentifier(AccessibilityID.App.termsOfUse)
+                    }
+                }
+
+                // Both providers require a link back: TVMaze (CC BY-SA) for show,
+                // detail, and watchlist data; TheTVDB for search metadata.
                 Section("Credits") {
-                    Text("Data provided by TVMaze")
-                        .appSecondaryText()
+                    Link(destination: ExternalLinks.tvMaze) {
+                        Text("Show data provided by TVMaze")
+                    }
+                    .accessibilityHint(String(localized: "Opens TVMaze.com"))
+                    .accessibilityIdentifier(AccessibilityID.App.tvMazeCredit)
+
+                    Link(destination: TheTVDBConfiguration.websiteURL) {
+                        Text("Search metadata provided by TheTVDB")
+                    }
+                    .accessibilityHint(String(localized: "Opens TheTVDB.com"))
+                    .accessibilityIdentifier(AccessibilityID.App.tvdbCredit)
                 }
 
                 if betaBuildAvailability.isAvailable {

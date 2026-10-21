@@ -15,6 +15,8 @@ struct PlusAccountSection: View {
     @Environment(PurchaseService.self) private var purchases
     /// Bound to the parent sheet that presents `PlusStoreView`.
     @Binding var isShowingPlusStore: Bool
+    /// Restore feedback for restores started here (the Plus sheet has its own).
+    @State private var restoreNotice: String?
 
     var body: some View {
         let presentation = PlusAccountPresentation(purchases)
@@ -35,7 +37,11 @@ struct PlusAccountSection: View {
             }
 
             Button {
-                Task { _ = await purchases.restorePurchases() }
+                Task {
+                    if await purchases.restorePurchases() == .success {
+                        restoreNotice = purchases.restoreNotice
+                    }
+                }
             } label: {
                 Label("Restore Purchases", systemImage: "arrow.clockwise")
             }
@@ -45,6 +51,17 @@ struct PlusAccountSection: View {
             Text("NextSeason Plus")
         } footer: {
             Text(presentation.footerText)
+        }
+        .alert(
+            "Restore Purchases",
+            isPresented: Binding(
+                get: { restoreNotice != nil },
+                set: { if !$0 { restoreNotice = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(restoreNotice ?? "")
         }
     }
 }

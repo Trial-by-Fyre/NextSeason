@@ -137,12 +137,69 @@ final class WatchlistViewModel {
         }
     }
 
+    /// Brief feedback after a pull-to-refresh that could not update some or all
+    /// shows (usually offline). Only user-initiated refreshes set it; foreground
+    /// and background refresh failures stay silent. Saved rows are kept as-is.
+    private(set) var refreshFailureMessage: String?
+
+    static let refreshFailedMessage = String(
+        localized: "Couldn't refresh your Watchlist. Check your connection and try again."
+    )
+    static let refreshPartlyFailedMessage = String(
+        localized: "Some shows couldn't be refreshed. Try again later."
+    )
+
+    /// How long the pull-to-refresh failure notice stays up.
+    static let refreshFailureDisplaySeconds: TimeInterval = 4
+    private var refreshFailureDismissal: Task<Void, Never>?
+
     /// Commits any pending removal, force-refreshes tracked shows, then reloads.
     func refreshFromNetwork() async {
+        clearRefreshFailure()
         await removalCoordinator.commitPendingRemovalIfNeeded()
         // Pull-to-refresh is interactive — update rows silently; don't alert.
-        await refreshService?.refreshAll(force: true, deliverNotifications: false)
+        let outcome = await refreshService?.refreshAll(force: true, deliverNotifications: false)
         await reload()
+        guard let message = Self.refreshFailureMessage(for: outcome) else { return }
+        withAnimation(.easeInOut(duration: 0.25)) { refreshFailureMessage = message }
+        // Transient notice: hide it after a few seconds unless replaced or dismissed.
+        refreshFailureDismissal = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(Self.refreshFailureDisplaySeconds))
+            guard !Task.isCancelled else { return }
+            self?.clearRefreshFailure()
+        }
+    }
+
+    func clearRefreshFailure() {
+        refreshFailureDismissal?.cancel()
+        refreshFailureDismissal = nil
+        guard refreshFailureMessage != nil else { return }
+        withAnimation(.easeInOut(duration: 0.25)) { refreshFailureMessage = nil }
+    }
+
+    /// Pull-to-refresh feedback for a refresh outcome. Cancelled runs (`nil`)
+    /// and runs without failures show nothing.
+    static func refreshFailureMessage(for outcome: WatchlistRefreshOutcome?) -> String? {
+        switch outcome?.completion {
+        case nil, .cancelled:
+            return nil
+        case .aborted:
+            return refreshFailedMessage
+        case .finished(let counts):
+            guard counts.failed > 0 else { return nil }
+            let nothingSucceeded = counts.refreshed == 0 && counts.skippedUnchanged == 0
+            return nothingSucceeded ? refreshFailedMessage : refreshPartlyFailedMessage
+        }
+    }
+
+    /// Called when the list reappears (pop from Show Details, tab return). A
+    /// deferred removal started on another screen is persisted now and its row
+    /// leaves at once, instead of lingering until the undo window times out.
+    /// The toast's Undo still restores it.
+    func persistDeferredRemovalOnReturn() {
+        guard let showID = removalCoordinator.deferredRemovalShowID else { return }
+        removeShowAnimated(showID: showID)
+        removalCoordinator.persistDeferredRemovalKeepingUndo()
     }
 
     /// Starts the undo window for removing `tracked`. The row stays visible

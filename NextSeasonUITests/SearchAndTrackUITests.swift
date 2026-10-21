@@ -112,6 +112,12 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
             searchNoResults.waitForExistence(timeout: UITestTimeout.extended),
             "An empty result set should show the fallback guidance, not imply the show is missing."
         )
+        XCTAssertTrue(
+            app.staticTexts[
+                "Try a more specific title — add a subtitle or the year (for example, “Title: Subtitle” or “Title 2019”)."
+            ].exists,
+            "The guidance text should be exposed to VoiceOver, not hidden behind the title."
+        )
     }
 
     func testSearchFailureShowsRetryState() {
@@ -329,6 +335,63 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
             watchlistEmptyState.waitForExistence(timeout: UITestTimeout.standard),
             "Confirming removal from detail should clear the watchlist."
         )
+    }
+
+    /// Blank space between the title and the star opens detail, like the title.
+    func testTappingSearchRowBlankSpaceOpensShowDetail() {
+        search(for: previewShowName)
+        waitForSearchResultRow(named: previewShowName)
+
+        let trackButton = searchTrackButton()
+        XCTAssertTrue(trackButton.waitForExistence(timeout: UITestTimeout.standard))
+        // Just left of the star, past the end of the title and subtitle text.
+        let star = trackButton.frame
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: star.minX - 24, dy: star.midY))
+            .tap()
+
+        waitForShowDetail()
+    }
+
+    /// Returning from detail keeps the query and results but does not reopen
+    /// the keyboard over them.
+    func testReturningFromShowDetailDoesNotRestoreSearchKeyboard() {
+        // Type without submitting (`search(for:)` taps Search), so the keyboard
+        // is still up when the row is opened, as in manual use.
+        XCTAssertTrue(focusSearchField(searchField), "Search field should take focus.")
+        searchField.typeText(previewShowName)
+        let result = waitForSearchResultRow(named: previewShowName)
+        XCTAssertTrue(app.keyboards.element.exists, "Typing should leave the keyboard up.")
+        result.tap()
+        waitForShowDetail()
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        waitForSearchResultRow(named: previewShowName)
+        XCTAssertEqual(searchFieldText(), previewShowName)
+        XCTAssertFalse(
+            app.keyboards.element.waitForExistence(timeout: 2),
+            "Returning from detail should not reopen the search keyboard."
+        )
+    }
+
+    /// A deferred removal started in detail is persisted on return to the
+    /// Watchlist, so the row leaves at once, and the toast's Undo still restores it.
+    func testRemovingFromWatchlistDetailRemovesRowOnReturnAndUndoRestores() {
+        trackShowFromSearchRow()
+        app.tabBars.buttons["Watchlist"].tap()
+        waitForWatchlistRow(named: previewShowName).tap()
+        showDetailTrackButton().tap()
+        XCTAssertTrue(watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard))
+
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+
+        // UI tests use a 30-second undo window, so this cannot be the timeout.
+        waitForWatchlistRowToDisappear(named: previewShowName, timeout: UITestTimeout.standard)
+        XCTAssertTrue(
+            watchlistUndoButton.exists, "Undo should stay available after the row leaves.")
+        watchlistUndoButton.tap()
+        waitForWatchlistRow(named: previewShowName)
     }
 
     // MARK: - Helpers

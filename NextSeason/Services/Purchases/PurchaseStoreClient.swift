@@ -20,8 +20,9 @@ protocol PurchaseStoreClient: AnyObject {
         onVerified: @escaping @MainActor (StoreTransaction) async -> Void
     ) async throws -> PurchaseOutcome
     /// Whether an active, non-revoked monthly or annual subscription entitlement
-    /// exists, or `.unverified` when a Plus entitlement failed verification.
-    func plusEntitlementCheck() async -> PlusEntitlementCheck
+    /// exists (or `.unverified` when a Plus entitlement failed verification), and
+    /// when the active entitlement expires or renews.
+    func plusEntitlementStatus() async -> PlusEntitlementStatus
     /// Triggers App Store sync (Restore Purchases); caller re-reads entitlements.
     func restorePurchases() async throws
     /// Long-lived listener for `Transaction.updates` (Ask to Buy, renewals, etc.).
@@ -41,6 +42,19 @@ nonisolated enum PlusEntitlementCheck: Equatable, Sendable {
     case active
     case inactive
     case unverified
+}
+
+/// One StoreKit entitlement read.
+nonisolated struct PlusEntitlementStatus: Equatable, Sendable {
+    let check: PlusEntitlementCheck
+    /// Latest verified Plus `Transaction.expirationDate` ("expires or renews").
+    /// Only present for `.active`; drives the re-check while the app stays open.
+    let expirationDate: Date?
+
+    init(check: PlusEntitlementCheck, expirationDate: Date? = nil) {
+        self.check = check
+        self.expirationDate = check == .active ? expirationDate : nil
+    }
 }
 
 /// StoreKit-independent snapshot of a verified transaction.

@@ -13,6 +13,9 @@ import SwiftUI
 struct PlusStoreView: View {
     @Environment(PurchaseService.self) private var purchases
     @Environment(\.dismiss) private var dismiss
+    /// Restore feedback owned by this sheet, so a restore that finishes after the
+    /// sheet is dismissed cannot surface its notice anywhere else.
+    @State private var restoreNotice: String?
 
     var body: some View {
         NavigationStack {
@@ -54,6 +57,17 @@ struct PlusStoreView: View {
                 }
             } message: {
                 Text(purchases.lastErrorMessage ?? "")
+            }
+            .alert(
+                "Restore Purchases",
+                isPresented: Binding(
+                    get: { restoreNotice != nil },
+                    set: { if !$0 { restoreNotice = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(restoreNotice ?? "")
             }
             .task {
                 if purchases.annualProduct == nil && purchases.monthlyProduct == nil {
@@ -123,7 +137,11 @@ struct PlusStoreView: View {
 
     private var restoreButton: some View {
         Button {
-            Task { _ = await purchases.restorePurchases() }
+            Task {
+                if await purchases.restorePurchases() == .success {
+                    restoreNotice = purchases.restoreNotice
+                }
+            }
         } label: {
             Text("Restore Purchases")
                 .frame(maxWidth: .infinity)

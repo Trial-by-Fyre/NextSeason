@@ -101,6 +101,20 @@ final class PurchaseService {
     /// Prevents duplicate tip thank-you toasts and replayed subscription updates
     /// completing a simulation when StoreKit redelivers a transaction.
     private var processedTransactionIDs: Set<UInt64> = []
+    /// Raw result of the last committed read. `.unverified` does not change a
+    /// resolved `storeEntitlement`, so restore feedback needs the raw answer.
+    private(set) var lastCommittedCheck: PlusEntitlementCheck?
+
+    /// How long after an active subscription's expiration to re-read entitlements
+    /// while the app stays open. The App Store renews slightly before expiration;
+    /// the margin gives a renewal time to reach the device so a renewing
+    /// subscriber is not paused (product owner decision, 2026-10-21).
+    static let expirationRecheckMargin: Duration = .seconds(5 * 60)
+    private let now: @MainActor () -> Date
+    private let sleep: @Sendable (Duration) async throws -> Void
+    /// The single pending expiration re-check; replaced by every committed
+    /// active/inactive read.
+    private var expirationRecheckTask: Task<Void, Never>?
 
     /// True when StoreKit has reported an active Plus subscription.
     var isStoreEntitled: Bool {
@@ -178,6 +192,12 @@ final class PurchaseService {
         complimentaryGrantEligibility: @escaping @MainActor () async -> Bool = { false },
         simulationAvailability: @escaping @MainActor () -> Bool = {
             BetaBuildAvailability.shared.allowsFreeTierSimulation
+        },
+        now: @escaping @MainActor () -> Date = { Date() },
+        // `ContinuousClock` (the default) keeps counting while the device sleeps,
+        // so a deadline passed during suspension fires on resume.
+        sleep: @escaping @Sendable (Duration) async throws -> Void = {
+            try await Task.sleep(for: $0)
         }
     ) {
         // Test injection is available only in developer builds. Release always uses
@@ -191,10 +211,13 @@ final class PurchaseService {
         self.store = store
         self.entitlementStore = entitlementStore
         self.storeEntitlement = initialStoreEntitlement
+        self.now = now
+        self.sleep = sleep
     }
 
     isolated deinit {
         store.stopObservingTransactionUpdates()
+        expirationRecheckTask?.cancel()
     }
 
     /// Production StoreKit-backed service.
@@ -358,6 +381,25 @@ final class PurchaseService {
         }
     }
 
+    /// Feedback for a successful Restore Purchases that found no actual Plus, read
+    /// by the view that started the restore right after it returns `.success`.
+    /// `nil` when StoreKit or complimentary Plus is active.
+    var restoreNotice: String? {
+        if isStoreEntitled || isComplimentary { return nil }
+        if lastCommittedCheck == .unverified {
+            return String(
+                localized:
+                    "NextSeason found a Plus purchase but couldn't verify it. Please try again later."
+            )
+        }
+        return String(
+            localized: "No active NextSeason Plus subscription was found for this Apple Account."
+        )
+    }
+
+    /// True while a re-check is scheduled for an active subscription's expiration.
+    var hasPendingExpirationRecheck: Bool { expirationRecheckTask != nil }
+
     /// Syncs with App Store (restore) then re-reads Plus entitlements.
     func restorePurchases() async -> PurchaseOutcome {
         guard !isPurchasing else { return .pending }
@@ -400,8 +442,8 @@ final class PurchaseService {
         // Unstructured so cancelling a caller never abandons the commit (which
         // would strand `waitForInitialEntitlementResolution()` waiters).
         Task { [weak self] in
-            let check = await store.plusEntitlementCheck()
-            self?.applyEntitlementCheck(check, generation: generation)
+            let status = await store.plusEntitlementStatus()
+            self?.applyEntitlementCheck(status, generation: generation)
         }
         // Parking is synchronous on the main actor after launching the read, so
         // the read cannot commit before this caller is registered.
@@ -412,9 +454,10 @@ final class PurchaseService {
 
     /// Commits one StoreKit entitlement read when `generation` is still the newest
     /// request; superseded results are discarded.
-    private func applyEntitlementCheck(_ check: PlusEntitlementCheck, generation: UInt) {
+    private func applyEntitlementCheck(_ status: PlusEntitlementStatus, generation: UInt) {
         guard generation == entitlementRefreshEpoch else { return }
-        switch check {
+        lastCommittedCheck = status.check
+        switch status.check {
         case .active:
             storeEntitlement = .resolved(isEntitled: true)
         case .inactive:
@@ -423,6 +466,7 @@ final class PurchaseService {
             if case .resolved = storeEntitlement { break }
             storeEntitlement = .unverified
         }
+        scheduleExpirationRecheck(for: status)
         // State is updated before resuming anyone. The newest request is the
         // highest generation, so every parked caller is now satisfied.
         resumeEntitlementWaiters()
@@ -430,6 +474,33 @@ final class PurchaseService {
         entitlementCommitWaiters.removeAll()
         for waiter in commitWaiters {
             waiter.resume()
+        }
+    }
+
+    /// Re-reads entitlements shortly after the active subscription expires, so a
+    /// lapse while the app stays open is applied without waiting for the next
+    /// foreground return. Goes through `refreshEntitlements()`, so ordering,
+    /// unverified handling, and reconciliation are unchanged.
+    private func scheduleExpirationRecheck(for status: PlusEntitlementStatus) {
+        // Unverified keeps the prior confirmed state, so its re-check still applies.
+        guard status.check != .unverified else { return }
+        expirationRecheckTask?.cancel()
+        expirationRecheckTask = nil
+        guard status.check == .active, let expiration = status.expirationDate else { return }
+        let remaining = expiration.timeIntervalSince(now())
+        // Active with a past date (billing grace period): StoreKit still entitles
+        // the user, and re-checking now would loop. Foreground return re-reads.
+        guard remaining > 0 else { return }
+        let delay = Duration.seconds(remaining) + Self.expirationRecheckMargin
+        let sleep = sleep
+        expirationRecheckTask = Task { [weak self] in
+            do { try await sleep(delay) } catch { return }
+            guard !Task.isCancelled, let self else { return }
+            // Cleared before the read, so the read's own commit can schedule the next
+            // re-check (or leave none, e.g. after an unverified answer).
+            self.expirationRecheckTask = nil
+            AppDiagnosticsLogger.breadcrumb("storekit_expiration_recheck")
+            await self.refreshEntitlements()
         }
     }
 

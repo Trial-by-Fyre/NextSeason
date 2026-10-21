@@ -13,7 +13,8 @@ import os
 /// confirmed access with the saved rows and applies `WatchlistLimitPolicy`:
 /// - Unlimited (Plus, complimentary): resume every paused show.
 /// - Free (confirmed lapse or Simulate Free Tier): if more than three shows are
-///   active, pause all but the three oldest.
+///   active, pause all but the three oldest. A show whose deferred removal is
+///   still in its undo window is left out of that choice (see `excludedShowIDs`).
 /// - Unknown (StoreKit loading or unverified): do nothing.
 ///
 /// Because the decision only depends on current state, running it repeatedly is
@@ -52,6 +53,7 @@ final class WatchlistAccessReconciler {
     private let userDefaults: UserDefaults
     private let access: @MainActor () -> Bool?
     private let waitForAccess: @MainActor () async -> Void
+    private let excludedShowIDs: @MainActor () -> Set<Int>
     private let willResume: @MainActor ([TrackedShow]) -> Void
     private let refreshAfterResume: @MainActor (Set<Int>) async -> Void
     private var latestRun: Task<Outcome, Never>?
@@ -66,6 +68,11 @@ final class WatchlistAccessReconciler {
     ///     (`PurchaseService.confirmedWatchlistAccess`).
     ///   - waitForAccess: Suspends until the first entitlement read has finished
     ///     (`PurchaseService.waitForInitialEntitlementResolution`).
+    ///   - excludedShowIDs: Saved rows about to be deleted
+    ///     (`WatchlistPendingRemoval.deferredRemovalShowID`). They are neither kept
+    ///     nor paused by a free-tier decision. Counting one as kept would leave
+    ///     only two active shows once its removal commits. If the removal is
+    ///     undone, cancelled, or fails instead, call `reconcile()` again.
     ///   - willResume: Called with the saved rows about to be resumed, before the
     ///     resume is persisted (`WatchlistRefreshService.markForCatchUp`), so no
     ///     refresh can see a resumed show without its catch-up mark.
@@ -77,6 +84,7 @@ final class WatchlistAccessReconciler {
         userDefaults: UserDefaults = .standard,
         access: @escaping @MainActor () -> Bool?,
         waitForAccess: @escaping @MainActor () async -> Void = {},
+        excludedShowIDs: @escaping @MainActor () -> Set<Int> = { [] },
         willResume: @escaping @MainActor ([TrackedShow]) -> Void = { _ in },
         refreshAfterResume: @escaping @MainActor (Set<Int>) async -> Void = { _ in }
     ) {
@@ -84,6 +92,7 @@ final class WatchlistAccessReconciler {
         self.userDefaults = userDefaults
         self.access = access
         self.waitForAccess = waitForAccess
+        self.excludedShowIDs = excludedShowIDs
         self.willResume = willResume
         self.refreshAfterResume = refreshAfterResume
         isPausedAlertPending = userDefaults.bool(forKey: Self.pausedAlertPendingKey)
@@ -136,7 +145,9 @@ final class WatchlistAccessReconciler {
                 }
                 return .resumed(ids)
             } else {
-                let ids = WatchlistLimitPolicy.showIDsToPause(in: shows)
+                let excluded = excludedShowIDs()
+                let ids = WatchlistLimitPolicy.showIDsToPause(
+                    in: shows.filter { !excluded.contains($0.id) })
                 guard !ids.isEmpty else { return .unchanged }
                 try await repository.setPaused(true, showIDs: ids)
                 AppDiagnosticsLogger.breadcrumb("watchlist_paused count=\(ids.count)")

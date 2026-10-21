@@ -98,10 +98,12 @@ extension NextSeasonUITesting where Self: XCTestCase {
     }
 
     /// Launches the app with stubbed network data for UI tests.
-    func launchUITestingApp() async throws {
+    /// `additionalArguments` lets a suite add system overrides such as a
+    /// Dynamic Type content size.
+    func launchUITestingApp(additionalArguments: [String] = []) async throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = [UITestingLaunchArgument.uiTesting]
+        app.launchArguments = [UITestingLaunchArgument.uiTesting] + additionalArguments
         app.launch()
         XCTAssertTrue(
             app.wait(for: .runningForeground, timeout: UITestTimeout.standard),

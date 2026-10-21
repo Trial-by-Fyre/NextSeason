@@ -33,6 +33,7 @@ struct SearchView: View {
     @Environment(\.watchlistPendingRemoval) private var removalCoordinator
     @Environment(\.dismissSearch) private var dismissSearch
     @Environment(\.presentPlusStore) private var presentPlusStore
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(PurchaseService.self) private var purchases
     /// Optional so previews without the app composition still render.
     @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
@@ -106,7 +107,11 @@ struct SearchView: View {
                         removalCoordinator?.dismissPendingRemovalForNavigation()
                     }
                 }
-                .searchable(text: $viewModel.query, prompt: "Search TV shows")
+                .searchable(
+                    text: $viewModel.query,
+                    placement: searchFieldPlacement,
+                    prompt: "Search TV shows"
+                )
                 .modifier(ReturnToSearchResultsOnActivateModifier(navigationPath: $navigationPath))
                 .onSubmit(of: .search) {
                     collapseSearchKeyboard(dismissSearch: dismissSearch)
@@ -223,29 +228,31 @@ struct SearchView: View {
     private var content: some View {
         switch viewModel.state {
         case .idle:
-            ContentUnavailableView {
-                Label {
-                    Text("Find Your Next Season")
-                        .appAccentText()
-                } icon: {
-                    Image(systemName: "magnifyingglass")
-                        .appPrimaryText()
-                }
-            } description: {
-                Text(searchIdleDescription)
-                    .appSecondaryText()
-            } actions: {
-                if !hasCompletedFirstSearch {
-                    Button(FirstRunCopy.tryExampleButtonTitle) {
-                        analytics.track(.exampleSearchUsed)
-                        viewModel.query = FirstRunCopy.exampleSearchQuery
+            scrollableState {
+                ContentUnavailableView {
+                    Label {
+                        Text("Find Your Next Season")
+                            .appAccentText()
+                    } icon: {
+                        Image(systemName: "magnifyingglass")
+                            .appPrimaryText()
                     }
-                    .buttonStyle(.borderedProminent)
-                    .accessibilityIdentifier(AccessibilityID.Search.tryExampleButton)
+                } description: {
+                    Text(searchIdleDescription)
+                        .appSecondaryText()
+                } actions: {
+                    if !hasCompletedFirstSearch {
+                        Button(FirstRunCopy.tryExampleButtonTitle) {
+                            analytics.track(.exampleSearchUsed)
+                            viewModel.query = FirstRunCopy.exampleSearchQuery
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .accessibilityIdentifier(AccessibilityID.Search.tryExampleButton)
+                    }
                 }
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier(AccessibilityID.Search.idlePrompt)
             }
-            .accessibilityElement(children: .contain)
-            .accessibilityIdentifier(AccessibilityID.Search.idlePrompt)
         case .loading:
             List {
                 ForEach(0..<3, id: \.self) { _ in
@@ -261,6 +268,13 @@ struct SearchView: View {
         case .results(let page):
             List {
                 Section {
+                    if showsInlineResultsHint && !page.items.isEmpty && !searchResultsHintDismissed
+                    {
+                        SearchResultsHintView()
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    }
                     if page.items.isEmpty {
                         ContentUnavailableView {
                             Label {
@@ -314,42 +328,85 @@ struct SearchView: View {
                 isScrollDismissingKeyboard: $isScrollDismissingKeyboard,
                 dismissSearch: dismissSearch
             )
-            .searchResultsHintInset(isVisible: !page.items.isEmpty && !searchResultsHintDismissed)
+            .searchResultsHintInset(
+                isVisible: !showsInlineResultsHint && !page.items.isEmpty
+                    && !searchResultsHintDismissed
+            )
         case .empty:
-            ContentUnavailableView {
-                Label {
-                    Text("Can't Find Your Show?")
-                        .appAccentText()
-                } icon: {
-                    Image(systemName: "magnifyingglass")
-                        .appPrimaryText()
-                }
-            } description: {
-                Text(FirstRunCopy.searchEmptyDescription)
-                    .appSecondaryText()
-            }
-            .uiTestMarker(AccessibilityID.Search.noResults, label: "Can't Find Your Show?")
-        case .failed(let message):
-            ContentUnavailableView {
-                Label {
-                    Text("Something Went Wrong")
-                        .appAccentText()
-                } icon: {
-                    Image(systemName: "exclamationmark.triangle")
-                        .appPrimaryText()
-                }
-            } description: {
-                Text(message)
-                    .appSecondaryText()
-            } actions: {
-                if viewModel.isSearchRetryAvailable {
-                    Button("Try Again") {
-                        Task { await viewModel.search() }
+            scrollableState {
+                ContentUnavailableView {
+                    Label {
+                        Text("Can't Find Your Show?")
+                            .appAccentText()
+                    } icon: {
+                        Image(systemName: "magnifyingglass")
+                            .appPrimaryText()
                     }
-                    .buttonStyle(.borderedProminent)
+                } description: {
+                    Text(FirstRunCopy.searchEmptyDescription)
+                        .appSecondaryText()
+                }
+                // Contain (not combine) so VoiceOver reads the guidance, not just the title.
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier(AccessibilityID.Search.noResults)
+            }
+        case .failed(let message):
+            scrollableState {
+                ContentUnavailableView {
+                    Label {
+                        Text("Something Went Wrong")
+                            .appAccentText()
+                    } icon: {
+                        Image(systemName: "exclamationmark.triangle")
+                            .appPrimaryText()
+                    }
+                } description: {
+                    Text(message)
+                        .appSecondaryText()
+                } actions: {
+                    if viewModel.isSearchRetryAvailable {
+                        Button("Try Again") {
+                            Task { await viewModel.search() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
             }
         }
+    }
+
+    /// At accessibility sizes, hosts a non-list state in a scroll view so content
+    /// taller than the screen can be reached; it stays centered when it fits.
+    /// Smaller sizes keep the static layout: there, a scroll view would make the
+    /// navigation bar hide the search field until the user pulls down.
+    @ViewBuilder
+    private func scrollableState(@ViewBuilder _ content: () -> some View) -> some View {
+        let content = content()
+        if dynamicTypeSize.isAccessibilitySize {
+            GeometryReader { proxy in
+                ScrollView {
+                    content
+                        .frame(maxWidth: .infinity, minHeight: proxy.size.height)
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .scrollDismissesKeyboard(.immediately)
+            }
+        } else {
+            content
+        }
+    }
+
+    /// At accessibility sizes the tall large title collapses the search drawer
+    /// until the user pulls down, which is easy to miss, so keep it visible.
+    private var searchFieldPlacement: SearchFieldPlacement {
+        dynamicTypeSize.isAccessibilitySize
+            ? .navigationBarDrawer(displayMode: .always) : .automatic
+    }
+
+    /// At accessibility sizes the pinned results hint covers most of the list,
+    /// so it scrolls with the results instead.
+    private var showsInlineResultsHint: Bool {
+        dynamicTypeSize.isAccessibilitySize
     }
 
     @ViewBuilder
@@ -367,15 +424,16 @@ struct SearchView: View {
             Button {
                 Task { await openAndPresent(result) }
             } label: {
+                // Expand inside the label, with a content shape, so blank space
+                // up to the star opens detail too; the star stays its own button.
                 ShowRowLabel(result: result)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .showDetailLinkAccessibility()
             .accessibilityIdentifier("\(AccessibilityID.Search.result).\(result.id)")
             .disabled(isResolving)
-            // Match watchlist rows: expand the label so the track control stays
-            // trailing instead of hugging the title/subtitle width.
-            .frame(maxWidth: .infinity, alignment: .leading)
 
             ShowRowTrackButton(
                 showID: result.id,
@@ -395,6 +453,10 @@ struct SearchView: View {
 
     /// Resolve TheTVDB → TVMaze, then push the existing `Show` detail destination.
     private func openAndPresent(_ result: TVDBSearchResult) async {
+        // End editing before the push. Otherwise UIKit restores the search field
+        // as first responder on return, and the keyboard covers the results.
+        // Resigning keeps the query and results.
+        KeyboardEditing.dismissEditing()
         do {
             let show = try await viewModel.resolveShow(for: result)
             analytics.track(

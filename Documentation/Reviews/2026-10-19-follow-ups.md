@@ -24,6 +24,10 @@ The entitlement-ordering follow-ups are already recorded in [EntitlementCheckOrd
 6. **Profiling can report the wrong outcome when superseded (low).** If any newer search (for example Try Again) supersedes `runProfilingSearch`'s forced search, it returns the newer call's state or "did not reach a settled outcome". This only matters for profiling runs with manual interaction.
    Source: [SearchRetryOwnershipReview](SearchRetryOwnershipReview-2026-10-19.md), finding 3.
 
+## Deferred from the October 21 Prompt 2 review
+
+7. **Dynamic Type guidance visibility assertions (P3 — low priority, deferred).** `NextSeasonUITests/DynamicTypeUITests.swift`, `isFullyVisible` (lines 128–130 at review), checks hittability and the bottom edge against the tab bar but does not check the top edge. The no-results test targets the entire container, so a visible lower portion can satisfy the assertion while earlier guidance is above the viewport. Verify the beginning and end of the guidance separately, scrolling as needed, and check viewport containment for individual text or controls that fit. Do not require a taller-than-screen container to fit all at once. This is a confirmed test-coverage weakness, not a confirmed clipping defect in the current app. Deferred at Janine's request on October 21, 2026; no application or test changes made.
+
 ## Considered and not recommended
 
 - **Superseded Try Again keeps using the network.** It still fetches its pages before the result is discarded. This costs resources but does not affect correctness. Cancelling the retry task would be a separate design change.

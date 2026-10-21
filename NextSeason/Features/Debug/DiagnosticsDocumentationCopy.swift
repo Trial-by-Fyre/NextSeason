@@ -9,6 +9,9 @@ import Foundation
 enum DiagnosticsDocumentationCopy {
     static let overview = String(localized: "diagnostics.help.overview")
     static let appSection = String(localized: "diagnostics.help.appSection")
+    static let subscriptionTestingSection = String(
+        localized: "diagnostics.help.subscriptionSection"
+    )
     static let betaValidationBackgroundSection = String(
         localized: "diagnostics.help.backgroundSection"
     )

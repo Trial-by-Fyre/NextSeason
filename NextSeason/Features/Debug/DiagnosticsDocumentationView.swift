@@ -21,6 +21,10 @@ struct DiagnosticsDocumentationView: View {
                     documentationText(DiagnosticsDocumentationCopy.appSection)
                 }
 
+                Section("Subscription Testing") {
+                    documentationText(DiagnosticsDocumentationCopy.subscriptionTestingSection)
+                }
+
                 Section("Beta validation — Background") {
                     documentationText(DiagnosticsDocumentationCopy.betaValidationBackgroundSection)
                 }

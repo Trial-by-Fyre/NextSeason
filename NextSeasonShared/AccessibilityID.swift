@@ -26,6 +26,11 @@ enum AccessibilityID {
         static let aboutButton = "app.aboutButton"
         static let rateOnAppStore = "app.rateOnAppStore"
         static let exportWatchlist = "app.exportWatchlist"
+        static let support = "app.support"
+        static let privacyPolicy = "app.privacyPolicy"
+        static let termsOfUse = "app.termsOfUse"
+        static let tvMazeCredit = "app.tvMazeCredit"
+        static let tvdbCredit = "app.tvdbCredit"
     }
 
     enum PersistenceRecovery {
@@ -69,6 +74,7 @@ enum AccessibilityID {
         static let undoButton = "watchlist.undo"
         static let confirmButton = "watchlist.confirm"
         static let pausedSection = "watchlist.pausedSection"
+        static let refreshFailure = "watchlist.refreshFailure"
     }
 
     /// NextSeason Plus paywall and tip-jar controls.

@@ -388,6 +388,9 @@
     "Couldn't read your watchlist. Please try again." : {
 
     },
+    "Couldn't refresh your Watchlist. Check your connection and try again." : {
+
+    },
     "Couldn't restore purchases. Please try again." : {
 
     },
@@ -575,7 +578,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Force Refresh Now** runs an immediate watchlist refresh using live TVMaze data. When it finishes, check the **Last foreground refresh** fields above for the result.\n\nThe notification test actions below require **Notifications enabled** (alert permission). They are disabled until permission is granted.\n\n**Send Test Notification** delivers a sample “new season” alert using the first tracked watchlist show, without going through the refresh pipeline. Useful for confirming that notifications appear on this device.\n\n**Schedule Pipeline Test Notification** seeds a fake new-season update for that same watchlist show, runs it through the real refresh and notification decision path, and schedules delivery in 5–10 seconds so you can background the app and confirm the alert arrives. Track at least one show first.\n\n**Run Simulated Update Scenario** is a two-step exercise: tap once for baseline fake data (step 1), then tap again for updated fake data (step 2) to exercise debounce and date-backed notification logic. Your real watchlist is not affected."
+            "value" : "**Force Refresh Now** runs an immediate watchlist refresh using live TVMaze data. It updates your shows silently and never sends notifications. When it finishes, check the **Last foreground refresh** fields above for the result.\n\nThe notification test actions below require **Notifications enabled** (alert permission). They are disabled until permission is granted, and each needs at least one show on your watchlist.\n\n**Send Test Notification** delivers a sample “new season” alert about 5 seconds later, without going through the refresh pipeline. It uses Lupin if it is on your watchlist, otherwise the first tracked show, and fictional status text. Useful for confirming that notifications appear and open the right screen.\n\n**Schedule Pipeline Test Notification** seeds a fake new-season update for the first tracked show, runs it through the real refresh and notification decision path, and schedules delivery in 5–10 seconds so you can background the app and confirm the alert arrives.\n\n**Run Simulated Update Scenario** is a two-step exercise: tap once for baseline fake data (step 1), then tap again for updated fake data (step 2) to exercise debounce and date-backed notification logic. A third tap starts over at step 1. Your real watchlist is not affected."
           }
         }
       }
@@ -597,7 +600,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "**Previous launch** flags when the prior session did not reach a normal background transition—for example, a crash or force quit. It does not replace TestFlight crash reports; it only gives testers a quick signal and context to share.\n\n**Current launch started** and **Last graceful background** help correlate timing with unexpected termination.\n\nWhen a prior launch ended unexpectedly, additional timestamps and breadcrumbs from that session are shown. **Breadcrumbs** are lightweight event markers recorded during the current session (and the prior session when relevant) to help reproduce issues."
+            "value" : "**Previous launch** flags when the prior session did not reach a normal background transition—for example, a crash or force quit. It does not replace TestFlight crash reports; it only gives testers a quick signal and context to share.\n\n**Current launch started** and **Last graceful background** help correlate timing with unexpected termination.\n\n**Consecutive unexpected launches** counts launches in a row that ended unexpectedly. It turns orange at the crash-loop threshold, when NextSeason opens a recovery screen instead of loading normally.\n\nWhen a prior launch ended unexpectedly, additional timestamps and breadcrumbs from that session are shown. **Breadcrumbs** are lightweight event markers recorded during the current session (and the prior session when relevant) to help reproduce issues."
           }
         }
       }
@@ -608,7 +611,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Diagnostics are available only in Debug and TestFlight builds. Use this screen to validate background refresh, notifications, and launch stability during beta testing.\n\n**Background** fields show what happened the last time iOS ran a background refresh task while the app was not in use. They are saved across app launches.\n\n**Foreground** fields show the result of the last **Force Refresh Now** tap in this session only. Opening the app or returning from the background does not update them."
+            "value" : "Diagnostics are available only in Debug and TestFlight builds. Use this screen to validate background refresh, notifications, Plus access, and launch stability during beta testing.\n\n**Background** fields show what happened the last time iOS ran a background refresh task while the app was not in use. They are saved across app launches.\n\n**Foreground** fields show the result of the last **Force Refresh Now** tap in this session only. Opening the app or returning from the background does not update them."
           }
         }
       }
@@ -635,6 +638,17 @@
         }
       }
     },
+    "diagnostics.help.subscriptionSection" : {
+      "comment" : "Diagnostics help",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "**Simulate Free Tier** applies the free limit of 3 active shows without changing your saved shows or your actual Plus, subscription, or complimentary access. Shows beyond the 3 oldest are paused, not deleted, and adding a show beyond the limit opens the Plus paywall. About labels the capacity as simulated.\n\nTurn the switch off to restore your actual access; paused shows resume if you have Plus. Restarting the app also ends simulation, as does a Plus purchase started during the simulation once it is confirmed. Renewals, restores, and tips do not end it.\n\nThis section appears only in Debug builds and verified TestFlight builds.\n\n**Show Plus Paywall** (Debug builds only) opens the Plus paywall for screenshots without changing your access."
+          }
+        }
+      }
+    },
     "diagnostics.help.usageSection" : {
       "comment" : "Diagnostics help",
       "localizations" : {
@@ -655,6 +669,9 @@
           }
         }
       }
+    },
+    "Dismisses this message" : {
+
     },
     "Don't see your show? NextSeason shows TVMaze's top matches only. You may find more on TVMaze.com." : {
       "extractionState" : "stale",
@@ -888,6 +905,9 @@
           }
         }
       }
+    },
+    "Help & Legal" : {
+
     },
     "Hit Show" : {
 
@@ -1177,6 +1197,9 @@
         }
       }
     },
+    "NextSeason found a Plus purchase but couldn't verify it. Please try again later." : {
+
+    },
     "NextSeason periodically checks your watchlist for new seasons and will notify you when one is found. iOS decides when apps may perform background checks, so opening the app occasionally helps keep your watchlist up to date." : {
       "localizations" : {
         "en" : {
@@ -1217,6 +1240,9 @@
           }
         }
       }
+    },
+    "No active NextSeason Plus subscription was found for this Apple Account." : {
+
     },
     "No background notification decision yet." : {
       "localizations" : {
@@ -1567,7 +1593,13 @@
     "Opens the App Store so you can write a review." : {
 
     },
+    "Opens the NextSeason support website." : {
+
+    },
     "Opens TheTVDB.com" : {
+
+    },
+    "Opens TVMaze.com" : {
 
     },
     "Optional support for NextSeason. Does not unlock features." : {
@@ -1830,6 +1862,9 @@
         }
       }
     },
+    "Search metadata provided by TheTVDB" : {
+
+    },
     "Search on TVMaze.com" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -1990,6 +2025,9 @@
     "Shares your watchlist as a CSV file." : {
 
     },
+    "Show data provided by TVMaze" : {
+
+    },
     "Show detail views" : {
       "localizations" : {
         "en" : {
@@ -2045,6 +2083,9 @@
       }
     },
     "Some Shows Are Paused" : {
+
+    },
+    "Some shows couldn't be refreshed. Try again later." : {
 
     },
     "Something Went Wrong" : {
@@ -2119,6 +2160,9 @@
           }
         }
       }
+    },
+    "Support" : {
+
     },
     "Support NextSeason" : {
 

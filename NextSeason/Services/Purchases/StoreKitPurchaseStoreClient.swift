@@ -56,8 +56,14 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
     /// off (until they expire) and subscriptions in a billing grace period, so no
     /// separate expiration logic is needed. A Plus entitlement that fails
     /// verification reports `.unverified` rather than `.inactive`.
-    func plusEntitlementCheck() async -> PlusEntitlementCheck {
+    ///
+    /// Reports the latest expiration among verified, non-upgraded Plus entitlements
+    /// (an upgraded transaction is superseded by its replacement). Unverified
+    /// entries never supply a date.
+    func plusEntitlementStatus() async -> PlusEntitlementStatus {
         var sawUnverifiedPlus = false
+        var isActive = false
+        var latestExpiration: Date?
         for await result in Transaction.currentEntitlements {
             let transaction: Transaction
             switch result {
@@ -67,14 +73,22 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
                 if Self.isPlus(unverified.productID) { sawUnverifiedPlus = true }
                 continue
             }
-            guard transaction.revocationDate == nil else { continue }
-            if Self.isPlus(transaction.productID) { return .active }
+            guard transaction.revocationDate == nil, Self.isPlus(transaction.productID) else {
+                continue
+            }
+            isActive = true
+            if !transaction.isUpgraded, let expiration = transaction.expirationDate {
+                latestExpiration = max(latestExpiration ?? expiration, expiration)
+            }
+        }
+        if isActive {
+            return PlusEntitlementStatus(check: .active, expirationDate: latestExpiration)
         }
         if sawUnverifiedPlus {
             AppDiagnosticsLogger.breadcrumb("storekit_plus_entitlement_unverified")
-            return .unverified
+            return PlusEntitlementStatus(check: .unverified)
         }
-        return .inactive
+        return PlusEntitlementStatus(check: .inactive)
     }
 
     private static func isPlus(_ productID: String) -> Bool {

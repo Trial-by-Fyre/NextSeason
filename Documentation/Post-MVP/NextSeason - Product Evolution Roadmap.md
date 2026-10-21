@@ -151,6 +151,7 @@ Implementation principles:
 
 - Refine the user experience based on App Store reviews and user feedback.
 - Continue improving accessibility.
+- **Deferred — low priority: Notifications Are Off banner copy.** At the largest Dynamic Type settings, the banner exceeds the screen height. It scrolls, so its content and controls remain reachable. Shorten the wording while preserving all information and the notification-enablement/settings control. Verify readability and scrolling at ordinary and largest text sizes, including smaller iPhones.
 - Improve performance and battery efficiency.
 - Reduce maintenance burden through ongoing codebase simplification.
 

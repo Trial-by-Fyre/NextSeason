@@ -24,6 +24,7 @@ struct WatchlistView: View {
     @Environment(\.analytics) private var analytics
     @Environment(\.scenePhase) private var scenePhase
     @Environment(PurchaseService.self) private var purchases
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// Optional so previews without the app composition still render.
     @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
         WatchlistAccessReconciler?
@@ -146,6 +147,9 @@ struct WatchlistView: View {
                 // Apply a deep link that arrived while this tab was off screen; the
                 // stack is now mounted so the push lands instead of being dropped.
                 onApplyPendingDetail()
+                // A star removal made in Show Details or Search is finished here
+                // so its row does not linger on the Watchlist (Undo stays available).
+                viewModel?.persistDeferredRemovalOnReturn()
                 // First presentation is owned by `.task(id:)`. Refresh here only
                 // after that initial load has finished (tab return / reappear).
                 guard hasCompletedInitialLoad else { return }
@@ -172,6 +176,7 @@ struct WatchlistView: View {
                 accessReconciler: accessReconciler
             )
         }
+        viewModel?.persistDeferredRemovalOnReturn()
         await reloadScreen()
         hasCompletedInitialLoad = true
     }
@@ -350,6 +355,13 @@ struct WatchlistView: View {
                         .listRowBackground(Color.clear)
                         .accessibilityHidden(true)
                 }
+                // At accessibility sizes the empty/no-matches message is a row, so it
+                // scrolls and stacks below the banner instead of drawing over it.
+                if showsInlineEmptyStates {
+                    emptyStateContent(for: presentation.overlay, viewModel: viewModel)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
                 ForEach(viewModel.filteredSectionGroups) { group in
                     WatchlistCollapsibleSection(
                         section: group.section,
@@ -399,14 +411,22 @@ struct WatchlistView: View {
                 await notificationStatus.refresh(using: notificationService)
             }
             .overlay {
-                switch presentation.overlay {
-                case .none:
-                    EmptyView()
-                case .emptyWatchlist:
-                    emptyState
-                case .noSearchResults:
-                    noSearchResults(query: viewModel.searchText)
+                if !showsInlineEmptyStates {
+                    emptyStateContent(for: presentation.overlay, viewModel: viewModel)
                 }
+            }
+            .overlay(alignment: .top) {
+                if let message = viewModel.refreshFailureMessage {
+                    WatchlistRefreshFailureNotice(message: message) {
+                        viewModel.clearRefreshFailure()
+                    }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+            .onChange(of: viewModel.refreshFailureMessage) { _, message in
+                // The notice is transient, so announce it once for VoiceOver.
+                guard let message else { return }
+                AccessibilityNotification.Announcement(message).post()
             }
         case .failed(let message):
             ContentUnavailableView {
@@ -427,6 +447,29 @@ struct WatchlistView: View {
                 .buttonStyle(.borderedProminent)
             }
         }
+    }
+
+    /// Empty-watchlist or no-matches message, shown as an overlay or, at
+    /// accessibility sizes, as a list row (`showsInlineEmptyStates`).
+    @ViewBuilder
+    private func emptyStateContent(
+        for overlay: WatchlistLoadedPresentation.Overlay,
+        viewModel: WatchlistViewModel
+    ) -> some View {
+        switch overlay {
+        case .none:
+            EmptyView()
+        case .emptyWatchlist:
+            emptyState
+        case .noSearchResults:
+            noSearchResults(query: viewModel.searchText)
+        }
+    }
+
+    /// A centered overlay cannot scroll and covers the notifications banner when
+    /// accessibility text sizes make either one taller than the screen.
+    private var showsInlineEmptyStates: Bool {
+        dynamicTypeSize.isAccessibilitySize
     }
 
     private var emptyState: some View {

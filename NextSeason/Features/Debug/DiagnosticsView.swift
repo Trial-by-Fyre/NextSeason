@@ -61,6 +61,7 @@ struct DiagnosticsView: View {
                 // Access overrides require stricter eligibility than the general beta
                 // tools. The section checks that eligibility through PurchaseService.
                 FreeTierSimulationSection()
+                IgnoreComplimentaryPlusSection()
 
                 if betaValidationAvailable {
                     betaValidationSection

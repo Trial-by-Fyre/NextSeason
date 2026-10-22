@@ -86,6 +86,36 @@ final class PurchaseService {
         if isSimulatingFreeTier { resumeEntitlementWaiters() }
     }
 
+    /// Session-only testing override: hides complimentary Plus so StoreKit alone
+    /// decides access. Never writes the stored grant. Independent of simulation,
+    /// which still masks all access while both are on.
+    private var ignoreComplimentaryPlusRequested = false
+
+    /// Uses the same Debug/verified-TestFlight gate as Simulate Free Tier.
+    var canIgnoreComplimentaryPlus: Bool { simulationAvailability() }
+
+    /// Re-checks eligibility on every read, like `isSimulatingFreeTier`.
+    var isIgnoringComplimentaryPlus: Bool {
+        canIgnoreComplimentaryPlus && ignoreComplimentaryPlusRequested
+    }
+
+    func setIgnoreComplimentaryPlus(_ enabled: Bool) {
+        ignoreComplimentaryPlusRequested = enabled && canIgnoreComplimentaryPlus
+        AppDiagnosticsLogger.breadcrumb(
+            "complimentary_plus_ignored=\(ignoreComplimentaryPlusRequested)")
+        // Turning the override off makes complimentary access definitive again, so
+        // an add waiting for StoreKit's first read can proceed.
+        if hasStoredComplimentaryPlus, !isIgnoringComplimentaryPlus {
+            resumeEntitlementWaiters()
+        }
+    }
+
+    /// Whether the permanent grant is stored, regardless of the override.
+    /// For Diagnostics only; access decisions use `isComplimentary`.
+    var hasStoredComplimentaryPlus: Bool {
+        entitlementStore.isComplimentary
+    }
+
     private let store: any PurchaseStoreClient
     private let entitlementStore: PlusEntitlementStore
     private let complimentaryGrantEligibility: @MainActor () async -> Bool
@@ -104,6 +134,10 @@ final class PurchaseService {
     /// Raw result of the last committed read. `.unverified` does not change a
     /// resolved `storeEntitlement`, so restore feedback needs the raw answer.
     private(set) var lastCommittedCheck: PlusEntitlementCheck?
+    /// Expiration and time of the last committed read, for Diagnostics' raw
+    /// StoreKit status (shown independently of complimentary access).
+    private(set) var lastCommittedExpirationDate: Date?
+    private(set) var lastCommittedCheckDate: Date?
 
     /// How long after an active subscription's expiration to re-read entitlements
     /// while the app stays open. The App Store renews slightly before expiration;
@@ -139,7 +173,7 @@ final class PurchaseService {
     /// access are definitive on their own, so they answer even while loading.
     var confirmedWatchlistAccess: Bool? {
         if isSimulatingFreeTier { return false }
-        if entitlementStore.isComplimentary { return true }
+        if isComplimentary { return true }
         switch storeEntitlement {
         case .resolved(let isEntitled): return isEntitled
         case .loading, .unverified: return nil
@@ -149,12 +183,14 @@ final class PurchaseService {
     /// Effective access for watchlist limits and paywall presentation. Simulation
     /// masks both sources of Unlimited while their actual entitlement state stays intact.
     var isUnlimitedWatchlist: Bool {
-        !isSimulatingFreeTier && (isStoreEntitled || entitlementStore.isComplimentary)
+        !isSimulatingFreeTier && (isStoreEntitled || isComplimentary)
     }
 
     /// Permanent complimentary access: unlimited watchlist without an active StoreKit purchase.
+    /// This is the single effective complimentary decision: false while Ignore
+    /// Complimentary Plus is active, even though the stored grant stays intact.
     var isComplimentary: Bool {
-        entitlementStore.isComplimentary
+        entitlementStore.isComplimentary && !isIgnoringComplimentaryPlus
     }
 
     /// Plus annual/monthly catalog for `PlusStoreView`.
@@ -226,6 +262,14 @@ final class PurchaseService {
             store: StoreKitPurchaseStoreClient(),
             complimentaryGrantEligibility: { await TemporaryBetaPlusGrant.isEligible() }
         )
+        // Xcode-run testing aid: start this process with the override already on,
+        // before the first reconcile, to observe cold launch with StoreKit-only access.
+        // Compiled out of Release; per-process, never persisted.
+        #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("-IgnoreComplimentaryPlus") {
+                setIgnoreComplimentaryPlus(true)
+            }
+        #endif
     }
 
     /// Loads products, resolves complimentary access, and starts listening
@@ -245,7 +289,7 @@ final class PurchaseService {
         if !entitlementStore.isComplimentary, await complimentaryGrantEligibility() {
             entitlementStore.grantComplimentaryPlus()
         }
-        if entitlementStore.isComplimentary { resumeEntitlementWaiters() }
+        if isComplimentary { resumeEntitlementWaiters() }
     }
 
     /// Re-reads StoreKit entitlements when the scene becomes active.
@@ -269,11 +313,11 @@ final class PurchaseService {
     func waitForInitialEntitlementResolution() async {
         if isSimulatingFreeTier { return }
         if hasResolvedStoreEntitlement { return }
-        if entitlementStore.isComplimentary { return }
+        if isComplimentary { return }
         await withCheckedContinuation { continuation in
             if hasResolvedStoreEntitlement {
                 continuation.resume()
-            } else if entitlementStore.isComplimentary {
+            } else if isComplimentary {
                 continuation.resume()
             } else {
                 entitlementWaiters.append(continuation)
@@ -457,6 +501,8 @@ final class PurchaseService {
     private func applyEntitlementCheck(_ status: PlusEntitlementStatus, generation: UInt) {
         guard generation == entitlementRefreshEpoch else { return }
         lastCommittedCheck = status.check
+        lastCommittedExpirationDate = status.expirationDate
+        lastCommittedCheckDate = now()
         switch status.check {
         case .active:
             storeEntitlement = .resolved(isEntitled: true)
@@ -488,10 +534,12 @@ final class PurchaseService {
         expirationRecheckTask = nil
         guard status.check == .active, let expiration = status.expirationDate else { return }
         let remaining = expiration.timeIntervalSince(now())
-        // Active with a past date (billing grace period): StoreKit still entitles
-        // the user, and re-checking now would loop. Foreground return re-reads.
-        guard remaining > 0 else { return }
+        // The deadline is expiration plus the margin, so a slightly fast device
+        // clock that already sees the expiration as past still gets its re-check.
+        // Once the whole deadline has elapsed (billing grace period), StoreKit still
+        // entitles the user and re-checking now would loop. Foreground return re-reads.
         let delay = Duration.seconds(remaining) + Self.expirationRecheckMargin
+        guard delay > .zero else { return }
         let sleep = sleep
         expirationRecheckTask = Task { [weak self] in
             do { try await sleep(delay) } catch { return }

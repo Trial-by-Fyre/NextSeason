@@ -27,6 +27,13 @@ struct PlusAccountSection: View {
                 Label("Watchlist", systemImage: "star")
             }
 
+            // Testing override reminder, so StoreKit-only access is not mistaken
+            // for a lost complimentary grant.
+            if purchases.isIgnoringComplimentaryPlus {
+                Label("Complimentary Plus ignored (Diagnostics)", systemImage: "testtube.2")
+                    .foregroundStyle(.orange)
+            }
+
             if presentation.showsUpgradeButton {
                 Button {
                     isShowingPlusStore = true

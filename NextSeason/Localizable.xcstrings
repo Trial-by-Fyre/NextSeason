@@ -116,6 +116,9 @@
         }
       }
     },
+    "Active" : {
+
+    },
     "Add a Show First" : {
 
     },
@@ -330,6 +333,15 @@
           }
         }
       }
+    },
+    "Complimentary grant" : {
+
+    },
+    "Complimentary Plus ignored (Diagnostics)" : {
+
+    },
+    "Complimentary Plus is ignored" : {
+
     },
     "Confirming your NextSeason Plus status." : {
 
@@ -804,6 +816,9 @@
         }
       }
     },
+    "Expires or renews" : {
+
+    },
     "Explains what each field and action does" : {
       "localizations" : {
         "en" : {
@@ -932,6 +947,9 @@
         }
       }
     },
+    "Ignore Complimentary Plus" : {
+
+    },
     "In Development" : {
       "localizations" : {
         "en" : {
@@ -971,6 +989,9 @@
           }
         }
       }
+    },
+    "Last checked" : {
+
     },
     "Last foreground fetch result" : {
       "localizations" : {
@@ -1400,6 +1421,9 @@
         }
       }
     },
+    "Not active" : {
+
+    },
     "Not applicable" : {
       "localizations" : {
         "en" : {
@@ -1429,6 +1453,9 @@
           }
         }
       }
+    },
+    "Not stored" : {
+
     },
     "Notification permission grants" : {
       "localizations" : {
@@ -2141,6 +2168,15 @@
         }
       }
     },
+    "Stored" : {
+
+    },
+    "StoreKit Plus" : {
+
+    },
+    "StoreKit Plus shows the last StoreKit read only, never complimentary access. The switch never changes the stored grant and turns off when the app restarts. Simulate Free Tier still applies the free limit while both are on." : {
+
+    },
     "Subscription Testing" : {
       "localizations" : {
         "en" : {
@@ -2423,6 +2459,9 @@
         }
       }
     },
+    "Unable to verify" : {
+
+    },
     "Unable to Verify Plus" : {
 
     },
@@ -2529,6 +2568,9 @@
           }
         }
       }
+    },
+    "Uses only StoreKit subscriptions for access without changing the stored complimentary grant." : {
+
     },
     "Version" : {
       "localizations" : {

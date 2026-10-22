@@ -84,8 +84,9 @@ final class BetaBuildAvailability {
     }
 
     /// Refreshes display information and verified override eligibility separately.
-    /// Verification or lookup failure clears eligibility even if a beta channel
-    /// can still be displayed using unverified data or the receipt fallback.
+    /// Verification failure clears eligibility even if a beta channel can still be
+    /// displayed using unverified data or the receipt fallback. A thrown lookup
+    /// never grants eligibility but keeps one already verified in this process.
     func refresh() async {
         #if DEBUG
             detectionAttempted = true
@@ -103,8 +104,13 @@ final class BetaBuildAvailability {
                     appStoreEnvironment = appTransaction.environment
                 }
             } catch {
-                hasVerifiedSandboxAppTransaction = false
-                appStoreEnvironment = nil
+                // A lookup failure (offline, or the calling view's task cancelled)
+                // says nothing new about provenance, which cannot change within a
+                // process. Keep an earlier verified sandbox result so access
+                // overrides do not silently switch off and resume paused shows.
+                if !hasVerifiedSandboxAppTransaction {
+                    appStoreEnvironment = nil
+                }
             }
             detectionAttempted = true
         #endif

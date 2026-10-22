@@ -100,6 +100,10 @@ enum WatchlistRecoveryExportReader {
             return ([], false)
         }
         defer { sqlite3_close(db) }
+        // This scan runs right after SwiftData closes its container on the same
+        // file, which can still hold a lock briefly. Without a timeout SQLite
+        // returns SQLITE_BUSY at once and the table looks missing; wait instead.
+        sqlite3_busy_timeout(db, 2000)
 
         guard let table = watchlistTableName(db: db) else { return ([], false) }
         let columns = tableColumns(db: db, table: table)

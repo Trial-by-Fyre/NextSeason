@@ -54,3 +54,27 @@ The service preserves actual StoreKit and complimentary access independently;
 only effective watchlist access changes. Swift Testing coverage lives in
 `NextSeasonTests/FreeTierSimulationTests.swift` and, for pausing and resuming,
 `NextSeasonTests/SubscriptionDowngradeTests.swift`.
+
+# Ignore Complimentary Plus
+
+Diagnostics → **Ignore Complimentary Plus** hides permanent complimentary Plus so
+real StoreKit subscriptions alone decide access (purchase, expiration,
+resubscription, restore, verification failures). It uses the same Debug /
+verified-TestFlight gate as Simulate Free Tier, is session-only, and never
+changes the stored grant (UserDefaults or Keychain). `PurchaseService.isComplimentary`
+is the single effective decision; `hasStoredComplimentaryPlus` reports the stored
+grant for Diagnostics. About shows an orange reminder while it is on.
+
+With both switches on, Simulate Free Tier wins (free limit). They are independent:
+a purchase that ends simulation leaves the override on.
+
+The section also shows the raw last StoreKit read (status, expiration, time) and
+whether the grant is stored, regardless of the switch. After a relaunch (override
+off, complimentary effective again) read that row to confirm StoreKit restored
+the subscription instead of relying on Unlimited access. In Debug runs from Xcode,
+the `-IgnoreComplimentaryPlus` launch argument starts the process with the override
+on before the first reconcile (compiled out of Release).
+
+Like simulation, toggling writes only pause flags (and the paused-alert flag);
+resumed shows get a catch-up refresh. Manual test steps and limitations:
+`Documentation/Reviews/IgnoreComplimentaryPlus-2026-10-21.md`.

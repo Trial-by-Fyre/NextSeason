@@ -24,6 +24,9 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     var plusExpirationDate: Date?
     /// Outcome returned from `purchase`; `.success` still delivers a transaction when applicable.
     var purchaseOutcome: PurchaseOutcome
+    /// Models StoreKit reporting `.success` with an earlier renewal transaction and
+    /// no active entitlement, as seen in the TestFlight sandbox (2026-10-23).
+    var reportsStaleSuccess = false
     /// When set, `restorePurchases()` throws this error.
     var restoreError: (any Error)?
     /// When set, `loadProducts(ids:)` throws this error.
@@ -88,10 +91,12 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
             throw PurchaseError.productUnavailable
         }
         if purchaseOutcome == .success {
-            let transaction = StoreTransaction(id: nextTransactionID, productID: productID)
+            let transaction = StoreTransaction(
+                id: nextTransactionID, productID: productID,
+                isCustomerPurchase: !reportsStaleSuccess)
             nextTransactionID += 1
             lastPurchasedTransaction = transaction
-            if let id = StoreProductID(rawValue: productID) {
+            if !reportsStaleSuccess, let id = StoreProductID(rawValue: productID) {
                 switch id {
                 case .plusAnnual, .plusMonthly:
                     isStoreEntitled = true

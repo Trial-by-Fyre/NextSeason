@@ -174,7 +174,14 @@ struct ShowDetailView: View {
         await viewModel.handleTrackButton(
             removalCoordinator: removalCoordinator,
             onWatchlistChanged: onWatchlistChanged,
-            onPaywallRequired: { presentPlusStore?() }
+            onPaywallRequired: {
+                presentPlusStore? {
+                    // Finish the blocked add after Plus unlocks. Retry only while
+                    // still untracked so the shared toggle can never remove the show.
+                    guard !viewModel.isTracked else { return }
+                    Task { await handleTrackButtonTap(viewModel: viewModel) }
+                }
+            }
         )
     }
 

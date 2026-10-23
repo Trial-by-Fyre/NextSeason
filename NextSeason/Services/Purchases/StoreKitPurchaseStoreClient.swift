@@ -36,6 +36,8 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
         switch result {
         case .success(let verification):
             let transaction = try checkVerified(verification)
+            AppDiagnosticsLogger.breadcrumb(
+                Self.purchaseSuccessDiagnostics(transaction, requestedProductID: productID))
             await deliverThenFinish(transaction, onVerified: onVerified)
             return .success
         case .userCancelled:
@@ -89,6 +91,22 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
             return PlusEntitlementStatus(check: .unverified)
         }
         return PlusEntitlementStatus(check: .inactive)
+    }
+
+    /// Describes the transaction behind a `.success` result. StoreKit has reported
+    /// success without showing its sheet (TestFlight sandbox, 2026-10-23); these
+    /// fields show which earlier transaction it returned.
+    private static func purchaseSuccessDiagnostics(
+        _ transaction: Transaction, requestedProductID: String
+    ) -> String {
+        func date(_ value: Date?) -> String { value?.formatted(.iso8601) ?? "nil" }
+        return "storekit_purchase_success requested=\(requestedProductID) "
+            + "product=\(transaction.productID) id=\(transaction.id) "
+            + "originalID=\(transaction.originalID) reason=\(transaction.reason.rawValue) "
+            + "purchased=\(date(transaction.purchaseDate)) signed=\(date(transaction.signedDate)) "
+            + "expires=\(date(transaction.expirationDate)) revoked=\(date(transaction.revocationDate)) "
+            + "upgraded=\(transaction.isUpgraded) env=\(transaction.environment.rawValue) "
+            + "ownership=\(transaction.ownershipType.rawValue)"
     }
 
     private static func isPlus(_ productID: String) -> Bool {

@@ -2309,6 +2309,9 @@
     "The purchase could not be completed. Please try again." : {
 
     },
+    "The purchase wasn't completed, so NextSeason Plus wasn't unlocked. Please try again." : {
+
+    },
     "There's a next season update." : {
       "localizations" : {
         "en" : {

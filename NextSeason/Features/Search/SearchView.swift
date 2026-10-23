@@ -184,7 +184,10 @@ struct SearchView: View {
         }
     }
 
-    private var watchlistTrackingContext: SearchWatchlistTracking.Context {
+    /// `onPlusUnlocked` finishes the blocked add if the paywall unlocks Plus.
+    private func watchlistTrackingContext(
+        onPlusUnlocked: @escaping @MainActor () -> Void
+    ) -> SearchWatchlistTracking.Context {
         SearchWatchlistTracking.Context(
             repository: repository,
             tvMaze: tvMaze,
@@ -195,7 +198,7 @@ struct SearchView: View {
             purchases: purchases,
             onWatchlistChanged: onWatchlistChanged,
             onSearchResultsHintDismissed: dismissSearchResultsHintIfNeeded,
-            onPaywallRequired: { presentPlusStore?() }
+            onPaywallRequired: { presentPlusStore?(onPlusUnlocked) }
         )
     }
 
@@ -486,10 +489,19 @@ struct SearchView: View {
             return
         }
 
+        await toggleTracking(for: show)
+    }
+
+    private func toggleTracking(for show: Show) async {
         do {
             try await watchlistTracking.handleTrackButton(
                 for: show,
-                context: watchlistTrackingContext
+                context: watchlistTrackingContext(onPlusUnlocked: {
+                    // Retry only while still untracked: the shared toggle would
+                    // otherwise remove a show that was resumed or added meanwhile.
+                    guard !watchlistTracking.trackedShowIDs.contains(show.id) else { return }
+                    Task { await toggleTracking(for: show) }
+                })
             )
         } catch is CancellationError {
             return

@@ -367,6 +367,8 @@ Create dedicated Sandbox Apple Accounts in App Store Connect → Users and Acces
 
 TestFlight uses sandbox purchases. For controllable billing and renewal scenarios, Apple directs testers to sign out of the production account under **Media & Purchases**, then sign in to the Sandbox Apple Account under Developer settings. Use a dedicated test device where practical; record the original account so you can restore it afterward. Default TestFlight renewals are daily, irrespective of monthly/annual duration; custom sandbox-account settings provide other rates. Do not assume a monthly test lasts a production month. [Apple TestFlight guidance](https://developer.apple.com/help/app-store-connect/test-a-beta-version/testing-subscriptions-and-in-app-purchases-in-testflight/).
 
+Sign out of Media & Purchases **before the first launch** of each new TestFlight build. Switching accounts while NextSeason is running can leave StoreKit with the previous account's subscription: Plus may appear active, and after signing out the first purchase can return instantly without Apple's sheet. If that happens, force-quit and relaunch NextSeason before testing purchases.
+
 Select a manageable renewal rate and note the transaction's expiration. Sandbox settings also allow interrupted purchases and clearing purchase history; clearing that history does not clear the app's watchlist or complimentary Keychain grant. Allow the reset to propagate before starting. [Apple sandbox account settings](https://developer.apple.com/help/app-store-connect/test-in-app-purchases/manage-sandbox-apple-account-settings/).
 
 #### Watchlist fixture
@@ -1153,6 +1155,7 @@ The walkthrough provides broad user-facing regression coverage. Completing it do
 - [ ] Owner: record actual final unit/UI results for the candidate. Review existing Instruments evidence and its gaps separately; do not restart the deferred physical-device investigation or automatically repeat a profiling battery. Perform upgrade/migration checks with representative earlier stores (OC-16).
 - [ ] Regenerate the bundled TVDB–TVMaze mapping before release as PROJECT.md requires; verify the candidate actually contains the regenerated artifact. This manual-test document does not regenerate it.
 - [ ] Review date/time-zone differences against the intended date model (OC-10). Verify all user-facing error and recovery states and release visibility of diagnostics.
+- [ ] Trim the verbose purchase/paywall diagnostic breadcrumbs added October 23, 2026 (`paywall_*`, `purchase_*`, `storekit_purchase_success`, `transaction_update`), especially transaction IDs, unless still needed.
 - [ ] Check the final build against screenshots, description, supported OS/device settings, and current feature set. This script intentionally contains no removed theme-switcher test or CSV import test.
 
 Originally prepared from the October 7 readiness roadmap and audited README; consolidated October 19, 2026 against the current code and review records. Exact OS/Xcode controls and fixture availability must be recorded on the tested candidate. Country-specific streaming availability, CSV import and new status policies are outside this script. The deferred physical-device “Closed Repeatedly” investigation remains deferred.

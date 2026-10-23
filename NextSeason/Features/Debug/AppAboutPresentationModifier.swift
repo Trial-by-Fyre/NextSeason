@@ -15,6 +15,8 @@ struct AppAboutPresentationModifier: ViewModifier {
     @Environment(PurchaseService.self) private var purchases
     @State private var activeSheet: AppInfoSheet?
     @State private var betaBuildAvailability = BetaBuildAvailability.shared
+    /// The add that opened the paywall; finished on dismissal if Plus unlocked.
+    @State private var onPlusUnlocked: (@MainActor () -> Void)?
 
     func body(content: Content) -> some View {
         if UITestingConfiguration.isEnabled {
@@ -24,14 +26,17 @@ struct AppAboutPresentationModifier: ViewModifier {
                 .environment(\.openAppAbout) {
                     activeSheet = .about
                 }
-                .environment(\.presentPlusStore) {
+                .environment(\.presentPlusStore) { onUnlocked in
+                    AppDiagnosticsLogger.breadcrumb(
+                        "paywall_present source=root current=\(activeSheet?.id ?? "none")")
+                    onPlusUnlocked = onUnlocked
                     activeSheet = .plusStore
                 }
                 .environment(\.openDiagnostics) {
                     guard betaBuildAvailability.isAvailable else { return }
                     activeSheet = .diagnostics
                 }
-                .sheet(item: $activeSheet) { sheet in
+                .sheet(item: $activeSheet, onDismiss: finishPlusUnlockIfNeeded) { sheet in
                     switch sheet {
                     case .about:
                         AppAboutView {
@@ -48,6 +53,18 @@ struct AppAboutPresentationModifier: ViewModifier {
                 .task {
                     await betaBuildAvailability.refresh()
                 }
+        }
+    }
+
+    /// Runs after the sheet is gone, so any alert the add raises (such as the
+    /// notification prompt) can present. Cancelling or a pending purchase leaves
+    /// the watchlist limited, and the add is dropped.
+    private func finishPlusUnlockIfNeeded() {
+        AppDiagnosticsLogger.breadcrumb("root_sheet_dismissed pendingAdd=\(onPlusUnlocked != nil)")
+        guard let action = onPlusUnlocked else { return }
+        onPlusUnlocked = nil
+        if purchases.isUnlimitedWatchlist {
+            action()
         }
     }
 }

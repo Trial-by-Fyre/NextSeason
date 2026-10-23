@@ -92,6 +92,14 @@ final class BetaBuildAvailability {
             detectionAttempted = true
             appStoreEnvironment = .xcode
         #else
+            // Access overrides depend on this flag, so log any change to it.
+            let wasEligible = hasVerifiedSandboxAppTransaction
+            defer {
+                if hasVerifiedSandboxAppTransaction != wasEligible {
+                    AppDiagnosticsLogger.breadcrumb(
+                        "override_eligibility_changed=\(hasVerifiedSandboxAppTransaction)")
+                }
+            }
             do {
                 let result = try await AppTransaction.shared
                 switch result {

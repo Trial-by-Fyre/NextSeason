@@ -33,9 +33,10 @@ struct PlusStoreView: View {
             .navigationTitle("NextSeason Plus")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                // Leaving without buying is a cancel, not a confirmation.
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        close(reason: "cancel")
                     }
                 }
             }
@@ -75,11 +76,31 @@ struct PlusStoreView: View {
                 }
             }
             .onChange(of: purchases.isUnlimitedWatchlist) { _, isUnlimited in
+                AppDiagnosticsLogger.breadcrumb(
+                    "paywall_access_changed \(purchases.accessDiagnosticsSummary)")
                 if isUnlimited {
-                    dismiss()
+                    close(reason: "unlimited_changed")
                 }
             }
+            // A disappear without a preceding `paywall_dismiss` breadcrumb means
+            // something outside this view closed the sheet.
+            .onAppear {
+                AppDiagnosticsLogger.breadcrumb(
+                    "paywall_appear \(purchases.accessDiagnosticsSummary)")
+            }
+            .onDisappear {
+                AppDiagnosticsLogger.breadcrumb(
+                    "paywall_disappear purchasing=\(purchases.isPurchasing) "
+                        + purchases.accessDiagnosticsSummary)
+            }
         }
+    }
+
+    /// Every dismissal this view initiates goes through here, so diagnostics
+    /// record why the paywall closed.
+    private func close(reason: String) {
+        AppDiagnosticsLogger.breadcrumb("paywall_dismiss reason=\(reason)")
+        dismiss()
     }
 
     private var header: some View {
@@ -212,7 +233,7 @@ struct PlusStoreView: View {
     private func purchase(_ product: StoreProduct) async {
         let outcome = await purchases.purchase(product)
         if outcome == .success {
-            dismiss()
+            close(reason: "purchase_success")
         }
     }
 }

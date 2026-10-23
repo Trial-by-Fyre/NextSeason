@@ -15,6 +15,7 @@ This document captures enhancements planned after the initial App Store release.
 
 - User-selectable sorting.
 - Support marking which shows the user has fully caught up on.
+- **Deferred — post-v1.0 usability:** Consider making collapsed Watchlist section counts more noticeable, e.g. a subtle count capsule beside “Airing Now”, after a show in a collapsed section was overlooked. The existing header count is correct; preserve collapsed state without auto-expanding sections. This is not a v1.0 blocker.
 - **Subscription downgrade improvements:** Allow users whose Plus subscription
   expires to choose which three shows remain active, rather than automatically
   retaining the first three. Provide a simple interface for managing those

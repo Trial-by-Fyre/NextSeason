@@ -193,6 +193,15 @@ final class PurchaseService {
         entitlementStore.isComplimentary && !isIgnoringComplimentaryPlus
     }
 
+    /// Breadcrumb snapshot of every input to `isUnlimitedWatchlist`, so a log can
+    /// show which source changed (diagnosing unexpected paywall dismissals).
+    var accessDiagnosticsSummary: String {
+        "unlimited=\(isUnlimitedWatchlist) store=\(storeEntitlement) "
+            + "comp=\(isComplimentary) storedComp=\(hasStoredComplimentaryPlus) "
+            + "sim=\(isSimulatingFreeTier) ignoreComp=\(isIgnoringComplimentaryPlus) "
+            + "overrideAvail=\(canSimulateFreeTier)"
+    }
+
     /// Plus annual/monthly catalog for `PlusStoreView`.
     ///
     /// Loading wins while a fetch is in flight (or has never completed) so the
@@ -371,12 +380,18 @@ final class PurchaseService {
     /// set `thankYouMessage` for tips before the store client finishes them.
     /// Simulation ends only after a successful verified Plus purchase, or later
     /// when a pending purchase completes through a matching transaction update.
+    /// A Plus `.success` that leaves the watchlist limited is returned as `.failed`.
     func purchase(_ product: StoreProduct) async -> PurchaseOutcome {
-        guard !isPurchasing else { return .pending }
+        guard !isPurchasing else {
+            AppDiagnosticsLogger.breadcrumb("purchase_ignored_in_flight")
+            return .pending
+        }
         isPurchasing = true
         lastErrorMessage = nil
         thankYouMessage = nil
         defer { isPurchasing = false }
+        AppDiagnosticsLogger.breadcrumb(
+            "purchase_start product=\(product.productID) \(accessDiagnosticsSummary)")
 
         // Capture the run before StoreKit can suspend; a purchase started outside
         // this simulation (or in an earlier run) must not turn it off.
@@ -393,6 +408,7 @@ final class PurchaseService {
                 }
                 await self?.handleVerifiedTransaction(transaction)
             }
+            var result = outcome
             switch outcome {
             case .success:
                 // The callback refreshes actual access before finish(). Wait for the
@@ -401,6 +417,20 @@ final class PurchaseService {
                     let simulationSession, simulationSessionID == simulationSession
                 {
                     setFreeTierSimulation(false)
+                }
+                // StoreKit can report `.success` without showing its sheet, returning
+                // an earlier transaction while Plus stays inactive (TestFlight sandbox,
+                // 2026-10-23). Only unlocked access confirms a Plus purchase, so the
+                // paywall stays open with an explanation instead of closing.
+                if product.kind == .plusAnnual || product.kind == .plusMonthly,
+                    !isUnlimitedWatchlist
+                {
+                    let message = String(
+                        localized:
+                            "The purchase wasn't completed, so NextSeason Plus wasn't unlocked. Please try again."
+                    )
+                    lastErrorMessage = message
+                    result = .failed(message)
                 }
             case .pending:
                 // Remember only the subscription the tester requested. Background
@@ -415,10 +445,17 @@ final class PurchaseService {
             case .failed(let message):
                 lastErrorMessage = message
             }
-            return outcome
+            AppDiagnosticsLogger.breadcrumb(
+                "purchase_outcome=\(outcome) result=\(result == outcome ? "same" : "failed_no_access") "
+                    + "verified=\(verifiedSubscriptionPurchase) " + accessDiagnosticsSummary)
+            return result
         } catch is CancellationError {
+            AppDiagnosticsLogger.breadcrumb("purchase_outcome=task_cancelled")
             return .cancelled
         } catch {
+            let nsError = error as NSError
+            AppDiagnosticsLogger.breadcrumb(
+                "purchase_outcome=error domain=\(nsError.domain) code=\(nsError.code)")
             let message = error.localizedDescription
             lastErrorMessage = message
             return .failed(message)
@@ -575,6 +612,11 @@ final class PurchaseService {
         _ transaction: StoreTransaction, fromTransactionUpdate: Bool = false
     ) async {
         let isNew = processedTransactionIDs.insert(transaction.id).inserted
+        if fromTransactionUpdate {
+            AppDiagnosticsLogger.breadcrumb(
+                "transaction_update product=\(transaction.productID) new=\(isNew) "
+                    + "customerPurchase=\(transaction.isCustomerPurchase)")
+        }
         switch transaction.kind {
         case .plusAnnual, .plusMonthly:
             let simulationSession = simulationSessionID

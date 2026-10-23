@@ -8,6 +8,12 @@ import Testing
 
 @testable import NextSeason
 
+/// Mutable beta-gate availability, read by the service's `@MainActor` closure.
+@MainActor
+private final class AvailabilityFlag {
+    var value = false
+}
+
 /// Ignore Complimentary Plus: StoreKit alone decides effective access while the
 /// stored grant stays intact. Scenario numbers refer to
 /// Documentation/Reviews/IgnoreComplimentaryPlus-2026-10-21.md.
@@ -256,16 +262,16 @@ struct IgnoreComplimentaryPlusTests {
 
     @Test("Without the beta gate the override cannot change access")  // 13
     func unavailableGate() {
-        var allowed = false
-        let purchases = makeService(allowed: { allowed })
+        let allowed = AvailabilityFlag()
+        let purchases = makeService(allowed: { allowed.value })
         purchases.setIgnoreComplimentaryPlus(true)
         #expect(purchases.isIgnoringComplimentaryPlus == false)
         #expect(purchases.isUnlimitedWatchlist)
 
         // An earlier request no longer applies once eligibility is gone.
-        allowed = true
+        allowed.value = true
         purchases.setIgnoreComplimentaryPlus(true)
-        allowed = false
+        allowed.value = false
         #expect(purchases.isIgnoringComplimentaryPlus == false)
         #expect(purchases.isComplimentary)
         #expect(purchases.confirmedWatchlistAccess == true)

@@ -9,22 +9,7 @@ Checklist companion to `NextSeason-StoreKit-Manual-Test-Script.md`, synchronized
 - [ ] [Entitlement ordering — OC-11](#oc-11--entitlement-ordering-in-real-purchaserestore-flows-item-1)
 - [ ] [Results](#result-sheet) and [cleanup](#completion-and-cleanup)
 
-Volunteer purchase testers: use only the [volunteer StoreKit checklist](#volunteer-storekit-checklist) below. SK-01–SK-30 are for Janine and developer-assisted verification; volunteers are not expected to exercise every subscription lifecycle case. Ordinary beta testers can use the [separate beta walkthrough](NextSeason-Beta-Regression-Checklist.md) without running this document.
-
-### Volunteer StoreKit checklist
-
-About 15 minutes, in the TestFlight build. TestFlight purchases use the sandbox and are not charged.
-
-**Start:** About shows **Up to 3 shows**, without Simulate Free Tier, and your Watchlist has exactly three shows. If About shows **Unlimited** because of complimentary beta access, purchases cannot be checked on this device. Mark the checklist **Not applicable** and stop; do not try to remove complimentary access.
-
-- [ ] 1. Try to add a fourth show. On the Plus screen, check that Monthly and Annual show a price and period, and that Terms of Use and Privacy Policy open.
-- [ ] 2. Tap Monthly or Annual, then **cancel** Apple's purchase sheet. The app stays usable, Plus is not unlocked, and the fourth show is not added.
-- [ ] 3. Buy the **same** plan and confirm Apple's sheet identifies it as a test/sandbox purchase. If it does not, stop and ask Janine. After purchase, About shows **Unlimited** and the originally blocked fourth show is added automatically, exactly once. Do not tap its star again.
-- [ ] 4. Close NextSeason from the app switcher, reopen it, and check that About still shows Unlimited and all shows remain.
-- [ ] 5. In About, tap **Restore Purchases**. Access stays Unlimited and no shows are duplicated.
-- [ ] 6. Optionally buy one tip in About. A thank-you appears once, and access is unchanged.
-
-**Expected:** Prices come from Apple's sheet and agree with the app. Cancelling grants nothing; purchasing unlocks Plus without Restore. Tips never unlock features. Report the plan you bought, any error text, and the time. Expiration, renewal, refunds, billing problems, and offline cases are covered by Janine in SK-11–SK-21; you do not need to test them.
+**Audience:** Janine and developer-assisted testing. The volunteer purchase checks live in the [beta regression guide](NextSeason-Beta-Regression-Checklist.md#volunteer-purchase-checks--only-if-assigned) and its matching checklist. Ordinary beta testers do not need this document. Some cases below can be performed manually by Janine; cases requiring Xcode or controlled fixtures are identified separately.
 
 The setup, safeguards, and result sheet below apply to SK-01–SK-30.
 
@@ -389,7 +374,7 @@ Use the normal **NextSeason** scheme, not **NextSeason - Final Complimentary Bet
 
 Check About before testing. For Janine/developer-assisted tests on an installation with complimentary access, open About → Diagnostics → Subscription Testing and turn **Ignore Complimentary Plus ON**, with **Simulate Free Tier OFF**. Wait for access to settle and verify Free when no active subscription exists. Ignore Complimentary Plus hides the stored grant without deleting it; it does not hide a paid subscription.
 
-**Both testing overrides are session-only and reset on app termination. After every cold launch/relaunch on a complimentary installation, re-enable Ignore Complimentary Plus before checking StoreKit-only access.** While it is off during startup, complimentary access may already reactivate paused shows; use a separate non-complimentary installation for strict cold-launch paid-access-loss/ordering evidence. Mark that branch Blocked if unavailable. Do not clear a genuine grant. Deleting the app or switching purchase accounts does not reliably remove its synchronizable Keychain grant. Volunteers should continue to use the restricted setup above.
+**Both testing overrides are session-only and reset on app termination. After every cold launch/relaunch on a complimentary installation, re-enable Ignore Complimentary Plus before checking StoreKit-only access.** While it is off during startup, complimentary access may already reactivate paused shows; use a separate non-complimentary installation for strict cold-launch paid-access-loss/ordering evidence. Mark that branch Blocked if unavailable. Do not clear a genuine grant. Deleting the app or switching purchase accounts does not reliably remove its synchronizable Keychain grant. Volunteers should use the restricted setup in the beta regression guide’s volunteer purchase section.
 
 Turn **Simulate Free Tier OFF** for every real StoreKit test. It overrides effective access and intentionally survives restore scans within the session.
 

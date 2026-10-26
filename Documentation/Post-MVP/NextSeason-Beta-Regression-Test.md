@@ -13,7 +13,7 @@ This is the master test plan, not a record of tests already passed. Choose the s
 
 Thank you for helping test NextSeason before release! A **regression test** means checking that the app's existing features still work after the latest changes. You don't need technical knowledge: follow the steps below and tell me where the app behaves differently from the expected result.
 
-Allow roughly 30–45 minutes for the main walkthrough, plus normal use over the next day or two. Mark each numbered test **Pass**, **Problem**, or **Skipped**. For skipped tests, include the reason. If something goes wrong, keep testing the other areas when possible.
+Allow roughly 30–45 minutes for the main walkthrough, plus normal use over the next day or two. Assigned volunteers can also complete the purchase checks below; other testers skip that section. Mark each numbered test **Pass**, **Problem**, or **Skipped**. For skipped tests, include the reason. If something goes wrong, keep testing the other areas when possible.
 
 ## Before you start
 
@@ -122,7 +122,7 @@ On Watchlist, the star is a toggle. Tapping a filled star starts a removal: the 
 - **Unlimited:** do not cancel anything. Open About → **Diagnostics** → **Subscription Testing** and turn on **Simulate Free Tier**. About now shows **Up to 3 shows (simulated)**. If you have more than three shows, your three oldest stay active and the rest move to **Paused — Plus Required**. Nothing is deleted. Remove temporary shows until exactly three are active.
 
 1. Try adding a fourth show from Search.
-2. Check that the Plus screen opens and has a usable Cancel control. Catalog, price, legal-disclosure and purchase checks belong in the separate StoreKit tests.
+2. Check that the Plus screen opens and has a usable Cancel control. Assigned volunteers check prices, legal links and purchases in the volunteer purchase section below.
 3. Dismiss it without buying and check that your Watchlist still has the same three active shows.
 4. Remove one temporary show, then add a different show to return to three.
 5. Open Plus from About using **Unlock NextSeason Plus**, then dismiss it.
@@ -130,9 +130,22 @@ On Watchlist, the star is a toggle. Tapping a filled star starts a removal: the 
 
 **Expected:** Adding a fourth show opens Plus without adding the show. Dismissing leaves the original three intact. After removing one, another can be added. Both routes to Plus work. Turning simulation off restores Plus without losing any shows. **End state:** Simulate Free Tier is off.
 
-### Separately assigned purchase testing
+### Volunteer purchase checks — only if assigned
 
-Purchase testing has moved to the [StoreKit test guide](NextSeason-StoreKit-Manual-Test-Script.md) and its [checklist](NextSeason-StoreKit-Manual-Test-Checklist.md). It is not part of this beta walkthrough.
+These checks are for beta testers and need no developer tools. Run them only when Janine assigns purchase testing. Allow about 15 minutes, in the TestFlight build. TestFlight purchases use the sandbox and are not charged.
+
+**Start:** About shows **Up to 3 shows**, without Simulate Free Tier, and your Watchlist has exactly three shows. If About shows **Unlimited** because of complimentary beta access, purchases cannot be checked on this device. Mark the checklist **Not applicable** and stop; do not try to remove complimentary access.
+
+1. Try to add a fourth show. On the Plus screen, check that Monthly and Annual show a price and period, and that Terms of Use and Privacy Policy open.
+2. Tap Monthly or Annual, then **cancel** Apple's purchase sheet. The app stays usable, Plus is not unlocked, and the fourth show is not added.
+3. Buy the **same** plan and confirm Apple's sheet identifies it as a test/sandbox purchase. If it does not, stop and ask Janine. After purchase, About shows **Unlimited** and the originally blocked fourth show is added automatically, exactly once. Do not tap its star again.
+4. Close NextSeason from the app switcher, reopen it, and check that About still shows Unlimited and all shows remain.
+5. In About, tap **Restore Purchases**. Access stays Unlimited and no shows are duplicated.
+6. Optionally buy one tip in About. A thank-you appears once, and access is unchanged.
+
+**Expected:** Prices come from Apple's sheet and agree with the app. Cancelling grants nothing; purchasing unlocks Plus without Restore. Tips never unlock features. Report the plan you bought, any error text, and the time. Expiration, renewal, refunds, billing problems, and offline purchase cases are covered in the [separate StoreKit guide](NextSeason-StoreKit-Manual-Test-Script.md); you do not need to test them.
+
+**Result:** Record Pass / Fail / Blocked / Not applicable for each step, along with the app build, device/iOS, chosen plan, and any error or screenshot.
 
 ## 10. Notification permission
 

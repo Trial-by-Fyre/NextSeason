@@ -9,13 +9,13 @@ Checklist companion to `NextSeason-StoreKit-Manual-Test-Script.md`, synchronized
 - [ ] [Entitlement ordering — OC-11](#oc-11--entitlement-ordering-in-real-purchaserestore-flows-item-1)
 - [ ] [Results](#result-sheet) and [cleanup](#completion-and-cleanup)
 
-**Audience:** Janine and developer-assisted testing. The volunteer purchase checks live in the [beta regression guide](NextSeason-Beta-Regression-Checklist.md#volunteer-purchase-checks--only-if-assigned) and its matching checklist. Ordinary beta testers do not need this document. Some cases below can be performed manually by Janine; cases requiring Xcode or controlled fixtures are identified separately.
+**Audience:** advanced technical testers and developers; this work can be delegated. Janine coordinates release decisions. The volunteer purchase checks live in the [beta regression guide](NextSeason-Beta-Regression-Checklist.md#volunteer-purchase-checks--only-if-assigned) and its matching checklist. Ordinary beta testers do not need this document. Some cases below can be performed manually by a suitably prepared technical tester; cases requiring Xcode or controlled fixtures are identified separately.
 
 The setup, safeguards, and result sheet below apply to SK-01–SK-30.
 
 ## Focused regression pass — recent purchase fixes
 
-Updated October 26, 2026. These cases supplement SK-01–SK-30; they do not replace release coverage. Use the setup below, record the exact candidate build, and run with Simulate Free Tier OFF except section 10. Start with A–C active and D untracked; keep at least five saved shows for lapse/reactivation. Reset purchase state only when needed, after preserving lifecycle evidence.
+Updated October 26, 2026. These cases supplement SK-01–SK-30; they do not replace release coverage. Use the setup below, record the exact candidate build, and run with Simulate Free Tier OFF except section 10. Use **N** only for a new, untracked show and **P** only for an already-saved paused show. For new-add cases, start with A–C active and N absent from the saved list. For lapse/reactivation, separately prepare at least five saved shows, with P among the later saves that pause. These are different starting states; reset them between cases. The full SK cases below use their own A–G fixture, not these N/P labels. Reset purchase state only when needed, after preserving lifecycle evidence.
 
 For every cold launch/relaunch on a complimentary installation, re-enable Ignore Complimentary Plus and confirm the intended access before continuing. Strict startup checks require a non-complimentary installation as explained under paid-device setup. Fixtures unavailable in TestFlight are Blocked, not failures or passes.
 
@@ -26,8 +26,8 @@ These tests target the first-attempt paywall dismissal bug.
 #### 1A. Purchase from Search
 
 - [ ] Cold-launch NextSeason with Free access and three tracked shows.
-- [ ] Search for show D.
-- [ ] Tap Add.
+- [ ] Search for show N.
+- [ ] Tap the empty star to add the show.
 - [ ] Verify the Plus paywall opens.
 - [ ] Verify the paywall has Cancel rather than Done.
 - [ ] Tap the Monthly plan button on the **first attempt**; there is no separate app Purchase button.
@@ -37,10 +37,10 @@ These tests target the first-attempt paywall dismissal bug.
 
 #### 1B. Purchase from Show Detail
 
-- [ ] Start fresh with Free access and D untracked.
+- [ ] Start fresh with Free access and N untracked.
 - [ ] Cold-launch NextSeason.
-- [ ] Open D's details from Search.
-- [ ] Tap Add.
+- [ ] Open N's details from Search.
+- [ ] Tap the empty star to add the show.
 - [ ] Verify the Plus paywall opens.
 - [ ] Tap the Annual plan button on the **first attempt**.
 - [ ] Verify Apple's confirmation appears over the current interface.
@@ -51,7 +51,7 @@ These tests target the first-attempt paywall dismissal bug.
 
 - [ ] Start fresh with Free access.
 - [ ] Cold-launch NextSeason.
-- [ ] Open About and select Unlock Plus.
+- [ ] Open About and select **Unlock NextSeason Plus**.
 - [ ] Attempt to purchase a subscription immediately.
 - [ ] Verify Apple's confirmation sheet appears on the first attempt.
 - [ ] Verify the plan and price.
@@ -67,22 +67,22 @@ Run this from both Search and Show Detail using appropriate fresh purchase state
 
 #### 2A. Search
 
-- [ ] Start with three tracked shows and D untracked.
-- [ ] Search for D and tap Add.
+- [ ] Start with three tracked shows and N untracked.
+- [ ] Search for N and tap its empty star to add it.
 - [ ] Purchase Plus successfully.
 - [ ] Verify the paywall dismisses automatically.
 - [ ] Verify Plus becomes active.
-- [ ] Verify D was added **exactly once automatically**.
-- [ ] Do not tap D's Add button a second time.
+- [ ] Verify N was added **exactly once automatically**.
+- [ ] Do not tap N’s star a second time.
 - [ ] Verify any notification-permission prompt remains usable.
 - [ ] Verify subsequent shows can be added.
 
 #### 2B. Show Detail
 
-- [ ] Repeat with D initially untracked, starting from its detail page.
+- [ ] Repeat with N initially untracked, starting from its detail page.
 - [ ] Purchase Plus successfully.
 - [ ] Verify the paywall dismisses.
-- [ ] Verify D is automatically tracked, exactly once.
+- [ ] Verify N is automatically tracked, exactly once.
 - [ ] Verify the Show Detail interface reflects the new tracked state.
 - [ ] Verify notification-permission prompts, if presented, can be responded to normally.
 
@@ -94,21 +94,21 @@ Run this from both Search and Show Detail using appropriate fresh purchase state
 
 #### 3A. Apple purchase cancellation
 
-- [ ] With Free access, attempt to add D.
+- [ ] With Free access, attempt to add N.
 - [ ] Start a Plus purchase.
 - [ ] Cancel from Apple's confirmation sheet.
 - [ ] Verify the NextSeason paywall remains available.
-- [ ] Verify D remains untracked.
+- [ ] Verify N remains untracked.
 - [ ] Verify the user can retry the purchase.
 - [ ] Tap Cancel on the NextSeason paywall.
 - [ ] Verify the paywall closes and the blocked add is abandoned.
 
 #### 3B. Purchase failure
 
-- [ ] Using an available sandbox failure simulation, attempt to buy Plus from D's blocked add.
+- [ ] Using an available sandbox failure simulation, attempt to buy Plus from N's blocked add.
 - [ ] Verify an appropriate failure message is displayed.
 - [ ] Verify the paywall remains available for retry.
-- [ ] Verify D remains untracked.
+- [ ] Verify N remains untracked.
 - [ ] Verify the user can dismiss the paywall safely.
 
 If no reliable failure simulation is available, mark Blocked.
@@ -120,9 +120,9 @@ If no reliable failure simulation is available, mark Blocked.
 - [ ] Simulate a purchase reporting success without Plus entitlement becoming effective.
 - [ ] Verify the paywall stays open.
 - [ ] Verify the app explains that Plus has not been unlocked.
-- [ ] Verify D remains untracked.
+- [ ] Verify N remains untracked.
 - [ ] Perform a subsequent genuine successful purchase.
-- [ ] Verify Plus unlocks and D is added exactly once.
+- [ ] Verify Plus unlocks and N is added exactly once.
 
 **Result:** Pass / Fail / Blocked / Not applicable / Not run; record each subcase separately with build, environment and evidence.
 
@@ -130,33 +130,33 @@ If no reliable failure simulation is available, mark Blocked.
 
 #### 4A. Pending transaction completes while paywall remains open
 
-- [ ] Start a blocked add for D.
+- [ ] Start a blocked add for N.
 - [ ] Use developer-assisted local Xcode Ask to Buy to create a pending purchase. Approval controls are not configured in the current TestFlight workflow; mark Blocked if this fixture is unavailable.
 - [ ] Keep the original paywall open.
 - [ ] Complete or approve the pending transaction.
 - [ ] Verify Plus becomes active.
 - [ ] Verify the paywall dismisses.
-- [ ] Verify D is automatically added exactly once.
+- [ ] Verify N is automatically added exactly once.
 
 #### 4B. Transaction completes after paywall dismissal
 
-- [ ] Start a blocked add for D.
+- [ ] Start a blocked add for N.
 - [ ] Initiate a pending transaction using the same local Xcode Ask to Buy fixture; mark Blocked if unavailable.
 - [ ] Dismiss the paywall, if permitted.
 - [ ] Complete the transaction afterward.
 - [ ] Verify Plus access is recognized.
-- [ ] Verify D is **not automatically added** because the original add was abandoned.
-- [ ] Verify the user can add D normally afterward.
+- [ ] Verify N is **not automatically added** because the original add was abandoned.
+- [ ] Verify the user can add N normally afterward.
 
 #### 4C. Transaction completes after relaunch
 
-- [ ] Start a blocked add for D.
+- [ ] Start a blocked add for N.
 - [ ] Initiate a pending transaction using the same local Xcode Ask to Buy fixture; mark Blocked if unavailable.
 - [ ] Terminate and relaunch NextSeason.
 - [ ] Complete the pending transaction.
 - [ ] Verify Plus access is restored.
 - [ ] Verify the abandoned Add Show operation does not resume.
-- [ ] Verify D remains untracked until explicitly added.
+- [ ] Verify N remains untracked until explicitly added.
 
 **Expected:** An active pending action completes automatically; an abandoned action never comes back unexpectedly.
 
@@ -211,16 +211,16 @@ If no reliable failure simulation is available, mark Blocked.
 
 Run through Search and Show Detail, using suitable Free-tier test state.
 
-- [ ] Start with an already-saved paused show D.
-- [ ] Find D through Search or its available detail/add entry point.
-- [ ] Attempt to add or reactivate D.
+- [ ] Start with an already-saved paused show P.
+- [ ] Find P through Search or its available detail/add entry point.
+- [ ] Attempt to add or reactivate P.
 - [ ] Verify the Plus paywall opens.
 - [ ] Purchase Plus or successfully restore existing Plus access.
-- [ ] Verify D remains tracked.
+- [ ] Verify P remains tracked.
 - [ ] Verify no duplicate is created.
-- [ ] Verify D is not removed.
+- [ ] Verify P is not removed.
 - [ ] Verify no inappropriate Undo toast appears.
-- [ ] Verify D becomes active and accessible.
+- [ ] Verify P becomes active and accessible.
 
 - [ ] Repeat for the other entry point.
 
@@ -235,12 +235,12 @@ Run through Search and Show Detail, using suitable Free-tier test state.
 #### 8A. Restore valid Plus during blocked add
 
 - [ ] Arrange for a valid Plus entitlement that NextSeason has not yet recognized.
-- [ ] Start with D untracked and three active shows.
-- [ ] Attempt to add D.
+- [ ] Start with N untracked and three active shows.
+- [ ] Attempt to add N.
 - [ ] On the paywall, select Restore Purchases.
 - [ ] Verify valid Plus access is recognized.
 - [ ] Verify the paywall dismisses.
-- [ ] Verify D is automatically added exactly once.
+- [ ] Verify N is automatically added exactly once.
 - [ ] Verify the Watchlist remains intact.
 
 If the necessary entitlement state cannot be reproduced, mark Blocked.
@@ -248,20 +248,20 @@ If the necessary entitlement state cannot be reproduced, mark Blocked.
 #### 8B. No eligible subscription
 
 - [ ] Use a sandbox account with no eligible active subscription.
-- [ ] Attempt to add D to trigger the paywall.
+- [ ] Attempt to add N to trigger the paywall.
 - [ ] Tap Restore Purchases.
 - [ ] Verify Plus is not incorrectly granted.
-- [ ] Verify D remains untracked.
+- [ ] Verify N remains untracked.
 - [ ] Verify the user receives understandable feedback.
 - [ ] Verify the paywall remains available.
 
 #### 8C. Failed or offline restoration
 
-- [ ] Trigger the paywall through D's blocked add.
+- [ ] Trigger the paywall through N's blocked add.
 - [ ] Disconnect network access.
 - [ ] Tap Restore Purchases.
 - [ ] Verify no crash or indefinite hang occurs.
-- [ ] Verify D remains untracked.
+- [ ] Verify N remains untracked.
 - [ ] Verify appropriate failure or unavailable feedback.
 - [ ] Restore connectivity.
 - [ ] Retry restoration.
@@ -327,6 +327,8 @@ If the necessary entitlement state cannot be reproduced, mark Blocked.
 
 ### How to use this script
 
+**Full-case fixture scope:** SK-01–SK-30 use A–G added in that order. D is initially new in purchase cases and later saved/paused in lapse cases; establish each case’s stated starting state. Do not carry the focused pass’s N/P assumptions into these cases.
+
 For recent fixes, use the focused regression pass above after completing setup. For broader release coverage, run SK-01–SK-30 in their listed passes. Each case gives its starting state, actions, and expected result. Record **Pass / Fail / Blocked / Not applicable**, the build, and any evidence. “Blocked” means you could not establish the required state; it does not mean the feature passed.
 
 Use three passes:
@@ -371,6 +373,8 @@ Monthly and annual provide the same unlimited-watchlist access. Tips never unloc
 #### Prepare a paid-access test device
 
 Use the normal **NextSeason** scheme, not **NextSeason - Final Complimentary Beta**. The special beta archive configuration grants permanent complimentary access and can conceal paid-subscription failures.
+
+For strict genuinely Free cold-launch tests, use a normal non-granting build with no active subscription and no stored/synchronized complimentary grant. An unused spare device on the same iCloud Keychain can inherit a grant; confirm settled Free access with both overrides OFF rather than relying on reinstall. Do not change the owner’s iCloud account or delete a grant just for testing.
 
 Check About before testing. For Janine/developer-assisted tests on an installation with complimentary access, open About → Diagnostics → Subscription Testing and turn **Ignore Complimentary Plus ON**, with **Simulate Free Tier OFF**. Wait for access to settle and verify Free when no active subscription exists. Ignore Complimentary Plus hides the stored grant without deleting it; it does not hide a paid subscription.
 
@@ -823,11 +827,16 @@ Record current-candidate automated evidence separately from manual observations;
 
 ### Source and decision references
 
+- [ ] [October 26 manual-coverage review dispositions](../Reviews/ManualTestCoverageReview-2026-10-26.md).
+
 - [ ] [Entitlement ordering review](../Reviews/EntitlementCheckOrderingReview-2026-10-19.md), [expiration and restore feedback](../Reviews/ExpirationRecheckAndRestoreFeedback-2026-10-21.md), and [Ignore Complimentary Plus review](../Reviews/IgnoreComplimentaryPlus-2026-10-21.md).
 - [ ] [Testing override behavior](FreeTierSimulation.md).
 - [ ] [Apple Ask to Buy testing](https://developer.apple.com/documentation/storekit/testing-ask-to-buy-in-xcode): use local Xcode approval/decline controls for pending completion; do not assume those controls exist in TestFlight.
 
 ### StoreKit release coordination
+
+- [ ] Follow [Permanent complimentary Plus for beta testers](Complimentary%20Plus%20Beta%20Grant.md): after the final granting beta has been distributed, remove the **NextSeason - Final Complimentary Beta** shared scheme, the **BetaComplimentary** project/target build configurations, and `Config/BetaComplimentary.xcconfig`. Preserve entitlement recognition/persistence and the build guards. These are separately assigned project cleanup actions, not edits performed by following this test document.
+- [ ] Run `python3 Scripts/tests/test-complimentary-plus-build.py` before distribution and again after the approved cleanup; record actual results. Select the normal **NextSeason** scheme and create a new normal **Release** archive for App Store submission. Verify that exact archive/build is selected in App Store Connect; never select the previously uploaded granting beta. A passing TestFlight runtime check does not establish this submission boundary.
 
 - [ ] Use controlled fixtures/test tooling ([SK-27–SK-30](#controlled-data-checks--complete-with-developer-assistance)) to verify qualifying notification events, long titles, duplicate suppression, removed shows, tap behavior, and background refresh. Natural beta use is supplementary evidence.
 - [ ] Use [this StoreKit guide](#how-to-use-this-script) and its [result sheet](#result-sheet) to record the detailed coverage below.

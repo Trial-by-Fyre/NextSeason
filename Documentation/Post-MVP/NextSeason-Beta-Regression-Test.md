@@ -32,6 +32,7 @@ Use the corresponding control if a button's wording differs slightly from this s
 2. Check your previous Watchlist against your note or screenshot.
 3. Switch between Search and Watchlist several times.
 4. Open a show, go back, leave the app for the Home Screen, and return.
+5. With at least one saved show, close NextSeason from the app switcher and reopen it normally, without tapping a notification. Verify it opens on Watchlist. The empty-watchlist launch is checked separately in OC-18.
 
 **Expected:** The app opens without crashing or becoming stuck. Your existing shows remain. Navigation works, and returning to the app leaves it usable. No unexpected recovery or reset screen appears.
 
@@ -56,6 +57,7 @@ Use the corresponding control if a button's wording differs slightly from this s
 4. Open an ended show and check its status.
 5. Search for `The Woman in the House`, open **The Woman in the House Across the Street from the Girl in the Window**, and check its row in Search and its details for clipped text or overlapping controls.
 6. Tap **View on TVMaze**, then return to NextSeason.
+7. While viewing a show’s details opened from Search, tap the already-selected Search tab again. Verify it returns to the Search results/root without a blank screen. Open another result, then switch to Watchlist and back to confirm navigation still works.
 
 **Expected:** Each result opens the correct show. Information is readable, scrolling and back navigation work, and missing dates are presented clearly. The long title wraps rather than overlapping the star or other controls. View on TVMaze opens that show's TVMaze page. An ended show should not misleadingly promise another season.
 
@@ -78,8 +80,9 @@ Use the corresponding control if a button's wording differs slightly from this s
 2. Enter part of a tracked show's title.
 3. Enter a title or nonsense that does not match your Watchlist.
 4. Clear the field and close search.
+5. If you have shows in two or more sections, choose a show X and collapse its section by tapping the header. Close and reopen the app; confirm that section stays collapsed. Search Watchlist for X, inspect the matching section header/count, then expand it and confirm X appears. Clear the search and restore your preferred section expansion.
 
-**Expected:** Matching tracked shows appear. No matches are communicated clearly. Clearing or closing search restores the full Watchlist without removing any shows.
+**Expected:** Search filters saved shows, including paused shows. A previously collapsed section stays collapsed during search; expand its matching header to see its rows. A matching collapsed section must not be reported as “No Matches.” Report unclear counts or hidden-match presentation separately as usability findings rather than assuming search automatically expands sections. A genuinely unmatched query shows No Matches. Clearing or closing search restores the full Watchlist without removing shows or resetting section preferences. If you cannot arrange two sections without disturbing your real shows, mark that branch Skipped.
 
 ## 6. Remove, Undo and re-add a show
 
@@ -98,7 +101,7 @@ On Watchlist, the star is a toggle. Tapping a filled star starts a removal: the 
 
 1. Screenshot or note the current Watchlist.
 2. Leave NextSeason and use another app briefly, then return.
-3. Close NextSeason from the app switcher and reopen it.
+3. Close NextSeason from the app switcher and reopen it normally. With saved shows, verify it opens on Watchlist; do not use a notification to launch for this check.
 4. If convenient, restart your iPhone and open NextSeason again.
 
 **Expected:** The Watchlist remains intact after each step. Ordinary closing and reopening does not trigger a recovery screen.
@@ -116,23 +119,39 @@ On Watchlist, the star is a toggle. Tapping a filled star starts a removal: the 
 
 ## 9. Free limit and Plus
 
-**Start: Free, with exactly three active shows.** Check About:
+**Start: Free or simulated Free, with exactly three active shows.** Check About:
 
-- **Up to 3 shows:** you are already Free. Add or remove temporary shows until exactly three are on your Watchlist.
-- **Unlimited:** do not cancel anything. Open About → **Diagnostics** → **Subscription Testing** and turn on **Simulate Free Tier**. About now shows **Up to 3 shows (simulated)**. If you have more than three shows, your three oldest stay active and the rest move to **Paused — Plus Required**. Nothing is deleted. Remove temporary shows until exactly three are active.
+- **Up to 3 shows:** you are already Free. If you have fewer than three active shows, add temporary shows until three are active. Paused shows do not count toward the limit. Do not remove real shows to prepare this test.
+- **Unlimited:** do not cancel anything. Open About → **Diagnostics** → **Subscription Testing** and turn on **Simulate Free Tier**. About now shows **Up to 3 shows (simulated)**. With more than three saves, the three oldest shows remain active automatically and the rest move to **Paused — Plus Required**; nothing is deleted. No removal is needed to obtain three active shows. If you have fewer than three saves, add temporary shows until three are active.
 
-1. Try adding a fourth show from Search.
+If simulation produced paused shows, perform the optional branch next, **before the main free-limit steps**. Keep simulation ON through both parts until main step 6. Otherwise skip the paused-row branch and continue with the main steps.
+
+### Paused-row checks — when Plus and more than three saved shows are available
+
+**Start:** Simulate Free Tier is ON, three shows are active and at least one is paused. If this starting state is unavailable, mark this branch Skipped and leave advanced lapse coverage to the StoreKit pass.
+
+1. Confirm the three oldest saved shows stay active and the others appear under **Paused — Plus Required**, with an explanation that they remain saved but are not tracked.
+2. Tap the body of a paused row, avoiding its star. Details must not open from Watchlist.
+3. Search Watchlist for that paused show; its paused row must appear. Clear the search, then export and verify the paused show is included in the CSV.
+4. If you have a **temporary paused show**, swipe-delete it and tap Undo. Verify it returns exactly once and stays paused. If every paused show is valuable, mark only this removal/Undo step Skipped; do not delete a real show for the test.
+5. Leave Simulate Free Tier **ON** and continue to the main free-limit steps. Removing a paused show does not free an active slot, and removing an active show does not automatically reactivate a paused one.
+
+### Main free-limit steps
+
+1. With exactly three active shows, try adding a fourth show from Search.
 2. Check that the Plus screen opens and has a usable Cancel control. Assigned volunteers check prices, legal links and purchases in the volunteer purchase section below.
 3. Dismiss it without buying and check that your Watchlist still has the same three active shows.
-4. Remove one temporary show, then add a different show to return to three.
+4. Only if one of those three **active** shows is temporary and safe to remove, remove it and complete the removal with OK or timeout, then add a different untracked show. Verify the new show appears once and there are three active shows again. Removing a **paused** show frees no slot. If all three active shows are ones you want to keep, mark this step **Skipped**; do not delete a real show for testing.
 5. Open Plus from About using **Unlock NextSeason Plus**, then dismiss it.
-6. If you turned on Simulate Free Tier: turn it off. About shows **Unlimited** again, paused shows return to their normal sections, and you can add a fourth show.
+6. If you turned on Simulate Free Tier, turn it **OFF** now. About shows **Unlimited** again, all remaining paused shows return to their normal sections, and you can add a fourth show.
 
-**Expected:** Adding a fourth show opens Plus without adding the show. Dismissing leaves the original three intact. After removing one, another can be added. Both routes to Plus work. Turning simulation off restores Plus without losing any shows. **End state:** Simulate Free Tier is off.
+**Expected:** Adding a fourth active show opens Plus without adding it. Dismissing leaves the original three intact. If main step 4 is performed, a completed removal of an active show frees a slot for one addition; paused shows are not automatically promoted. Both routes to Plus work. Turning simulation off restores Plus without losing remaining saved shows. A skipped removal check is not a failure or a pass. **End state:** Simulate Free Tier is off.
 
 ### Volunteer purchase checks — only if assigned
 
 These checks are for beta testers and need no developer tools. Run them only when Janine assigns purchase testing. Allow about 15 minutes, in the TestFlight build. TestFlight purchases use the sandbox and are not charged.
+
+**Build eligibility:** Janine must identify a normal, non-granting TestFlight build and suitable Free account/install before assigning these checks. A Final Complimentary Beta build grants permanent Plus when eligibility is recognized; recipients cannot establish Free access merely by cancelling a subscription. If all volunteers have complimentary access, record this section Not applicable and obtain purchase evidence through the advanced StoreKit pass. Volunteers should not use Ignore Complimentary Plus or erase their grant.
 
 **Start:** About shows **Up to 3 shows**, without Simulate Free Tier, and your Watchlist has exactly three shows. If About shows **Unlimited** because of complimentary beta access, purchases cannot be checked on this device. Mark the checklist **Not applicable** and stop; do not try to remove complimentary access.
 
@@ -167,6 +186,16 @@ No special steps. Leave **Background App Refresh** on for NextSeason and use the
 
 **Expected:** iOS decides when background work runs, and a notification needs a qualifying show change. **Nothing happening is not a failure**; mark this test skipped unless you observe something.
 
+### Optional notification-tap check — TestFlight with Diagnostics available
+
+This uses fictional notification text to check delivery and navigation, not a real season update. Run only if you are comfortable using Diagnostics; otherwise mark Skipped.
+
+1. With notifications and visible alerts enabled and at least one active saved show, open About → Diagnostics → **Send Test Notification**. Note the named show in the outcome text (Lupin if saved, otherwise your most recently added show).
+2. Go to the Home Screen before the roughly five-second delivery delay. Tap the banner, or the delivered alert in Notification Center.
+3. If the named show is still saved and active, verify NextSeason opens that show’s Watchlist details. Return to the list and verify saved data is unchanged. If the chosen show is paused, use the paused routing expectations in OC-08 instead; do not count it as an active-show pass.
+
+**Expected:** the active saved identity matches the destination, regardless of the fictional season text. If permissions, Focus, or system delivery prevent an alert, record Skipped/Not observed with the reason. This does not prove background refresh, provider-change detection, or production notification eligibility.
+
 ## 12. Offline and network recovery
 
 Work through the three phases in order. Make sure you have at least two tracked shows.
@@ -176,7 +205,7 @@ Work through the three phases in order. Make sure you have at least two tracked 
 1. Search for a show and open its details. Return to Search.
 2. On Watchlist, use its search to find a tracked show, then clear and close the search.
 3. Open a tracked show's details from Watchlist, then return.
-4. Pull down on Watchlist to refresh it.
+4. Pull down on Watchlist to refresh it. For the later offline-add check, Free testers need an available active slot: if at capacity, remove one **active temporary** show and complete its removal with OK or timeout. Removing a paused show frees no slot. If all active shows are valuable, leave them intact and mark the offline-add branch Skipped. Plus testers do not need to remove anything.
 
 **Offline:** turn on Airplane Mode and make sure Wi-Fi is off.
 
@@ -184,21 +213,23 @@ Work through the three phases in order. Make sure you have at least two tracked 
 6. **Watchlist search:** search your Watchlist for a tracked show.
 7. **Show details:** open a tracked show from Watchlist.
 8. **Pull to refresh:** pull down on Watchlist.
+9. **Add, separate offline mini-pass:** with the slot prepared in step 4 or Plus access, reconnect briefly and search for a new untracked temporary show without opening its details. Record its name, then turn Airplane Mode back on with Wi-Fi off. With a free slot or Plus, tap that result’s empty star while offline. Check its star and Watchlist, then try opening its details. If you cannot retain a result or have no free slot, mark this branch Skipped.
 
 **Recovery:** turn off Airplane Mode, or turn Wi-Fi back on, and wait for a connection.
 
-9. **Search:** tap **Try Again** if it is shown, or search again.
-10. **Show details:** reopen the show; tap **Try Again** if its Next Season section shows an error.
-11. **Pull to refresh:** pull down on Watchlist again.
+10. **Search:** tap **Try Again** if it is shown, or search again.
+11. **Show details:** reopen the show; tap **Try Again** if its Next Season section shows an error.
+12. **Pull to refresh:** pull down on Watchlist again.
+13. **Retry the failed add:** if step 9 failed, search for the same show while connected and tap its empty star. Verify it is saved exactly once and the star is filled. If the offline add already succeeded, confirm that single saved row remains; do not tap its filled star again. If the add branch was skipped, record this recovery step Skipped too.
 
-**Expected:** While connected, everything loads normally. Offline, Search shows an understandable error with Try Again, although a title you searched recently may still appear from cache. Watchlist search still works because it uses saved shows. Show details still shows the saved title, and its Next Season section either shows saved information or an error with Try Again. Pull to refresh shows a brief "Couldn't refresh your Watchlist" notice. No shows are lost, nothing crashes, and no screen stays loading indefinitely. After recovery, Search, Try Again, and pull to refresh all succeed without restarting the app.
+**Expected:** While connected, everything loads normally. Offline, Search shows an understandable error with Try Again, although a title you searched recently may still appear from cache. Watchlist search still works because it uses saved shows. Show details still shows the saved title, and its Next Season section either shows saved information or an error with Try Again. Pull to refresh shows a brief "Couldn't refresh your Watchlist" notice. No shows are lost, nothing crashes, and no screen stays loading indefinitely. For the offline add, a lookup/save failure shows understandable feedback, leaves the show untracked with an empty star, and does not add a partial row. Cached/full show data can permit a successful offline add; that is not a failure if the star and single saved row agree. Record which branch occurred; cached success does not cover lookup failure. After reconnecting, retry a failed add and verify it succeeds exactly once. Search, Try Again, details, and pull to refresh recover without restarting the app. Controlled lookup/save failures are covered separately by CV-01/CV-08.
 
 ## 13. Readability and appearance
 
 1. Check Search, show details, Watchlist, and About in your normal appearance.
 2. Switch the iPhone between Light and Dark appearance and revisit those screens.
 3. In Settings → Accessibility → Display & Text Size → Larger Text, turn on Larger Accessibility Sizes and drag to the largest size. Check those screens and Plus, if accessible.
-4. With large text, check that the Search field stays visible, the Search welcome text and Try an Example button scroll into view, and the first-results hint scrolls with the results. On Watchlist, a "No Matches" or empty-Watchlist message appears below the Notifications Are Off banner rather than on top of it. Also try scrolling, tapping stars, and dismissing sheets.
+4. With large text, check that the Search field stays visible, the Search welcome text and Try an Example button scroll into view **if still shown**, and the first-results hint scrolls with the results **if not previously dismissed**. Upgraded installations normally no longer show these first-run affordances; record Not applicable for those portions and use OC-18 for clean first-run coverage. On Watchlist, a "No Matches" or empty-Watchlist message appears below the Notifications Are Off banner rather than on top of it. Also try scrolling, tapping stars, and dismissing sheets.
 5. If comfortable, briefly enable Increase Contrast, **Show Borders** (called Button Shapes on iOS 18), Reduce Transparency, and Reduce Motion, checking the main screens after changes.
 6. Restore your preferred settings.
 
@@ -227,7 +258,9 @@ Work through the three phases in order. Make sure you have at least two tracked 
 
 ## 16. Time-zone/date check with The Rookie
 
-**Show:** The Rookie, tracked. When this script was updated on October 21, 2026, TVMaze listed its season 9 premiere as **January 6, 2027** (9 PM Eastern). That date comes from TVMaze and has not been confirmed with the network. If the app shows a different date or none, record what it shows. A different date is not a failure; use the date the app shows as the expected date for this test. If no date is shown, mark this test skipped.
+**Show:** The Rookie, tracked. When this script was updated on October 21, 2026, TVMaze listed its season 9 premiere as **January 6, 2027** (9 PM Eastern). That date comes from TVMaze and has not been confirmed with the network. If the app shows a different date or none, record what it shows. A different date is not a failure; use the date the app shows as the expected date for this test. If no future premiere is shown, or that premiere has already passed, choose another show with a displayed future premiere and record its name, ID, and date. If none is available, mark this test skipped.
+
+Use the selected show throughout the following steps, substituting its name for The Rookie if necessary.
 
 1. Note the premiere date shown in The Rookie's details and its Watchlist row.
 2. In Settings → General → Date & Time, turn off **Set Automatically** and choose **Singapore**. Return to NextSeason and check The Rookie's details and Watchlist row.
@@ -268,7 +301,7 @@ Updated October 26, 2026. Run these cases on the final candidate after the beta 
 1. **Ordinary app pass:** beta walkthrough 1–16, then OC-01–OC-06, OC-10 and OC-13–OC-14. Use the current candidate on iOS 18 and a current iOS device/simulator; include iOS 26 coverage when available for its different system appearance. Record unavailable environments.
 2. **Physical-device notification pass:** OC-07–OC-09 and OC-12. Use a normal Debug/TestFlight launch, without UI-testing or profiling arguments. Diagnostics is hidden in the UI-test configuration. Real device notification delivery and animation cannot be established by mounted unit tests.
 3. **Separate purchase assignment:** use the [StoreKit guide](NextSeason-StoreKit-Manual-Test-Script.md) or [StoreKit checklist](NextSeason-StoreKit-Manual-Test-Checklist.md); record purchase results there.
-4. **Developer-assisted pass:** OC-15–OC-16 and the controlled verification register. These cases require disposable fixtures or existing test seams. There is no ordinary in-app button to corrupt a snapshot, fail a save, or hold a StoreKit read.
+4. **Developer-assisted pass:** OC-15–OC-16, OC-18, and the controlled verification register. These cases require disposable fixtures or existing test seams. There is no ordinary in-app button to corrupt a snapshot, fail a save, or hold a StoreKit read.
 5. **Cleanup:** OC-17; record all remaining Blocked/Not run cases and their required next action.
 
 Plan several sessions rather than one sitting. Background delivery and subscription lifecycle cases may need later observation; there is no guaranteed completion time for those portions.
@@ -352,7 +385,7 @@ Use **Pass / Fail / Blocked / Not applicable / Not run** for each OC case and ea
 
 ### OC-07 — Diagnostics actions and notification wording (R03, R12, R15)
 
-**Environment:** normal Debug/TestFlight app, alert permission enabled, temporary saved show. Open ellipsis/About → Diagnostics. Record the show identified by each action; Send Test Notification prefers Lupin if saved, otherwise a saved row. Other simulation actions use the repository's first saved row. Do not assume they all choose the same show.
+**Environment:** normal Debug/TestFlight app, alert permission enabled, temporary saved show. Open ellipsis/About → Diagnostics. Record the show identified by each action; Send Test Notification prefers Lupin if saved, otherwise the most recently added show. Other simulation actions use the repository’s first saved row (most recently added). Do not assume they all choose the same show.
 
 1. Record the real watchlist row's status and date. Tap Run Simulated Update Scenario: note Step 1 and its decision. Tap again: note Step 2 and scheduling outcome. Tap a third time: it should restart at Step 1.
 2. Start Step 1 again. Tap Schedule Pipeline Test Notification, then run the next two-step action. The independent delayed runner must not reset the two-step runner; it should still reach Step 2.
@@ -397,7 +430,7 @@ After N5/N6/N8–N10, wait for navigation to settle, go back, revisit Watchlist 
 
 ### OC-10 — Provider calendar dates across screens and time zones (R02, R09)
 
-**Environment:** ordinary app; use **The Rookie** (TVMaze 32938). On October 21, 2026, TVMaze listed its season 9 premiere as 2027-01-06 at 21:00 Eastern (airstamp 2027-01-07 02:00 UTC). That date has not been confirmed with the network. Recheck the date the app shows before testing and record it as the source date; if it has changed or disappeared, use another show with a displayed future premiere rather than this date.
+**Environment:** ordinary app; use **The Rookie** (TVMaze 32938). On October 21, 2026, TVMaze listed its season 9 premiere as 2027-01-06 at 21:00 Eastern (airstamp 2027-01-07 02:00 UTC). That date has not been confirmed with the network. Recheck the date the app shows before testing and record it as the source date; if it has changed or disappeared, use another show with a displayed future premiere rather than this date. Also replace the fixture once the recorded premiere is no longer in the future.
 
 1. Compare the premiere on detail, Watchlist and a fresh CSV export. In the CSV compare the descriptive Next Season column with Next Season Premiere.
 2. Turn off Set Automatically in Date & Time and test **Singapore** (UTC+8, where the airing falls on the next local day) and **Honolulu** (UTC−10), keeping the actual clock/date correct. Reopen detail and Watchlist, and reopen About before preparing a new export in each zone.
@@ -477,6 +510,20 @@ The purchase/restore entitlement-ordering steps now live in [StoreKit OC-11](Nex
 3. Record which full unit/UI runs the owner actually performed, on which OS/build and with which remaining failures. This script does not run or authorize a suite automatically.
 4. List remaining sandbox/device checks, known accessibility issue, provider-dependent gaps and accepted limitations. Do not restart deferred investigations or profiling batteries simply to fill a checkbox.
 
+### OC-18 — Clean first run, coaching, empty state and last-show launch
+
+**Environment:** separately assigned disposable installation with no restored Watchlist or first-run preferences; network available. Do not delete an ordinary tester’s only installation. A spare device/reinstall alone does not prove fresh defaults, notification permission, or entitlement state. Record each independently. For the genuinely Free branch, use a normal non-granting build, no active subscription, and an installation/account that has not received the grant or synchronized its iCloud Keychain. Confirm About settles on **Up to 3 shows** with both overrides OFF. Do not erase genuine grants; mark the Free branch Blocked if unavailable. First-run UI can still be checked with complimentary Plus if local preferences are genuinely fresh.
+
+1. Launch normally with an empty Watchlist and fresh preferences. Verify Search is selected, its welcome copy and **Try an Example** are visible, and Watchlist shows its empty state when selected. No notification permission request should be required just to browse.
+2. At the largest practical accessibility text size, verify welcome text and Try an Example scroll into reach. Tap Try an Example and confirm it searches **Severance**. Once results load, clear the query: the example button must no longer appear. If provider/network data prevents results, record that branch Blocked rather than inventing a successful first search.
+3. Inspect the first-results star hint at normal/large text sizes, then dismiss it by starring a result or opening its details; there is no dedicated dismiss button. Relaunch. Search again: the dismissed hint and completed-search example button stay hidden.
+4. On a fixture whose system notification permission is genuinely not determined and whose in-app deferral is fresh, add the first temporary show. Confirm the **Stay in the Loop** prompt follows successful saving. Choose **Not Now**, add another temporary show, and relaunch: automatic prompts must not nag. Use About → Notifications to explicitly enable later; the system request can then appear.
+5. On a separate fresh permission fixture, add a show and choose **Enable Notifications** in the in-app prompt. Verify it leads to the system permission request; exercise allow and deny on separately prepared fixtures as in OC-06. Verify tracking remains usable in either case. Do not assume reinstall resets iOS permission.
+6. With a saved show, relaunch normally and confirm Watchlist opens. Remove every temporary show, completing any Undo/OK window; relaunch with no saved shows and confirm Search opens and Watchlist is empty. Previously dismissed coaching stays dismissed: empty data is not the same as fresh preferences.
+7. Restore text/notification settings. Record build, local-preference state, entitlement state, and permission state separately for every branch.
+
+**Expected:** first-run affordances appear only when eligible, their completed/dismissed state persists, normal launch selects Watchlist for saved shows and Search for an empty list, and permission choices do not prevent saving or cause repeated unsolicited prompts. Notification deep links intentionally override normal launch selection and are tested elsewhere. Fixture preparation that cannot be established remains Blocked.
+
 ### October result sheet
 
 Use a separate copy per candidate. Add rows for N1–N10 and every OS/environment used. Record subscription-plan results in the separate StoreKit documents.
@@ -500,6 +547,7 @@ Use a separate copy per candidate. Add rows for N1–N10 and every OS/environmen
 | OC-15 Review prompt | | | |
 | OC-16 Upgrade/recovery | | | |
 | OC-17 Cleanup/remaining checks | | | |
+| OC-18 Clean first run/empty launch | | | |
 
 ### Controlled verification register — not ordinary manual taps
 
@@ -519,6 +567,7 @@ These are the limits of manual verification, not extra hidden UI features. For e
 
 ### Source and decision references
 
+- [October 26 manual-coverage review dispositions](../Reviews/ManualTestCoverageReview-2026-10-26.md) record how the independent review’s 14 findings were addressed; this is document coverage evidence, not executed test results.
 - [Original feature-area review](../Reviews/2026-10-12-feature-area-review.md), [approved decisions/analysis](../Reviews/2026-10-12-feature-area-review-analysis.md), [R03/R13 matrix](../Reviews/2026-10-12-r03-r13-behavior-matrix.md), [R08/R11 matrix](../Reviews/2026-10-13-r08-r11-behavior-matrix.md).
 - [Entitlement ordering](../Reviews/EntitlementCheckOrderingReview-2026-10-19.md), [notification navigation](../Reviews/NotificationSearchNavigationReview-2026-10-19.md), [Search retry ownership](../Reviews/SearchRetryOwnershipReview-2026-10-19.md), [remaining follow-ups](../Reviews/2026-10-19-follow-ups.md), [known accessibility failure](../Reviews/Known-Test-Failures.md).
 - [Free-tier simulation](FreeTierSimulation.md). Diagnostics labels and behavior checked against the current app implementation on October 19, 2026; the walkthrough, About links and time-zone instructions were rechecked on October 21, 2026. These are instructions, not test results.
@@ -532,8 +581,10 @@ The walkthrough provides broad user-facing regression coverage. Completing it do
 
 - Assign coverage across iOS 18, 26, and 27 and different screen sizes, including both system-design generations. Testers use their existing devices; they should not upgrade/downgrade iOS for this task.
 - Track results against a specific final version/build. After fixes, repeat affected tests and connected flows; broader changes may require another full pass.
-- Assign a clean install on a spare device or controlled test environment, including empty Watchlist, initial launch, and first-run permission allow/deny paths. Separately verify upgrade from earlier TestFlight builds with existing data. Do not risk a tester's only Watchlist.
-- Complete the applicable OC-01–OC-17 cases and N1–N10 with individual outcomes; OC-11 results belong in the separate StoreKit document. Use the controlled verification register to distinguish fixture evidence from manual passes.
+- Assign OC-18 on controlled fresh-preference and permission fixtures, including its separate genuinely Free entitlement branch; a spare device may inherit complimentary Plus through iCloud Keychain. Separately verify upgrade from earlier TestFlight builds with existing data. Do not risk a tester's only Watchlist.
+- Complete the applicable OC-01–OC-18 cases and N1–N10 with individual outcomes; OC-11 results belong in the separate StoreKit document. Use the controlled verification register to distinguish fixture evidence from manual passes.
+- Before App Store submission, complete the [complimentary-build cleanup and archive checks](NextSeason-StoreKit-Manual-Test-Script.md#storekit-release-coordination); never submit the uploaded granting beta build.
+- Compare the candidate’s actual Aptabase event/property whitelist and SDK collection with the published privacy policy and App Store Connect privacy answers. Record the reviewed build, SDK version/configuration, policy URL/date, and submitted answers; resolve discrepancies before submission. Automated-test builds suppress analytics and cannot establish normal-build collection. This is a release review, not a volunteer manual pass. See [Apple App Privacy Details](https://developer.apple.com/app-store/app-privacy-details/).
 - Coordinate separately assigned [StoreKit coverage](NextSeason-StoreKit-Manual-Test-Script.md); retain its own results and release gaps.
 - Test persistence recovery and crash-loop prevention using controlled failure injection, including diagnostics export, readable-Watchlist export, reset consequences, and successful relaunch. Do not ask ordinary testers to corrupt storage or trigger resets.
 - Owner: record actual final unit/UI results for the candidate. Review existing Instruments evidence and its gaps separately; do not restart the deferred physical-device investigation or automatically repeat a profiling battery. Perform upgrade/migration checks with representative earlier stores (OC-16).

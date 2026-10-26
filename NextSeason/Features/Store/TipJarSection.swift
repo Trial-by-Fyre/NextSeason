@@ -3,6 +3,7 @@
 //  NextSeason
 //
 
+import StoreKit
 import SwiftUI
 
 /// Optional consumable tips. Shown to free and Plus users; never unlocks features.
@@ -10,6 +11,8 @@ import SwiftUI
 /// Purchase buttons are created only from products StoreKit actually loaded.
 struct TipJarSection: View {
     @Environment(PurchaseService.self) private var purchases
+    /// Presents StoreKit's confirmation sheet over the screen showing the tips.
+    @Environment(\.purchase) private var purchaseAction
 
     var body: some View {
         Section {
@@ -17,7 +20,11 @@ struct TipJarSection: View {
             case .available:
                 ForEach(purchases.tipProducts) { product in
                     Button {
-                        Task { _ = await purchases.purchase(product) }
+                        Task {
+                            _ = await purchases.purchase(
+                                product,
+                                confirmation: PurchaseConfirmation(action: purchaseAction))
+                        }
                     } label: {
                         LabeledContent {
                             Text(product.displayPrice)

@@ -3,6 +3,7 @@
 //  NextSeason
 //
 
+import StoreKit
 import SwiftUI
 
 /// Paywall / upgrade sheet: monthly and annual subscriptions, and restore.
@@ -13,6 +14,8 @@ import SwiftUI
 struct PlusStoreView: View {
     @Environment(PurchaseService.self) private var purchases
     @Environment(\.dismiss) private var dismiss
+    /// Presents StoreKit's confirmation sheet over this sheet.
+    @Environment(\.purchase) private var purchaseAction
     /// Restore feedback owned by this sheet, so a restore that finishes after the
     /// sheet is dismissed cannot surface its notice anywhere else.
     @State private var restoreNotice: String?
@@ -231,7 +234,8 @@ struct PlusStoreView: View {
 
     /// Starts a StoreKit purchase and dismisses the sheet on `.success`.
     private func purchase(_ product: StoreProduct) async {
-        let outcome = await purchases.purchase(product)
+        let outcome = await purchases.purchase(
+            product, confirmation: PurchaseConfirmation(action: purchaseAction))
         if outcome == .success {
             close(reason: "purchase_success")
         }

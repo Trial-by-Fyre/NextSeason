@@ -26,13 +26,22 @@ final class StoreKitPurchaseStoreClient: PurchaseStoreClient {
 
     func purchase(
         productID: String,
+        confirmation: PurchaseConfirmation?,
         onVerified: @escaping @MainActor (StoreTransaction) async -> Void
     ) async throws -> PurchaseOutcome {
         guard let product = productsByID[productID] else {
             throw PurchaseError.productUnavailable
         }
 
-        let result = try await product.purchase()
+        let result: Product.PurchaseResult
+        if let confirmation {
+            result = try await confirmation.purchase(product)
+        } else {
+            // Every purchase button supplies its view's action; this fallback lets
+            // StoreKit choose the scene and is logged so a missed caller is visible.
+            AppDiagnosticsLogger.breadcrumb("purchase_without_confirmation_context")
+            result = try await product.purchase()
+        }
         switch result {
         case .success(let verification):
             let transaction = try checkVerified(verification)

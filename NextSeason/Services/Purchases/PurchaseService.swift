@@ -381,7 +381,10 @@ final class PurchaseService {
     /// Simulation ends only after a successful verified Plus purchase, or later
     /// when a pending purchase completes through a matching transaction update.
     /// A Plus `.success` that leaves the watchlist limited is returned as `.failed`.
-    func purchase(_ product: StoreProduct) async -> PurchaseOutcome {
+    /// Views pass their `PurchaseConfirmation` so StoreKit's sheet appears over them.
+    func purchase(
+        _ product: StoreProduct, confirmation: PurchaseConfirmation? = nil
+    ) async -> PurchaseOutcome {
         guard !isPurchasing else {
             AppDiagnosticsLogger.breadcrumb("purchase_ignored_in_flight")
             return .pending
@@ -398,7 +401,9 @@ final class PurchaseService {
         let simulationSession = isSimulatingFreeTier ? simulationSessionID : nil
         var verifiedSubscriptionPurchase = false
         do {
-            let outcome = try await store.purchase(productID: product.productID) {
+            let outcome = try await store.purchase(
+                productID: product.productID, confirmation: confirmation
+            ) {
                 [weak self] transaction in
                 if transaction.productID == product.productID,
                     transaction.isCustomerPurchase,

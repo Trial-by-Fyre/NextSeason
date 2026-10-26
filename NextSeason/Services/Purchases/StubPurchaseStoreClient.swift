@@ -85,6 +85,7 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
 
     func purchase(
         productID: String,
+        confirmation: PurchaseConfirmation?,
         onVerified: @escaping @MainActor (StoreTransaction) async -> Void
     ) async throws -> PurchaseOutcome {
         guard products.contains(where: { $0.productID == productID }) else {

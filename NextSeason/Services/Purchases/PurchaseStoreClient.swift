@@ -15,8 +15,11 @@ protocol PurchaseStoreClient: AnyObject {
     func loadProducts(ids: [String]) async throws -> [StoreProduct]
     /// Runs the StoreKit purchase flow. Calls `onVerified` with a checked
     /// transaction before finishing it so entitlements can update first.
+    /// `confirmation` presents StoreKit's sheet from the calling view; test
+    /// doubles ignore it.
     func purchase(
         productID: String,
+        confirmation: PurchaseConfirmation?,
         onVerified: @escaping @MainActor (StoreTransaction) async -> Void
     ) async throws -> PurchaseOutcome
     /// Whether an active, non-revoked monthly or annual subscription entitlement

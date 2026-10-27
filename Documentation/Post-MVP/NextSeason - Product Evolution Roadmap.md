@@ -13,6 +13,9 @@ This document captures enhancements planned after the initial App Store release.
 
 ## Watchlist Management
 
+- **Proposal — paused-show upgrade entry point:** Consider opening the Plus paywall when a user taps a paused Watchlist row. Before implementation, confirm whether successful purchase/restore should then open that show’s details; cancellation should leave the saved show intact. Captured from October 23 discussions; scheduling and design are not yet approved. See [suggestion audit S-01](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
+- **Idea for evaluation — Free-tier usage indicator:** Consider a “Tracking N of 3 free shows” line counting active shows, including those in collapsed sections, while excluding paused shows. Evaluate separately from collapsed-header styling; no design is approved. See [suggestion audit S-02](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
+
 - User-selectable sorting.
 - Support marking which shows the user has fully caught up on.
 - **Deferred — post-v1.0 usability:** Consider making collapsed Watchlist section counts more noticeable, e.g. a subtle count capsule beside “Airing Now”, after a show in a collapsed section was overlooked. The existing header count is correct; preserve collapsed state without auto-expanding sections. This is not a v1.0 blocker.
@@ -149,6 +152,10 @@ Implementation principles:
 - Preserve user privacy by performing generation on-device whenever possible.
 
 ## Continuous Improvement
+
+- **Design review proposal — About color consistency:** Review the About page’s text, icons, links, and status colors, especially in Dark Mode, where the assignments can feel arbitrary. Establish a consistent visual hierarchy and meaningful use of color while preserving contrast, accessible status distinctions, and Light Mode readability. No replacement palette is approved. See [suggestion audit S-04](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
+- **Low-priority cleanup proposal:** Use a structured Search failure/retry kind rather than comparing localized error text to decide whether Try Again is available. Preserve restart-only mapping-bootstrap guidance and ordinary retry behavior. See [suggestion audit S-03](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
+- Consult the [recent discussion suggestion audit](../Reviews/DiscussionSuggestionAudit-2026-10-26.md) for existing technical follow-ups saved in review notes, alternatives that were not selected, and the unresolved blocked-add retry correctness concern. Those entries retain their original status; this index does not defer unresolved defects or approve implementation.
 
 - Refine the user experience based on App Store reviews and user feedback.
 - Continue improving accessibility.

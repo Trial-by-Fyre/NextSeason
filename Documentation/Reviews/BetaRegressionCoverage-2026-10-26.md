@@ -2,7 +2,7 @@
 
 ## Purpose and evidence status
 
-The owner requested one general manual walkthrough, not a growing manual reproduction for every fixed glitch. The beta guide/checklist now merge the October pass into feature checks. This document is an engineering coverage index, **not another manual test list**. Existing review histories remain unchanged.
+The owner requested one general manual walkthrough, not a growing manual reproduction for every fixed glitch. The beta guide/checklist merge the October pass into feature checks. As of October 27, all AM checks and release coordination live in the [separate developer/QA acceptance document](../Post-MVP/NextSeason-Developer-QA-Acceptance.md), not the volunteer script. This document is an engineering coverage index, **not another manual test list**. Existing review histories remain unchanged.
 
 Risk: medium documentation reorganization. Verification plan: map every OC case to a current feature or separately assigned presentation check, retain controlled verification responsibilities, compare guide/checklist content, and validate links. No app behavior, accepted product policy, release disposition, or test result changes. No unit/UI suites run for this documentation task. The shortened script has not had another independent acceptance review.
 
@@ -18,7 +18,7 @@ Manual testing retains ordinary feature integration, genuine network recovery, l
 | OC-02 retry/new query/clear | Walkthrough 12 recovery | CV-01 holds completions and verifies both success/failure ordering; ordinary manual retry is a smoke check, not a proof of overlap. |
 | OC-03 removal/Undo modes | Walkthrough 6; VoiceOver 14 | CV-02 competing removals, timeout and failed-save permutations. |
 | OC-04 Undo after filling a freed slot | Walkthrough 6 Undo and 9 ordinary capacity/paused behavior | Exact competing add/Undo and restore-as-paused orders belong to CV-02; no requirement to beat a five-second toast manually. |
-| OC-05 tab selection with pending removal | Walkthrough 6, one ordinary real-tap sequence | CV-07 mounted shell/persistence ordering; a real tap remains useful UI evidence. |
+| OC-05 tab selection with pending removal | Removed from the general walkthrough October 27 after owner observed cancellation; see [observation and rule investigation](WatchlistTabRemovalObservation-2026-10-27.md). | Earlier review expected commit, but actual behavior and intended policy need reconciliation. No current manual pass, defect classification, or acceptance inferred. |
 | OC-06 permission choices/settings | Walkthrough 10 plus AM-03 fresh allow/deny/deferral | Prompt-state persistence and disabled-notification decision policy are controlled coverage. |
 | OC-07 Diagnostics actions | AM-01 | CV-09 exact interleavings, scheduling outcomes, capture validity. |
 | OC-08 N1–N10 notification routing | Walkthrough 11 active-show smoke plus AM-02 saved/removed/paused and lifecycle observations | CV-07 latest-request/removal ownership. Ten manually timed combinations are replaced by representative actual-device routes plus controlled regressions; unavailable routes remain gaps. |
@@ -89,3 +89,15 @@ Claude’s owner-supplied read-only review confirmed consolidation coverage, pai
 Date-setting sources checked October 26: [Apple iOS 27 guide](https://support.apple.com/en-ie/guide/iphone/iph65f82af3e/27/ios/27) documents the separate controls; [Apple time-zone support instructions](https://support.apple.com/en-us/101619) describe the single Set Automatically switch and selecting a city under Time Zone. The archived iOS 18 guide could not be retrieved in this session. A general Apple source establishes the alternate instruction path, not a directly observed iOS 18 screen. Prior notes describing only the owner’s separate-switch layout are superseded by this conditional wording.
 
 Document synchronization, local-link/anchor checks and formatting checks passed after these edits. The requested iOS 18 visual check remains an explicit review gap; device test results, release configuration work, the launch-flash investigation and existing accessibility issue remain uncompleted. No changes to app code, tests, grants, settings, or test results were made.
+
+## October 27 — pending-removal tab-switch observation
+
+Removed walkthrough 6.5 and its tab-switch cancellation expectation from both beta formats at the owner’s request. Steps 6.1–6.4 retain ordinary removal/Undo coverage. The [reported cancellation and conflicting earlier expectation](WatchlistTabRemovalObservation-2026-10-27.md) are tracked separately for investigation; no app behavior changed and no timing test was added back. The checklist was regenerated from the current owner-edited guide, preserving the guide’s other edits.
+
+## October 27 — explain the Diagnostics actions
+
+AM-01 now states where each button/result is located and what each tap should do. The two simulation taps establish an undated fictional season, then add a date and request a notification; a separate delayed pipeline action gives the tester time to background the app. Fictional data is isolated from the saved Watchlist. Force Refresh Now instead runs the real service with notifications disabled and records foreground outcome fields; offline cache success is not misreported as failure coverage. Natural background evidence stays separate and opportunistic. Expectations were checked against DiagnosticsView, DiagnosticsSimulations, DiagnosticsSimulatedUpdateRunner, DiagnosticsSimulatedDataProvider and the refresh outcome formatter. This is a wording clarification, not an executed simulation/device test or added timing matrix.
+
+## October 27 — separate developer/QA acceptance from volunteer testing
+
+At the owner’s request, removed all AM procedures and the release-coordinator task list from the volunteer beta pair. Moved those responsibilities to NextSeason-Developer-QA-Acceptance.md and trimmed them to human observations of iOS/device presentation and prepared first-run/upgrade/recovery environments. AM-01 no longer requires manual two-step simulation-state assertions or repeated forced offline refreshes; use automated evidence for the internal logic and reuse ordinary network recovery. AM-02 still distinguishes actual notification destinations/lifecycle evidence, AM-03 fresh system dialogs and AM-04 real upgrade/recovery UI. Existing historical OC/CV mapping remains applicable by ID, now pointing to the separate document. Missing fixtures/results remain gaps, not passed tests or accepted deferrals. Volunteer optional purchases remain in the beta script. StoreKit lifecycle coverage is unchanged. No app code, settings or test results changed; this document separation received consistency/link checks, not another independent behavioral review.

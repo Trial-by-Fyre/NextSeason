@@ -13,6 +13,7 @@ This document captures enhancements planned after the initial App Store release.
 
 ## Watchlist Management
 
+- **Future navigation improvement — close removed-show details:** Reported October 27, 2026: open a saved show’s details in Watchlist, switch to Search, remove the same show there and complete removal, then return to Watchlist; the removed show’s details remain open. After removal commits, returning to Watchlist should show the list instead. Preserve the detail while removal is still undoable; if removal is undone, the detail may remain. Ordinary tab switching should continue to preserve details for shows that are still saved. Not yet implemented or independently reproduced.
 - **Proposal — paused-show upgrade entry point:** Consider opening the Plus paywall when a user taps a paused Watchlist row. Before implementation, confirm whether successful purchase/restore should then open that show’s details; cancellation should leave the saved show intact. Captured from October 23 discussions; scheduling and design are not yet approved. See [suggestion audit S-01](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
 - **Idea for evaluation — Free-tier usage indicator:** Consider a “Tracking N of 3 free shows” line counting active shows, including those in collapsed sections, while excluding paused shows. Evaluate separately from collapsed-header styling; no design is approved. See [suggestion audit S-02](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
 

@@ -259,6 +259,14 @@ These tasks are listed in approximately sequential order.
 
 ### Not Started / Remaining
 
+-   **Pre-release readability fix — paused-show explanation:** The text under
+    “Paused — Plus Required” is too small and light to read easily (reported
+    October 27, 2026). Increase its readable size/weight and contrast while
+    preserving Dynamic Type and the explanation that shows remain saved but
+    are not tracked. Verify readability in Light and Dark Mode at default and
+    larger text sizes, without clipping or overlap. Evidence:
+    [owner screenshot](</Users/janine/Downloads/Screenshot 2026-10-27 at 2.01.55 PM.png>).
+    Status: open; no UI fix or verification completed.
 -   Complete a full regression test.
 -   Test on iOS 27 (current public release).
 -   Test on iOS 26.

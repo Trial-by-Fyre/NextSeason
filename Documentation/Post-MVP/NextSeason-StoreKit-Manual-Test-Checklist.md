@@ -1,23 +1,29 @@
 # NextSeason — StoreKit manual regression and release testing — checklist
 
-Checklist companion to `NextSeason-StoreKit-Manual-Test-Script.md`, synchronized October 26, 2026. Check steps only after performing them and recording outcomes; a check means covered, not necessarily passed. Keep Blocked/Not run steps unchecked. Use a fresh copy per candidate build.
+Checklist companion to `NextSeason-StoreKit-Manual-Test-Script.md`, synchronized October 28, 2026. Check steps after performing them and recording outcomes; checked means covered, not necessarily passed. Use a fresh copy per candidate build.
 
-**Updated October 26, 2026.** Extracted from the beta regression documents and updated with the October 22–23 fixes and current working-copy purchase presentation. This is a plan, not a record of passes. Record the exact installed build; uncommitted working-copy changes are not proof of TestFlight behavior. Use the [plain guide](NextSeason-StoreKit-Manual-Test-Script.md). OC-11 and CV-06 retain their original IDs.
+**Updated October 28, 2026.** These are executable manual checks, not recorded passes. Record the exact installed build; working-copy changes are not proof of TestFlight behavior. Use the [plain guide](NextSeason-StoreKit-Manual-Test-Script.md). Case IDs are retained for existing results; removed controlled cases are tracked in the [engineering coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md).
 
 - [ ] [Recent-fix regression pass](#focused-regression-pass--recent-purchase-fixes)
-- [ ] [Setup and full SK-01–SK-30 coverage](#how-to-use-this-script)
+- [ ] [Setup and broader release checks](#how-to-use-this-script)
 - [ ] [Entitlement ordering — OC-11](#oc-11--entitlement-ordering-in-real-purchaserestore-flows-item-1)
 - [ ] [Results](#result-sheet) and [cleanup](#completion-and-cleanup)
 
-**Audience:** advanced technical testers and developers; this work can be delegated. Janine coordinates release decisions. The volunteer purchase checks live in the [beta regression guide](NextSeason-Beta-Regression-Checklist.md#volunteer-purchase-checks--only-if-assigned) and its matching checklist. Ordinary beta testers do not need this document. Some cases below can be performed manually by a suitably prepared technical tester; cases requiring Xcode or controlled fixtures are identified separately.
+**Audience:** advanced technical testers and developers; this work can be delegated. Janine coordinates release decisions. The volunteer purchase checks live in the [beta regression guide](NextSeason-Beta-Regression-Checklist.md#volunteer-purchase-checks) and its matching checklist. Ordinary beta testers do not need this document. Start with the TestFlight checks; use Xcode only for the explicitly labeled local tests. No custom UI test mode is needed for the steps retained here.
 
-The setup, safeguards, and result sheet below apply to SK-01–SK-30.
+### Choose your testing session
+
+- [ ] **TestFlight on your iPhone:** focused 1, 2, 3A, 5–10 (8B–8D only), plus the additional device cases below. Use the [paid-device setup](#prepare-a-paid-access-test-device) and [sandbox account controls](#sandbox-account-controls). Focused 3B can also run here using the billing-failure switch.
+- [ ] **App launched from Xcode:** focused 4A–4D and local catalog/error/refund checks. Complete [local Xcode setup](#local-xcode-setup), then use the named controls below. This is a separate development run, not your TestFlight installation.
+- [ ] **Engineering evidence:** former 3C, 8A and other forced internal-state requirements live in the [coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md). They are not tasks to attempt or repeatedly mark Blocked here.
+
+Record a result once when focused and SK cases cover the same actions. Use the SK case for its additional branches. Equipment/account prerequisites may still be unavailable; record those as Not run with a reason. Do not invent results for unobserved states.
 
 ## Focused regression pass — recent purchase fixes
 
-Updated October 26, 2026. These cases supplement SK-01–SK-30; they do not replace release coverage. Use the setup below, record the exact candidate build, and run with Simulate Free Tier OFF except section 10. Use **N** only for a new, untracked show and **P** only for an already-saved paused show. For new-add cases, start with A–C active and N absent from the saved list. For lapse/reactivation, separately prepare at least five saved shows, with P among the later saves that pause. These are different starting states; reset them between cases. The full SK cases below use their own A–G fixture, not these N/P labels. Reset purchase state only when needed, after preserving lifecycle evidence.
+Updated October 28, 2026. These focused checks cover recent fixes; the later SK cases supply additional release scenarios. Cases 3C and 8A have moved to the engineering record; remaining IDs are unchanged. Use the setup below, record the exact candidate build, and run with Simulate Free Tier OFF except section 10. Use **N** only for a new, untracked show and **P** only for an already-saved paused show. For new-add cases, start with A–C active and N absent from the saved list. For lapse/reactivation, separately prepare at least five saved shows, with P among the later saves that pause. These are different starting states; reset them between cases. The SK cases below use their own A–G show labels, not these N/P labels. Reset purchase state only when needed, after preserving lifecycle evidence. A purchase reset does not remove saved shows: before another new-add case, remove its previous N (or D in the SK cases) and any extra disposable test shows, completing removal with OK/timeout, so the named new show is untracked and A–C are the three active shows. Never remove valued shows to prepare a case.
 
-For every cold launch/relaunch on a complimentary installation, re-enable Ignore Complimentary Plus and confirm the intended access before continuing. Strict startup checks require a non-complimentary installation as explained under paid-device setup. Fixtures unavailable in TestFlight are Blocked, not failures or passes.
+For every cold launch/relaunch on a complimentary installation, re-enable Ignore Complimentary Plus and confirm the intended access before continuing. Strict startup checks require a non-complimentary installation as explained under paid-device setup. The pending cases in section 4 use Xcode, with the setup below; do them in a separate local session.
 
 ### 1. Purchase presentation — SK-02, SK-04/05
 
@@ -63,7 +69,7 @@ These tests target the first-attempt paywall dismissal bug.
 
 ### 2. Successful purchase — SK-04/05
 
-Run this from both Search and Show Detail using appropriate fresh purchase state.
+Run this from both Search and Show Detail, using a different sandbox account with no purchases or the purchase-history reset in [sandbox account controls](#sandbox-account-controls) between runs. Preserve lifecycle evidence before resetting.
 
 #### 2A. Search
 
@@ -105,35 +111,25 @@ Run this from both Search and Show Detail using appropriate fresh purchase state
 
 #### 3B. Purchase failure
 
-- [ ] Using an available sandbox failure simulation, attempt to buy Plus from N's blocked add.
-- [ ] Verify an appropriate failure message is displayed.
-- [ ] Verify the paywall remains available for retry.
-- [ ] Verify N remains untracked.
-- [ ] Verify the user can dismiss the paywall safely.
+**Setup:** use the [sandbox billing-failure switch](#sandbox-account-controls), or the [Xcode purchase-error control](#local-xcode-setup). Start Free with N untracked and A–C active.
 
-If no reliable failure simulation is available, mark Blocked.
+- [ ] Turn on purchase failure, then attempt to buy Plus from N's blocked add.
+- [ ] Verify an understandable failure message appears and N remains untracked.
+- [ ] Verify the paywall remains usable for retry or cancellation.
+- [ ] Turn failure off and retry successfully; N is added once and Plus becomes active.
 
-#### 3C. Success reported without Plus access
+**Result:** Pass / Fail / Not run; record the environment and any error text.
 
-**Developer-assisted; no manual TestFlight switch exists.** A stale-success fixture makes a purchase report success while leaving Plus inactive. Automated service coverage exists in `NextSeasonTests/PurchaseSuccessWithoutAccessTests.swift` using `reportsStaleSuccess`, but it does not by itself prove the paywall and blocked-add UI steps below. Mark the manual case **Blocked — manual fixture unavailable** unless a developer supplies a UI fixture; record actual automated results separately.
+### 4. Pending purchases — local Xcode / SK-08
 
-- [ ] Simulate a purchase reporting success without Plus entitlement becoming effective.
-- [ ] Verify the paywall stays open.
-- [ ] Verify the app explains that Plus has not been unlocked.
-- [ ] Verify N remains untracked.
-- [ ] Perform a subsequent genuine successful purchase.
-- [ ] Verify Plus unlocks and N is added exactly once.
-
-**Result:** Pass / Fail / Blocked / Not applicable / Not run; record each subcase separately with build, environment and evidence.
-
-### 4. Pending and interrupted purchases — SK-08/09/10
+**Setup for all four cases:** follow [Ask to Buy setup](#ask-to-buy-setup) below. Start each case with Free access, A–C active and N untracked. These controls are built into Xcode; no custom app fixture is required.
 
 #### 4A. Pending transaction completes while paywall remains open
 
 - [ ] Start a blocked add for N.
-- [ ] Use developer-assisted local Xcode Ask to Buy to create a pending purchase. Approval controls are not configured in the current TestFlight workflow; mark Blocked if this fixture is unavailable.
+- [ ] Attempt a Plus purchase and choose **Ask** in Apple’s Ask Permission dialog. In Xcode’s transaction manager, confirm **Pending Ask to Buy** before continuing.
 - [ ] Keep the original paywall open.
-- [ ] Complete or approve the pending transaction.
+- [ ] In Xcode’s transaction manager, select the pending purchase, Control-click it, and choose **Approve**.
 - [ ] Verify Plus becomes active.
 - [ ] Verify the paywall dismisses.
 - [ ] Verify N is automatically added exactly once.
@@ -141,24 +137,37 @@ If no reliable failure simulation is available, mark Blocked.
 #### 4B. Transaction completes after paywall dismissal
 
 - [ ] Start a blocked add for N.
-- [ ] Initiate a pending transaction using the same local Xcode Ask to Buy fixture; mark Blocked if unavailable.
+- [ ] Attempt a Plus purchase, choose **Ask**, and confirm **Pending Ask to Buy** in Xcode’s transaction manager.
 - [ ] Dismiss the paywall, if permitted.
-- [ ] Complete the transaction afterward.
+- [ ] In Xcode’s transaction manager, Control-click the pending purchase and choose **Approve** afterward.
 - [ ] Verify Plus access is recognized.
 - [ ] Verify N is **not automatically added** because the original add was abandoned.
 - [ ] Verify the user can add N normally afterward.
 
 #### 4C. Transaction completes after relaunch
 
+**Open failure:** build 50 granted Plus before approval in the owner’s iOS 27.0 simulator test, while Xcode still showed pending approval. Keep this case failed until resolved; see [diagnostic evidence](../Reviews/StoreKitPendingRelaunch-2026-10-28.md).
+
 - [ ] Start a blocked add for N.
-- [ ] Initiate a pending transaction using the same local Xcode Ask to Buy fixture; mark Blocked if unavailable.
+- [ ] Attempt a Plus purchase, choose **Ask**, and confirm **Pending Ask to Buy** in Xcode’s transaction manager.
 - [ ] Terminate and relaunch NextSeason.
-- [ ] Complete the pending transaction.
+- [ ] In Xcode’s transaction manager, Control-click the pending purchase and choose **Approve**.
 - [ ] Verify Plus access is restored.
 - [ ] Verify the abandoned Add Show operation does not resume.
 - [ ] Verify N remains untracked until explicitly added.
 
-**Expected:** An active pending action completes automatically; an abandoned action never comes back unexpectedly.
+#### 4D. Pending purchase is declined
+
+**Open failure:** owner reported that a new purchase declined in Xcode’s transaction manager was recorded as successful by NextSeason. See the [failure record](../Reviews/StoreKitPendingRelaunch-2026-10-28.md#declined-purchase-reported-as-successful). Cause is not established; keep this case failed until resolved.
+
+- [ ] Save evidence of earlier cases before resetting. Use the Ask to Buy setup to delete local subscription transactions, relaunch, and confirm Free access with A–C active and N untracked. Do not carry a previously approved subscription into this case.
+- [ ] Start N’s blocked add, choose a Plus plan, and choose **Ask** in Apple’s dialog.
+- [ ] Confirm the transaction is **Pending Ask to Buy** in the manager and NextSeason still shows Free access.
+- [ ] In the transaction manager, Control-click that pending transaction and choose **Decline**.
+- [ ] Verify NextSeason does not report a successful purchase, grant Plus, or add N. The app remains usable, and the paywall can be dismissed or used to retry.
+- [ ] Relaunch and verify access remains Free and N remains untracked. Re-enable Ignore Complimentary Plus only if the test installation has a stored grant; leave Simulate Free Tier OFF.
+
+**Expected:** An active pending action completes automatically only after approval; an abandoned action never comes back unexpectedly. Declining grants no Plus access and produces no purchase-success result.
 
 **Result:** Pass / Fail / Blocked / Not applicable / Not run; record each subcase separately with build, environment and evidence.
 
@@ -209,41 +218,34 @@ If no reliable failure simulation is available, mark Blocked.
 
 #### 7B. Blocked add for an already-saved paused show
 
-Run through Search and Show Detail, using suitable Free-tier test state.
+Run through Search and Show Detail. Use the expired state from section 5: three active shows and P already saved but paused.
 
 - [ ] Start with an already-saved paused show P.
 - [ ] Find P through Search or its available detail/add entry point.
 - [ ] Attempt to add or reactivate P.
 - [ ] Verify the Plus paywall opens.
-- [ ] Purchase Plus or successfully restore existing Plus access.
+- [ ] Purchase Plus. The separate restore-during-blocked-add requirement is retained in the engineering record.
 - [ ] Verify P remains tracked.
 - [ ] Verify no duplicate is created.
 - [ ] Verify P is not removed.
 - [ ] Verify no inappropriate Undo toast appears.
 - [ ] Verify P becomes active and accessible.
 
-- [ ] Repeat for the other entry point.
+- [ ] Let the sandbox subscription expire again as in section 5, confirm P is paused with three active shows, then repeat for the other entry point.
 
 **Expected:** Reactivation does not accidentally toggle the existing saved show off.
+
+#### 7C. Monthly purchase first attempt for an already-saved show
+
+**Open failure:** owner reports the first Monthly purchase attempt displays **Couldn't Complete Purchase** / “The purchase wasn't completed, so NextSeason Plus wasn't unlocked. Please try again.” It has occurred intermittently elsewhere and appears consistent when purchasing to reactivate an already-saved show; the second attempt succeeds. See [report and screenshot](../Reviews/StoreKitMonthlyFirstAttempt-2026-10-28.md).
+
+Reuse 7B’s starting state and Monthly purchase actions. Record the first attempt separately from any retry, including whether Apple’s sheet appeared and whether Plus/the saved show became active. If retry succeeds, preserve the first-attempt failure; do not mark it passed merely because retry worked. Expected: a valid purchase succeeds on the first attempt and reactivates the saved show once.
 
 **Result:** Pass / Fail / Blocked / Not applicable / Not run; record each subcase separately with build, environment and evidence.
 
 ---
 
 ### 8. Restore Purchases — SK-18
-
-#### 8A. Restore valid Plus during blocked add
-
-- [ ] Arrange for a valid Plus entitlement that NextSeason has not yet recognized.
-- [ ] Start with N untracked and three active shows.
-- [ ] Attempt to add N.
-- [ ] On the paywall, select Restore Purchases.
-- [ ] Verify valid Plus access is recognized.
-- [ ] Verify the paywall dismisses.
-- [ ] Verify N is automatically added exactly once.
-- [ ] Verify the Watchlist remains intact.
-
-If the necessary entitlement state cannot be reproduced, mark Blocked.
 
 #### 8B. No eligible subscription
 
@@ -255,17 +257,19 @@ If the necessary entitlement state cannot be reproduced, mark Blocked.
 - [ ] Verify the user receives understandable feedback.
 - [ ] Verify the paywall remains available.
 
-#### 8C. Failed or offline restoration
+#### 8C. Offline Restore and reconnect
 
-- [ ] Trigger the paywall through N's blocked add.
-- [ ] Disconnect network access.
-- [ ] Tap Restore Purchases.
-- [ ] Verify no crash or indefinite hang occurs.
-- [ ] Verify N remains untracked.
-- [ ] Verify appropriate failure or unavailable feedback.
-- [ ] Restore connectivity.
-- [ ] Retry restoration.
-- [ ] Verify the app recovers normally.
+**Open recovery failure:** after an offline Restore error, the owner restored connectivity, dismissed the error and retried a purchase; the app displayed the purchase-not-unlocked error. Reported as repeatable; see the [8C recovery report and screenshot](../Reviews/StoreKitReconnectPurchaseFailure-2026-10-28.md). Keep this separate from the wording improvement below.
+
+**Open presentation improvement:** the observed alert uses a purchase-specific title and generic restore error. Record clearer restore/network wording as a follow-up; see the [8C report](../Reviews/StoreKitRestoreErrorMessaging-2026-10-28.md). This does not establish the underlying error code.
+
+- [ ] Start Free with N untracked and three active shows; trigger the paywall through N's blocked add.
+- [ ] Turn on Airplane Mode and explicitly turn Wi-Fi off.
+- [ ] Tap Restore Purchases; record the actual result. Cached StoreKit data can allow a successful response, so an error is not required.
+- [ ] Verify no crash or indefinite hang occurs and N remains untracked while there is no active Plus subscription. If an error appears, check that it is understandable and dismissible.
+- [ ] Restore connectivity and retry. Verify controls remain usable and the final access matches the account.
+
+This tests offline behavior and reconnection. Forced restore errors belong to the engineering record; an offline success does not establish that error branch.
 
 #### 8D. Restore after expiration
 
@@ -327,9 +331,9 @@ If the necessary entitlement state cannot be reproduced, mark Blocked.
 
 ### How to use this script
 
-**Full-case fixture scope:** SK-01–SK-30 use A–G added in that order. D is initially new in purchase cases and later saved/paused in lapse cases; establish each case’s stated starting state. Do not carry the focused pass’s N/P assumptions into these cases.
+**Show setup:** the SK cases use A–G added in that order. D is initially new in purchase cases and later saved/paused in lapse cases; establish each case’s stated starting state. Do not carry the focused pass’s N/P assumptions into these cases.
 
-For recent fixes, use the focused regression pass above after completing setup. For broader release coverage, run SK-01–SK-30 in their listed passes. Each case gives its starting state, actions, and expected result. Record **Pass / Fail / Blocked / Not applicable**, the build, and any evidence. “Blocked” means you could not establish the required state; it does not mean the feature passed.
+For recent fixes, use the focused regression pass above after completing setup. For broader manual coverage, run the retained SK cases in their listed passes. SK-28 and the controlled portions of other cases are in the engineering record. Each case gives its starting state, actions, and expected result. Record **Pass / Fail / Blocked / Not applicable**, the build, and any evidence. “Blocked” means you could not establish the required state; it does not mean the feature passed.
 
 Use three passes:
 
@@ -339,7 +343,7 @@ Use three passes:
 
 Repeat monthly and annual purchase/lapse/restoration cases for both plans. Run core purchase, cancel, restore, and paused-row screens with VoiceOver and the largest practical text size on the oldest supported iOS device you have, and on your current iOS device. One device may satisfy both passes when appropriate.
 
-Do not wait for a live TVMaze show to change to test a notification rule. The controlled-data cases near the end require developer assistance; the ordinary app cannot reliably create those situations on demand.
+Do not wait for a live TVMaze change or try to manufacture a timing race. Controlled notification and ordering requirements are in the engineering record; ordinary device notification taps remain below.
 
 ### Record the test setup
 
@@ -378,7 +382,7 @@ For strict genuinely Free cold-launch tests, use a normal non-granting build wit
 
 Check About before testing. For Janine/developer-assisted tests on an installation with complimentary access, open About → Diagnostics → Subscription Testing and turn **Ignore Complimentary Plus ON**, with **Simulate Free Tier OFF**. Wait for access to settle and verify Free when no active subscription exists. Ignore Complimentary Plus hides the stored grant without deleting it; it does not hide a paid subscription.
 
-**Both testing overrides are session-only and reset on app termination. After every cold launch/relaunch on a complimentary installation, re-enable Ignore Complimentary Plus before checking StoreKit-only access.** While it is off during startup, complimentary access may already reactivate paused shows; use a separate non-complimentary installation for strict cold-launch paid-access-loss/ordering evidence. Mark that branch Blocked if unavailable. Do not clear a genuine grant. Deleting the app or switching purchase accounts does not reliably remove its synchronizable Keychain grant. Volunteers should use the restricted setup in the beta regression guide’s volunteer purchase section.
+**Both testing overrides are session-only and reset on app termination. After every cold launch/relaunch on a complimentary installation, re-enable Ignore Complimentary Plus before checking StoreKit-only access.** While it is off during startup, complimentary access may already reactivate paused shows; use a separate non-complimentary installation for strict cold-launch paid-access-loss/ordering evidence. Mark that branch Blocked if unavailable. Do not clear a genuine grant. Deleting the app or switching purchase accounts does not reliably remove its synchronizable Keychain grant. Volunteers use the purchase section in the beta regression guide.
 
 Turn **Simulate Free Tier OFF** for every real StoreKit test. It overrides effective access and intentionally survives restore scans within the session.
 
@@ -386,9 +390,30 @@ Remove UI-testing/profile launch arguments. UI tests use stubs and are not a man
 
 #### Local Xcode setup
 
-In Xcode, choose the normal NextSeason scheme. Open **Product → Scheme → Edit Scheme → Run → Options**, select the existing **NextSeason.storekit** configuration, and run the app. While running, open **Debug → StoreKit → Manage Transactions**. Reset local test transactions when a case calls for fresh purchase history. Use the configuration editor's renewal-rate controls; use a slower rate for offline tests so the paid period does not end during the test. These local purchases do not validate App Store Connect configuration. [Apple setup guidance](https://developer.apple.com/documentation/xcode/setting-up-storekit-testing-in-xcode), [local testing guidance](https://developer.apple.com/documentation/storekit/testing-in-app-purchases-in-xcode).
+Use a simulator or disposable development installation. Local StoreKit transactions do not charge an Apple Account, and do not validate App Store Connect products. Do not replace your only valuable TestFlight installation just to run local checks.
 
-Record and restore any temporary scheme/configuration changes afterward. Keep local tests separate from sandbox transactions.
+- [ ] 1. Open `NextSeason.xcodeproj` in Xcode. Select the normal **NextSeason** scheme and your test simulator/device, not **NextSeason - Final Complimentary Beta**.
+- [ ] 2. Open **Product → Scheme → Edit Scheme → Run → Options**. Record the current **StoreKit Configuration**, then select **NextSeason.storekit**. The existing file is `NextSeason/StoreKit/NextSeason.storekit`; no new configuration file is needed.
+- [ ] 3. Open that file in the Project navigator. Select **Configuration Settings** and keep purchase dialogs enabled. Run the app with Xcode’s Run button.
+- [ ] 4. Open **Debug → StoreKit → Manage Transactions** and select NextSeason on the correct simulator/device. This is where you inspect, approve, decline, delete and refund local purchases.
+- [ ] 5. To start another Free case, first save any evidence, then select and **delete** the local subscription transactions in this manager. Turn off error/interruption options, relaunch, and confirm About settles to **Up to 3 shows**. Deleting local transactions resets purchase state, not the Watchlist. Use Refund only in the refund test. On a complimentary installation, re-enable **Ignore Complimentary Plus** after relaunch; keep **Simulate Free Tier OFF** unless the case explicitly tests it.
+- [ ] 6. For a **purchase error**, select the configuration file → **Configuration Settings** → **Simulated StoreKit Errors**. Enable the **Purchase** API error and choose a network error. Retry the purchase in the app, then disable that error to recover.
+- [ ] 7. For a **catalog error**, use the same error settings for **Load Products** (product loading), then terminate and run the app so no earlier in-memory catalog is reused. Open the Plus sheet, observe its unavailable state, disable the error, and tap Try Again.
+- [ ] 8. When done, disable all errors/Ask to Buy/interruption settings and restore the scheme’s original StoreKit Configuration. Select **None** for a subsequent Xcode sandbox run; local transaction history and sandbox purchase history are separate.
+
+Apple documents these controls in [local setup](https://developer.apple.com/documentation/xcode/setting-up-storekit-testing-in-xcode), the [transaction manager](https://developer.apple.com/documentation/xcode/testing-in-app-purchases-with-storekit-transaction-manager-in-code), and [StoreKit error simulation](https://developer.apple.com/videos/play/wwdc2023/10140/). Setting names can vary slightly by Xcode version; record the actual selected API/error.
+
+#### Ask to Buy setup
+
+For focused 4A–4D and SK-08:
+
+- [ ] 1. Complete local Xcode setup above and establish Free access with three active shows. Leave the show to be added untracked.
+- [ ] 2. Select **NextSeason.storekit** → **Configuration Settings**. Under **Purchase Options**, enable **Ask to Buy**. In older Xcode layouts, the same switch is under **Editor → Enable Ask to Buy** while that file is selected.
+- [ ] 3. Run NextSeason. Attempt Monthly or Annual from the blocked-add paywall. In Apple’s **Ask Permission** dialog choose **Ask**. The transaction manager must show **Pending Ask to Buy**; Plus must still be inactive.
+- [ ] 4. Leave that pending transaction alone while performing the case’s app actions. To complete it, Control-click it in the manager and choose **Approve**; for the decline branch choose **Decline**.
+- [ ] 5. Between cases, delete the local test subscription transactions, relaunch, reapply Ignore Complimentary Plus if needed, and confirm Free. Keep Ask to Buy on for the next pending case; turn it off when these cases are finished.
+
+Do not sign into a child account or configure a real family. This is Apple’s local simulation, separate from TestFlight. See [Apple’s Ask to Buy instructions](https://developer.apple.com/documentation/storekit/testing-ask-to-buy-in-xcode).
 
 #### Real-device sandbox and TestFlight setup
 
@@ -402,7 +427,16 @@ For short monthly lapse tests, the sandbox account’s three-minute monthly rene
 
 Select a manageable renewal rate and note the transaction's expiration. Sandbox settings also allow interrupted purchases and clearing purchase history; clearing that history does not clear the app's watchlist or complimentary Keychain grant. Allow the reset to propagate before starting. [Apple sandbox account settings](https://developer.apple.com/help/app-store-connect/test-in-app-purchases/manage-sandbox-apple-account-settings/).
 
-#### Watchlist fixture
+#### Sandbox account controls
+
+Use only your dedicated Sandbox Apple Account, and preserve ongoing lifecycle evidence before resetting its history.
+
+- [ ] **Fresh purchase state:** switch to a new sandbox test account with no purchases, or use Settings → Developer → Sandbox Apple Account → Manage → **Clear Purchase History**. Wait for clearing to finish, force-quit/relaunch NextSeason, re-enable Ignore Complimentary Plus if needed, and confirm settled Free access. Leave Simulate Free Tier OFF. This does not erase your Watchlist or complimentary grant.
+- [ ] **Failed purchase / failed renewal:** in Settings → Developer → Sandbox Apple Account → Manage → **Account Settings**, turn **Allow Purchases & Renewals OFF**. A new purchase fails; an existing subscription fails at its next renewal. Turn the same switch ON for a successful retry or billing recovery. This affects that sandbox account on all its devices; restore it when finished. [Apple billing controls](https://developer.apple.com/documentation/storekit/testing-failing-subscription-renewals-and-in-app-purchases).
+- [ ] **Interrupted purchase:** in App Store Connect → Users and Access → Sandbox, select the test account, enable **Interrupt Purchases for This Tester**, and Save. Attempt a purchase; leave its requested action unfinished for SK-09, then complete the displayed action or disable that option and retry. [Apple account controls](https://developer.apple.com/help/app-store-connect/test-in-app-purchases/manage-sandbox-apple-account-settings/).
+- [ ] **Cancel renewal / change plan:** on the iPhone, Settings → Developer → Sandbox Apple Account → Manage → **Subscriptions** → **NextSeason Plus**. Cancel Subscription stops future renewals; the existing paid period must actually expire before testing lapse. Select the other available plan for SK-11 and record Apple’s effective date.
+
+#### Watchlist setup
 
 Choose seven available shows. Label them in your notes **A–G**, record their names/TVMaze IDs, and add them in that order when instructed. A, B, C must be the oldest. Prefer shows with stable source data. Record their status and “Updated” times before lapse tests.
 
@@ -423,24 +457,24 @@ Choose seven available shows. Label them in your notes **A–G**, record their n
 
 #### SK-02 — Product catalog, prices, disclosures, and links
 
-**Start:** SK-01 state; online. Run locally, then again in TestFlight.
+**Start:** SK-01 state; online. Run locally, then again in TestFlight; record local prices separately from the real App Store Connect catalog.
 
 - [ ] 1. Inspect Monthly and Annual, their period labels, currency, and price.
 - [ ] 2. Open each Apple purchase sheet and compare its product/period/price with the app; cancel both.
 - [ ] 3. Open Terms of Use and Privacy Policy, then return.
 - [ ] 4. Inspect all three tip options in About.
 
-**Expected:** products match their identifiers and App Store Connect configuration. No lifetime option appears. Subscription disclosure and links are readable; links load the intended pages. Tip copy says tips do not unlock features. No stale error or duplicate sheet appears on return.
+**Expected:** products match their identifiers and the selected environment’s configuration. The TestFlight run, rather than local StoreKit, must agree with App Store Connect. No lifetime option appears. Subscription disclosure and links are readable; links load the intended pages. Tip copy says tips do not unlock features. No stale error or duplicate sheet appears on return.
 
 #### SK-03 — Catalog failure and retry
 
-**Start:** fresh launch without a previously loaded catalog. Local error simulation, or sandbox device offline before launch.
+**Environment:** local Xcode, using the catalog-error setup in [local Xcode setup](#local-xcode-setup), step 7.
 
-- [ ] 1. Open About and the Plus sheet. If necessary use local StoreKit product-loading error controls; turning off internet will not reliably fail local StoreKit.
+- [ ] 1. Enable the Load Products error, terminate/re-run the app, then open About and the Plus sheet. Turning off internet is not this local error setup.
 - [ ] 2. Observe loading and eventual failure.
-- [ ] 3. Restore normal settings/connectivity. Tap Try Again.
+- [ ] 3. Disable the Load Products error. Tap Try Again.
 
-**Expected:** unavailable products are not replaced with invented live prices or enabled purchase buttons. A recoverable unavailable message appears; retries restore the catalog. Existing paid access and saved shows do not disappear because product loading failed. Dismiss remains usable when no purchase is in flight. Record a blocked result if the environment cannot induce failure.
+**Expected:** unavailable products are not replaced with invented live prices or enabled purchase buttons. A recoverable unavailable message appears; retries restore the catalog. Existing paid access and saved shows do not disappear because product loading failed. Dismiss remains usable when no purchase is in flight.
 
 #### SK-04 — Monthly purchase
 
@@ -455,7 +489,7 @@ Choose seven available shows. Label them in your notes **A–G**, record their n
 
 #### SK-05 — Annual purchase
 
-Reset purchase history using the appropriate environment; establish a genuinely free account. Repeat SK-04 with Annual. Confirm the payment sheet uses Annual and its yearly price. Keep one paid fixture for the later lifecycle cases.
+Reset purchase history using the appropriate environment; establish a genuinely free account. Repeat SK-04 with Annual. Confirm the payment sheet uses Annual and its yearly price. Keep one paid test account/installation for the later lifecycle cases.
 
 #### SK-06 — Cancel the purchase sheet
 
@@ -469,7 +503,7 @@ Reset purchase history using the appropriate environment; establish a genuinely 
 
 #### SK-07 — Failed purchase and recovery
 
-**Start:** free. Use Xcode's purchase-failure simulation, or sandbox billing failure settings.
+**Start:** Free. Enable the Purchase API error in [local Xcode setup](#local-xcode-setup), step 6, or turn Allow Purchases & Renewals OFF using [sandbox account controls](#sandbox-account-controls).
 
 - [ ] 1. Attempt Monthly with failure enabled.
 - [ ] 2. Dismiss the error; repeat with Annual and one tip.
@@ -479,20 +513,20 @@ Reset purchase history using the appropriate environment; establish a genuinely 
 
 #### SK-08 — Pending purchase approved, declined, and approved while app is closed
 
-**Environment:** developer-assisted local Xcode; enable Ask to Buy in the configuration editor. This approval/decline fixture is not configured in the current TestFlight workflow. Mark unavailable branches Blocked; sandbox pending initiation does not provide Xcode’s approval controls.
+**Environment:** local Xcode. Follow [Ask to Buy setup](#ask-to-buy-setup), including the transaction reset between runs. Start A–C active and D untracked. These approval controls do not operate on your TestFlight installation.
 
-- [ ] 1. As a free user, attempt Monthly. Leave the transaction Pending Approval in the transaction manager.
+- [ ] 1. With A–C active and D untracked, attempt to add D, choose Monthly on its paywall, then choose **Ask** in Apple’s Ask Permission dialog. Confirm **Pending Ask to Buy** in the transaction manager.
 - [ ] 2. Verify no Plus access yet; the app is navigable after the purchase call returns pending.
 - [ ] 3. Keep the original blocked-add paywall open and approve in the manager. Confirm Unlimited, automatic dismissal, and D added exactly once.
-- [ ] 4. Reset the fixture. Repeat with Annual, but decline the pending transaction. Confirm free access remains.
-- [ ] 5. Reset again. Create a pending blocked add, dismiss the paywall, then approve: Plus unlocks but D stays untracked because the add was abandoned.
-- [ ] 6. Reset again. Create a pending blocked add, close the app, approve it, then relaunch: Plus unlocks but the abandoned add does not resume. Reapply Ignore Complimentary Plus after relaunch if needed.
+- [ ] 4. Delete the local subscription transactions, relaunch, confirm Free and leave D untracked. Repeat with Annual, but decline the pending transaction. Confirm free access remains.
+- [ ] 5. Delete the local subscription transactions, relaunch and confirm Free. Create a pending blocked add, dismiss the paywall, then approve: Plus unlocks but D stays untracked because the add was abandoned.
+- [ ] 6. Delete the local subscription transactions, relaunch and confirm Free. Create a pending blocked add, close the app, approve it, then relaunch: Plus unlocks but the abandoned add does not resume. Reapply Ignore Complimentary Plus after relaunch if needed.
 
 **Expected:** access arrives only after verified completion. Delayed/launch completion is recognized without purchasing twice. Declining grants nothing. Pending is not falsely described as success. There may be no dedicated in-app pending message in the current UI; record the experience separately from entitlement correctness. [Apple Ask to Buy guidance](https://developer.apple.com/documentation/storekit/testing-ask-to-buy-in-xcode).
 
 #### SK-09 — Interrupted purchase
 
-**Environment:** sandbox, with interrupted purchases enabled for this test account.
+**Environment:** sandbox. Follow the **Interrupted purchase** instructions in [sandbox account controls](#sandbox-account-controls) before starting.
 
 - [ ] 1. Start a subscription and follow the interrupted flow without completing the required external action.
 - [ ] 2. Return to NextSeason. Check capacity and ability to navigate.
@@ -502,7 +536,7 @@ Reset purchase history using the appropriate environment; establish a genuinely 
 
 #### SK-10 — Rapid taps and lifecycle interruption
 
-**Start:** free. Run for a subscription and a tip.
+**Environment:** local Xcode, Free access. Run for a subscription and a tip; inspect counts in Debug → StoreKit → Manage Transactions.
 
 - [ ] 1. Tap a purchase button rapidly twice; try another purchase control while Apple's sheet is active.
 - [ ] 2. Cancel. Start again, background NextSeason during the flow, then return.
@@ -524,9 +558,9 @@ Reset purchase history using the appropriate environment; establish a genuinely 
 
 #### SK-12 — Cancel renewal without expiring
 
-**Start:** paid A–G, comfortably before expiration.
+**Environment:** sandbox/TestFlight, paid A–G, comfortably before expiration; use the recorded sandbox renewal rate.
 
-- [ ] 1. Turn off auto-renew using the environment's subscription-management controls. Locally, use a non-renewing test subscription/renewal control; do not use Refund or deleting transactions as a substitute.
+- [ ] 1. Turn off auto-renew using the environment's subscription-management controls. Use Settings → Developer → Sandbox Apple Account → Manage → Subscriptions → NextSeason Plus → Cancel Subscription. Do not use Refund or transaction deletion as a substitute.
 - [ ] 2. Record Apple's entitlement expiration.
 - [ ] 3. Return to NextSeason before that time, relaunch, and add another show.
 
@@ -551,9 +585,9 @@ Repeat expiration while NextSeason stays visible, then switch away and return. R
 
 #### SK-15 — Refund/revocation
 
-**Environment:** local Xcode for controlled refund/revocation; repeat through sandbox controls if available.
+**Environment:** [local Xcode setup](#local-xcode-setup), with Ask to Buy and errors off. This is the local refund test; it is not evidence of a sandbox/App Store refund.
 
-- [ ] 1. Establish paid A–G. Refund/revoke the active subscription transaction using the manager.
+- [ ] 1. Establish paid A–G. Open Debug → StoreKit → Manage Transactions, select the active subscription transaction, and click **Refund**.
 - [ ] 2. Check the running app, then foreground return and relaunch.
 - [ ] 3. Attempt a fourth active addition.
 
@@ -563,31 +597,30 @@ Repeat expiration while NextSeason stays visible, then switch away and return. R
 
 **Environment:** real-device sandbox account. First record whether Billing Grace Period is enabled for sandbox in App Store Connect.
 
-- [ ] 1. Purchase Plus. Enable sandbox renewal billing failure before the next renewal through Settings → Developer → Sandbox Account → Manage → Account Settings.
+- [ ] 1. Purchase Plus with Allow Purchases & Renewals ON. Before the next renewal, turn that switch OFF using [sandbox account controls](#sandbox-account-controls).
 - [ ] 2. When Apple reports a grace state, check About, additions, and all seven shows.
-- [ ] 3. Resolve billing before grace ends and allow renewal. Confirm access remains.
+- [ ] 3. Turn Allow Purchases & Renewals ON before grace ends and allow renewal. Confirm access remains.
 - [ ] 4. On a separate run, let grace end without recovery, or test billing retry without a grace entitlement. Return to the app.
-- [ ] 5. Resolve billing and confirm valid access returns.
+- [ ] 5. Turn Allow Purchases & Renewals ON and confirm valid access returns after Apple completes recovery.
 
 **Expected:** Apple's active/grace entitlement keeps Plus. After no entitled state remains, A–C stay active and extras pause. Recovery resumes all saved rows, with silent catch-up. If grace is not configured, mark the grace-specific branch Not applicable and still test retry/expiration. Do not classify every payment failure as immediate access loss. [Apple billing-test guidance](https://developer.apple.com/documentation/storekit/testing-failing-subscription-renewals-and-in-app-purchases).
 
 #### SK-17 — Resubscribe after lapse and repeated lapse
 
-**Start:** lapsed fixture with three active and extras paused.
+**Start:** use SK-13’s expired subscription, with three active shows and extras paused.
 
 - [ ] 1. Buy Monthly or Annual again. Inspect all saved shows as access returns.
 - [ ] 2. Pull to refresh; relaunch. Record any notifications during reactivation.
 - [ ] 3. Let paid access lapse again.
 
-**Expected:** every saved paused row resumes without duplicates. Catch-up updates old data without announcing changes from the paused interval. A later lapse chooses the three oldest surviving saves again; previous free-period selections are not remembered as a separate preference. Current access-change alerts should not remain after restoration. Controlled-data verification of notification history is SK-27.
+**Expected:** every saved paused row resumes without duplicates. Catch-up updates old data without announcing changes from the paused interval. A later lapse chooses the three oldest surviving saves again; previous free-period selections are not remembered as a separate preference. Current access-change alerts should not remain after restoration. Controlled notification-history verification is in the [engineering record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md); ordinary notification observations do not establish silent catch-up correctness.
 
-#### SK-18 — Restore Purchases: active, inactive, failure, repeated
+#### SK-18 — Restore Purchases: active, inactive, offline, repeated
 
 - [ ] 1. With an active paid account, use Restore Purchases from About; repeat from the Plus sheet if reachable. Relaunch first if needed.
 - [ ] 2. Repeat on a fresh account without purchases and on an expired account.
-- [ ] 3. Induce a restore failure using local error controls or offline real-device testing, then recover and retry.
+- [ ] 3. Use Airplane Mode with Wi-Fi off and tap Restore, noting the actual outcome; cached responses may succeed. Reconnect and retry. Check any observed error for clear feedback, but do not require a failure or claim this proves the forced-error branch.
 - [ ] 4. Tap Restore rapidly twice and repeat a successful restore.
-- [ ] 5. With developer assistance, establish valid Plus that has not yet been recognized, trigger D’s blocked add, and restore on that paywall. Confirm dismissal and D added exactly once. Mark Blocked if automatic detection prevents establishing this state.
 
 **Expected:** valid access is recovered; restore does not purchase or duplicate shows. No-purchase/expired accounts remain free and see a Restore Purchases alert saying no active subscription was found (in the Plus sheet or About, wherever Restore was tapped); no false “Plus restored” claim. Failure gets recoverable feedback and no stuck busy state. Repeating restore is harmless. Automatic entitlement detection may restore access before you tap Restore; record that as automatic detection, not proof that the button changed access.
 
@@ -622,20 +655,19 @@ Repeat expiration while NextSeason stays visible, then switch away and return. R
 
 #### SK-22 — Free slots, paused reactivation, and Undo
 
-**Start:** lapsed A–G.
+**Start:** the expired state from SK-13: A–C active, D–G paused, and H a new untracked show. Use only shows you are willing to remove.
 
-- [ ] 1. Remove active A using its star, but before confirmation try to add H. Undo A's removal.
-- [ ] 2. Confirm removal of A; add paused D through Search/Detail.
-- [ ] 3. Attempt H with three active again.
-- [ ] 4. Repeat using swipe-delete of an active show, followed by adding H and Undo while the toast exists.
-- [ ] 5. With two active shows, tap stars for two different new shows rapidly. Repeat with a slow network, then inspect the saved result after returning to Watchlist.
+- [ ] 1. Remove active A using its Watchlist star, then tap Undo on the removal toast. Confirm A remains active and the saved list is unchanged.
+- [ ] 2. Remove A again and finish with OK or timeout. In the Search tab, find paused D and tap its empty star to reactivate it. Confirm D appears once as active, with B and C still active.
+- [ ] 3. Attempt to add H. Confirm Plus opens, H stays untracked and there are still three active shows. Cancel the paywall.
+- [ ] 4. Swipe-delete one active test show and tap Undo. Confirm it returns once and the active count stays at three.
 
-**Expected:** deferred star removal retains its slot during Undo; a real committed removal frees it. Reactivating D updates its saved row rather than duplicating it. No fourth active row should persist; a blocked addition opens Plus. If the replacement addition completed first, Undo restores the original show as paused, preserving its metadata and leaving the existing active shows unchanged. If Undo won the slot first, the later addition is blocked. Human taps cannot guarantee the precise suspension ordering; SK-28 provides deterministic coverage.
+**Expected:** Undo preserves one saved row; a committed active removal frees one slot. Reactivating a paused show updates its existing row without duplication. The free cap still applies. Exact competing additions/removal/Undo orders are engineering coverage, not a manual timing exercise.
 
 #### SK-23 — Tips for free and paid users
 
 - [ ] 1. As free, purchase Trailer, Pilot, and Hit Show separately. Dismiss each thank-you; buy the same tip again.
-- [ ] 2. Cancel a tip, fail a tip, then retry successfully.
+- [ ] 2. Cancel a tip. Use the Purchase API error (local setup step 6) or sandbox Allow Purchases & Renewals OFF to fail a tip; disable the error/turn the switch ON and retry successfully.
 - [ ] 3. Relaunch and Restore Purchases. Repeat one tip as paid and one as complimentary.
 
 **Expected:** each successful new tip transaction thanks the user once during its handling; purchases are repeatable consumables. Cancel/failure produces no thank-you. Tips never grant Plus, change pause flags, or consume watchlist slots. Restore does not recreate spent tips or retroactively unlock features. Relaunch must not cause a repeated thank-you loop; the app does not promise a persisted receipt/history screen for tips.
@@ -646,10 +678,10 @@ Repeat expiration while NextSeason stays visible, then switch away and return. R
 
 - [ ] 1. Install the normal non-granting build over the existing beta installation.
 - [ ] 2. Relaunch online/offline; check About and add beyond three shows.
-- [ ] 3. If this fixture also has a paid subscription, let that subscription expire or revoke it.
+- [ ] 3. If this installation also has a paid subscription, let that subscription expire or revoke it.
 - [ ] 4. Retry after a normal foreground return. Optionally check a second device with the same iCloud/Keychain setup, allowing sync time.
 
-**Expected:** recognized permanent complimentary access remains Unlimited independently of purchased entitlement. About identifies complimentary access when there is no active paid subscription. A temporary Keychain problem must not revoke already recognized access. Cross-device discovery may depend on Keychain synchronization; it does not synchronize watchlists. A fresh normal installation with no existing grant must not receive a new complimentary entitlement.
+**Expected:** recognized permanent complimentary access remains Unlimited independently of purchased entitlement. About identifies complimentary access when there is no active paid subscription. Forced Keychain-failure retention is tracked in the engineering record; these ordinary launches do not force that error. Cross-device discovery may depend on Keychain synchronization; it does not synchronize watchlists. A fresh normal installation with no existing grant must not receive a new complimentary entitlement.
 
 #### SK-25 — Simulate Free Tier: state, restart, purchase, restore, tips
 
@@ -657,12 +689,12 @@ Repeat expiration while NextSeason stays visible, then switch away and return. R
 
 - [ ] 1. About → Diagnostics → Subscription Testing → enable Simulate Free Tier. Inspect the active notice and simulated capacity in About.
 - [ ] 2. Confirm A–C active, extras paused, normal cap enforced, export includes all saves.
-- [ ] 3. Restore Purchases, purchase a tip, and cancel/fail a Plus purchase; simulation must remain on.
+- [ ] 3. Restore Purchases and purchase a tip; simulation must remain on. For the cancel/failure branches, use the separate local Free state described in step 5, with simulation enabled. Cancel Apple’s sheet, then enable the Purchase API error (local setup step 6) and retry; neither outcome may end simulation. Disable the error afterward. Do not try to buy an already-active plan merely to force a failure.
 - [ ] 4. Disable simulation; confirm all saves resume. Enable it again, then relaunch; session-only simulation ends and valid actual access resumes.
-- [ ] 5. In a fresh local paid-test fixture, make a successful customer Plus purchase started during simulation. It should end simulation after verified active access.
-- [ ] 6. Locally repeat with a pending Plus purchase, approving it later. Verify approval ends the same simulation session. Repeat after toggling simulation off/on before approval; an old session's completion must not turn off the new one.
+- [ ] 5. In a separate local run, delete local subscription transactions using setup step 5 and confirm Free access. Remove D and any extra disposable test shows if saved, completing removal, so A–C remain active and D is untracked. Then enable Simulate Free Tier, attempt D, and purchase Plus. Verified customer purchase success should end simulation and add D once. This run starts Free, so there is no need to buy a second already-active subscription.
+- [ ] 6. Reset the local subscription transactions again, remove disposable D if it was saved, and follow Ask to Buy setup with A–C active and D untracked. Enable simulation while Free, attempt D, choose Ask, and approve in the transaction manager. Confirm simulation ends. Reset transactions, remove disposable D and re-establish A–C active/D untracked again. Repeat, but toggle simulation OFF then ON before approval: that earlier session’s completion must leave the new simulation ON. Turn it OFF afterward.
 
-**Expected:** actual purchased/complimentary entitlement is preserved underneath simulation. Renewals, unrelated transactions, restore, and tips do not end the override. Restart ends it; genuine success from the current simulated purchase can end it. If a currently subscribed account cannot make another customer purchase, use a reset fixture; do not count an automatic renewal as this test. Ordinary free users disabling simulation remain free.
+**Expected:** actual purchased/complimentary entitlement is preserved underneath simulation. Renewals, unrelated transactions, restore, and tips do not end the override. Restart ends it; genuine success from the current simulated purchase can end it. Use the separate Free local runs in steps 5–6 rather than trying to purchase an already-active plan; an automatic renewal does not count. Ordinary free users disabling simulation remain free.
 
 #### SK-26 — Production boundary and user-facing presentation
 
@@ -672,80 +704,46 @@ Check free, paid, complimentary, loading, and unavailable-catalog screens in Voi
 
 #### About Plus status acceptance checks
 
-Use the same build for each state. Restore Purchases stays visible throughout; it is temporarily disabled while a purchase/restore is in progress. Initial loading may finish too quickly to observe visually; record that rather than assuming a mandatory visible delay.
+- [ ] 1. In each prepared Free, paid, complimentary and simulated state, open About. Free shows **Up to 3 shows** and Unlock NextSeason Plus; paid shows **Unlimited** with the paid footer; complimentary-only access shows **Unlimited** with the permanent complimentary footer; simulation explicitly says **Up to 3 shows (simulated)**.
+- [ ] 2. Use Restore Purchases in each reachable state. Confirm controls return to usable state and the final status matches actual access. If paid and complimentary access coexist, the paid footer takes priority.
+- [ ] 3. Check these screens with large text and VoiceOver. The status/footer and Restore control must remain readable and reachable.
 
-| State | Status | Footer / action | Upgrade button |
-|---|---|---|---|
-| First entitlement read loading, no complimentary access | Checking… | Confirming your NextSeason Plus status. | Hidden |
-| First read unverified, no complimentary access | Unable to Verify Plus | Verification-uncertainty guidance below; Restore Purchases available | Hidden |
-| Confirmed free | Up to 3 shows | NextSeason Plus removes the watchlist limit. | Visible |
-| Confirmed paid | Unlimited | You have NextSeason Plus. | Hidden |
-| Complimentary without confirmed paid access | Unlimited | You have permanent complimentary NextSeason Plus. Thank you for beta testing. | Hidden |
-| Simulate Free Tier enabled | Up to 3 shows (simulated) | Simulation guidance and instructions to turn it off in Diagnostics | Hidden during the first StoreKit read; visible after it finishes |
+Loading may finish too quickly to observe; note it only if seen. Do not attempt to force **Unable to Verify Plus** through Airplane Mode. Controlled loading/uncertainty/error transitions are in the [engineering record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md).
 
-- [ ] 1. Cold launch with no complimentary grant. Observe loading if visible, then confirmed paid/free presentation. Check that no stale uncertainty footer or upgrade button remains after the settled answer.
-- [ ] 2. Use a controlled unverified first-read fixture with no complimentary grant. About must display **Unable to Verify Plus**, hide **Unlock NextSeason Plus**, and omit ordinary three-show capacity. Verify the exact footer: “NextSeason couldn't verify your subscription status. Your saved shows are preserved. Check your connection and try Restore Purchases.” Existing saved tracking state must not be paused merely because verification is uncertain. New additions still follow the existing unverified-access limit; this fix does not grant unlimited access.
-- [ ] 3. From that fixture, allow a definitive active answer and use Restore Purchases. About must become Unlimited with the paid footer and no upgrade button. The view must update without reopening About.
-- [ ] 4. Repeat with a definitive inactive answer on refresh/foreground return. About must become Up to 3 shows with the ordinary free footer and upgrade button. A confirmed lapse may now pause extras through the existing access policy; distinguish this from uncertainty.
-- [ ] 5. Repeat Restore Purchases while the entitlement remains unverified. About must stay Unable to Verify Plus with the upgrade button hidden; completing a restore request is not proof of verified paid access. After the request ends, Restore Purchases becomes usable again. Separately test a thrown restore error and recovery.
-- [ ] 6. Repeat loading, unverified, and confirmed-free states with a recognized complimentary grant. About remains Unlimited with the complimentary footer. If both paid and complimentary access are present, the paid footer takes priority.
-- [ ] 7. Enable simulation over paid, complimentary, and unverified states. About uses the explicit simulated presentation; turning simulation off restores the actual presentation. Preserve the existing rule that the simulated upgrade button waits for the first StoreKit read to finish.
-- [ ] 8. With VoiceOver and large text, check the new status/footer are understandable and readable and the Restore Purchases control remains reachable.
+### Additional device checks
 
-A real unverified entitlement can be hard to force. Airplane Mode may produce a cached verified answer instead. If you cannot produce the state on a device, record that portion **Blocked**, and separately record the controlled-fixture/unit-test evidence from `PlusAccountPresentationTests`. Do not record a successful offline launch as proof that the unverified presentation was exercised. The presentation implementation has been reviewed; visual/device acceptance remains to be recorded.
+#### SK-27 — Old notification destinations
 
-### Controlled-data checks — complete with developer assistance
+Use a physical device with visible notification permission and disposable saved shows. This checks delivery/navigation, not production change detection.
 
-These are part of the complete coverage record, but cannot be reliably forced through ordinary shipped-app taps. Do not modify live TVMaze records, use debugger shortcuts that bypass entitlement checks, or treat a fictional notification as production proof.
+- [ ] 1. With at least one active saved show, open About → Diagnostics → **Send Test Notification**. Record the selected show from the outcome text (Lupin if saved, otherwise the most recently added show). Close Diagnostics and go to the Home Screen before the roughly five-second delay ends.
+- [ ] 2. Leave the delivered alert untapped. Remove that show and finish removal with OK/timeout, then tap the retained alert. Confirm Search details open without silently re-adding it. If the provider is unavailable, check for understandable feedback rather than a crash.
+- [ ] 3. On a separate run, create an alert for an active show that will become paused. With Plus and at least four disposable saves, the selected target (Lupin if saved, otherwise the most recently added show) must be outside the three oldest. Use a disposable show set with that ordering; do not remove a valued Lupin just to change the target. Deliver the alert, enable Simulate Free Tier, confirm the target is paused, then tap the retained alert. Expect Watchlist without paused details.
+- [ ] 4. For the closed-app version, first deliver a new alert while the later-saved target is active. Cancel sandbox renewal and wait for actual expiration as in SK-13; confirm the target is paused. Use a non-complimentary test installation, since complimentary access can reactivate shows during startup. Close the app and tap that retained alert; record the destination. Simulation ends at termination and cannot prepare this state. If no such test installation is available, record this equipment-dependent branch Not run.
 
-#### SK-27 — Paused refresh, historical catch-up, and old notification navigation
-
-Have the developer use controlled TVMaze responses on the current code, or run the existing subscription-downgrade suites and record the exact build/results.
-
-Verify:
-
-- [ ] 1. Pause D–G; publish a new status for an active show and a paused show; run the production refresh. Only active shows fetch/update/notify.
-- [ ] 2. Resume Plus after historical changes to paused shows. They get a silent baseline; a genuinely later change notifies once.
-- [ ] 3. Fail catch-up, swipe-delete its marked show, refresh while absent, Undo, then refresh. The original mark survives and historical data remains silent. Delete and add a genuinely new row instead; the old mark must not silence it.
-- [ ] 4. Tap a notification whose show has become paused, both while running and from a cold launch. It lands on Watchlist without paused detail navigation after access reconciliation.
-- [ ] 5. Tap an active show's notification; it opens its detail. Tap one for a removed show; it uses the Search fallback or handles unavailable data without crashing.
-- [ ] 6. Change access/pause state while a show's fetch is suspended. No stale response unpauses the row or announces its history.
-
-For a manual old-notification smoke check, Diagnostics → Send Test Notification chooses Lupin if tracked, otherwise a saved row; record the actual selected show. Deliver the notification while the show is active, leave it untapped, cause real lapse or enable simulation, and then tap it. Repeat from a closed app with real inactive entitlement. The diagnostics notification is fictional and intentionally bypasses production change detection: it tests delivery/routing only. It is not proof that paused shows can or cannot generate production alerts.
-
-#### SK-28 — Deterministic free admission and ordinary soft-alert confirmation
-
-Use the current `WatchlistAdmissionAndDebounceTests.swift` suites, or an equivalent controlled manual fixture, to verify:
-
-- [ ] Two different additions both hold stale counts during detail fetches; first saves, second hits the cap.
-- [ ] Immediate Undo restores an active row while an addition is suspended; addition is rejected when it resumes.
-- [ ] An undated announcement and an ending each use one fixed TVMaze update timestamp: first non-forced refresh waits, second announces, third does not repeat.
-- [ ] A first StoreKit check still loading does not pause saves; an unverified first check preserves saved state without granting unverified unlimited additions; unverified after confirmed paid access preserves that answer; subsequent definitive active/inactive results converge correctly.
-
-The competing-add test now describes detail-fetch suspension accurately; it does not separately guarantee both additions waited for StoreKit. If you want that exact ordering proven, record it as a separate coverage item rather than claiming a human rapid-tap test establishes it.
+**Expected:** active saved alerts open that show’s Watchlist details (reuse beta walkthrough 11); removed targets use Search without re-adding; paused targets remain protected. Restore simulation/settings afterward. Controlled provider changes, catch-up and held fetches are in the engineering record under the same SK-27 ID.
 
 #### SK-29 — Notification permission integration
 
-- [ ] 1. Deny notification permission; check the Watchlist banner and About status.
-- [ ] 2. Use Enable Notifications/Open Settings to enable it. Return and inspect status.
-- [ ] 3. Disable permission after enabling it; return again.
-- [ ] 4. With controlled data, discover a change while permission is disabled, then re-enable.
+Reuse beta walkthrough 10’s actual-device settings-return result on this build. It covers disabling/enabling notifications, About status, the Watchlist banner and continued normal tracking. Do not repeat the same steps solely to fill another result row. Controlled processing of a known provider change while notifications are disabled is in the engineering record.
 
-**Expected:** UI reflects current alert settings on return; normal tracking still works; enablement takes the appropriate permission/Settings path. Changes processed while notifications are disabled are not promised as a replay backlog. About explains that iOS decides background timing. A silent manual pull-to-refresh intentionally updates the list without production alerts.
+#### SK-30 — Sandbox storefront presentation
 
-#### SK-30 — Unverified transaction and storefront edge cases
+- [ ] 1. Record the current sandbox account country/region. In App Store Connect → Users and Access → Sandbox, select your test account, change **Country or Region**, and Save.
+- [ ] 2. Sign out/in again with that Sandbox Apple Account on the test device, then force-quit/relaunch NextSeason. Reapply Ignore Complimentary Plus when needed.
+- [ ] 3. Open the loaded catalog and Apple’s purchase sheet. Compare the newly supplied product, currency, period and price; cancel without purchasing.
+- [ ] 4. Restore the original sandbox country/region and sign in again.
 
-With developer assistance, inject StoreKit verification failure for a purchase and for current entitlements. Distinguish this from a network failure: Airplane Mode does not guarantee an unverified transaction. A failed purchase verification must not grant Plus; current-entitlement uncertainty follows SK-28. If available, also change sandbox storefront and verify newly loaded catalog currency/price agrees with Apple's sheet. No special lifetime, promotional-offer, or Family Sharing flow is implemented by this local product configuration; test those only if explicitly enabled in App Store Connect for release.
+**Expected:** the app agrees with Apple’s sheet for the selected storefront. Do not force a particular currency where Apple’s chosen storefront legitimately uses the same one. No lifetime, promotional-offer or Family Sharing flow is implemented by the current local product configuration. Verification-failure requirements are retained separately in the engineering record. [Apple storefront controls](https://developer.apple.com/help/app-store-connect/test-in-app-purchases/manage-sandbox-apple-account-settings/).
 
 ### Result sheet
 
-For every row, fill outcome, environment, build, and evidence. Use a separate copy of this document for each release candidate. Repeat rows as needed for monthly/annual, device, and environment.
+For each applicable manual row, fill outcome, environment, build, and evidence. Do not repeat overlapping focused/SK checks. The engineering record owns 3C, 8A, SK-28, CV-06 and the moved controlled portions; none needs a Blocked checkbox in this manual result sheet. Use a separate copy of this document for each release candidate. Repeat rows as needed for monthly/annual, device, and environment.
 
 | Case | Outcome | Environment / plan | Evidence / issue |
 |---|---|---|---|
-| Focused 1–10 (record each subcase) | | | |
+| Focused retained cases (3C/8A moved; record each attempted subcase) | | | |
 | OC-11 Entitlement integration | | | |
-| CV-06 Controlled access evidence | | | |
 | SK-01 Free and paywall entries | | | |
 | SK-02 Catalog, price, legal links | | | |
 | SK-03 Catalog failure/retry | | | |
@@ -763,7 +761,7 @@ For every row, fill outcome, environment, build, and evidence. Use a separate co
 | SK-15 Refund/revocation | | | |
 | SK-16 Grace/retry/recovery | | | |
 | SK-17 Resubscribe/repeated lapse | | | |
-| SK-18 Restore matrix | | | |
+| SK-18 Reachable Restore cases | | | |
 | SK-19 Reinstall/second device | | | |
 | SK-20 Paid offline/reconnect | | | |
 | SK-21 Free offline/offline lapse | | | |
@@ -772,10 +770,9 @@ For every row, fill outcome, environment, build, and evidence. Use a separate co
 | SK-24 Complimentary | | | |
 | SK-25 Simulation | | | |
 | SK-26 Production/accessibility | | | |
-| SK-27 Controlled catch-up/routing | | | |
-| SK-28 Admission/soft alerts/uncertainty | | | |
+| SK-27 Device notification destinations | | | |
 | SK-29 Permissions | | | |
-| SK-30 Verification/storefront | | | |
+| SK-30 Sandbox storefront | | | |
 
 #### Failure report template
 
@@ -795,7 +792,7 @@ Does it reproduce after reconnect/relaunch? Does complimentary access affect it?
 
 #### Completion and cleanup
 
-Do not claim StoreKit is fully validated solely from local or simulated passes. Before release, have recorded real-device passes for catalog/purchase on both plans, cancellation versus expiry, restoration, revocation where available, offline/reconnect, and applicable grace/retry behavior. Record unavailable controlled scenarios and any presentation failures explicitly. An unscheduled iOS background refresh is a coverage limitation, not a successful test.
+Do not claim StoreKit is fully validated solely from local or simulated passes. Before release, have recorded real-device passes for catalog/purchase on both plans, cancellation versus expiry, restoration, revocation where available, offline/reconnect, and applicable grace/retry behavior. Keep the separate engineering evidence gaps and any presentation failures explicit. An unscheduled iOS background refresh is a coverage limitation, not a successful test.
 
 Then turn Simulate Free Tier OFF and Ignore Complimentary Plus OFF. Complimentary Plus returns only if a stored grant exists; otherwise access follows StoreKit. Verify saved shows remain intact. Disable local purchase errors, Ask to Buy, interrupted purchases, and billing failures; restore the scheme's original StoreKit setting and the test device's original Media & Purchases account. Keep screenshots/logs and the completed result sheet. Do not clear purchase history on accounts used for ongoing lifecycle tests until their evidence is recorded.
 
@@ -805,25 +802,21 @@ This document does not itself alter repository or App Store Connect settings. It
 
 ### OC-11 — Entitlement ordering in real purchase/restore flows (item #1)
 
-**Environment:** real-device sandbox/TestFlight, normal non-granting build, no complimentary entitlement, simulation off. Repeat relevant purchase branches for Monthly and Annual. Use the full setup and lifecycle expectations in SK-01–SK-30.
+**Environment:** real-device sandbox/TestFlight, normal non-granting build, no complimentary entitlement, simulation off. Repeat relevant purchase branches for Monthly and Annual. Reuse the setup and retained SK lifecycle cases; do not repeat evidence already recorded there. Steps 3 and 5 reference separate local Xcode runs.
 
 - [ ] 1. Cold launch while free, then purchase Plus as the app becomes usable. Briefly switch away/back around purchase completion. Confirm Unlimited, add beyond three, inspect saved active/paused rows, then relaunch.
 - [ ] 2. Repeat with Restore Purchases on a valid paid account, switching away/back while restore is pending. Confirm access and saved rows converge correctly without transient false lapse alerts or a stuck busy state.
-- [ ] 3. Where supported by the chosen test environment, approve a pending customer purchase while the app is running, then while closed; return/relaunch. Keep local Ask to Buy simulation distinct from actual sandbox availability.
+- [ ] 3. Reuse the local SK-08 Ask to Buy observations for delayed completion; record their local environment separately. Do not attempt Xcode approval controls on the TestFlight build.
 - [ ] 4. With actual Plus and more than three saves, exercise a renewal and a genuine lapse/recovery during foreground transitions (SK-11–SK-17). Observe that real active access is not revoked by an older answer and genuine inactivity eventually pauses extras.
-- [ ] 5. In the separate simulation fixture (SK-25), complete a customer Plus purchase or pending approval from that simulation session. Check that active access is applied, the simulation ends and the purchase UI becomes usable. Restore/tips/renewals must not end simulation.
+- [ ] 5. In the separate local Free runs described in SK-25 steps 5–6, complete a customer Plus purchase or pending approval from that simulation session. Check that active access is applied, the simulation ends and the purchase UI becomes usable. Restore/tips/renewals must not end simulation.
 
 **Expected:** no late flip back to free after confirmed active access, no false pause event, no duplicate transaction handling and no permanently enabled simulation after the qualifying successful purchase. Current uncertainty preserves previously confirmed state; it is not automatically a lapse.
 
-**Limits:** UI timing does not prove scans overlapped. Record actual observations and use [CV-06](#controlled-verification-register) for controlled stale answers, cancellation, .unverified and stuck reads. A stalled **newest** read is a known limitation: dependent operations can wait until a later refresh commits or the app restarts. Foregrounding does not currently retry stalled initial resolution, and a stalled transaction handler queues later updates. Do not manufacture a “pass” by treating indefinite loading as normal; if a real stall occurs, capture diagnostics/time/account state and report it. Do not force arbitrary timeout-based entitlement changes.
+**Limits:** UI timing does not prove scans overlapped. Record actual observations and use [CV-06](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md#controlled-verification-register) for controlled stale answers, cancellation, .unverified and stuck reads. A stalled **newest** read is a known limitation: dependent operations can wait until a later refresh commits or the app restarts. Foregrounding does not currently retry stalled initial resolution, and a stalled transaction handler queues later updates. Do not manufacture a “pass” by treating indefinite loading as normal; if a real stall occurs, capture diagnostics/time/account state and report it. Do not force arbitrary timeout-based entitlement changes.
 
 ### Controlled verification register
 
-Record current-candidate automated evidence separately from manual observations; existing test code is not a recorded pass. Unavailable fixtures remain Blocked.
-
-| ID / area | Required controlled scenario and expected result | Existing starting points |
-|---|---|---|
-| CV-06 Access (item #1) | Hold old inactive/active scans and release in reverse order; only newest-request results apply. A newer successful scan releases callers even while an older one remains held. Purchase/update finishing and simulation completion await applied access; restore overlap, cancellation, burst requests, .unverified newest result and complimentary grant preserve their contracts. Record newest-stall recovery limitation without simulating a false inactive entitlement. | PurchaseServiceEntitlementOrderingTests; PurchaseServiceTests; FreeTierSimulationTests; SubscriptionDowngradeTests; EntitlementCheckOrderingReview-2026-10-19.md |
+CV-06 and the other non-manual requirements are maintained in the [engineering coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md#controlled-verification-register), outside this tester checklist. No coverage is passed or waived by moving it.
 
 ### Source and decision references
 
@@ -838,7 +831,7 @@ Record current-candidate automated evidence separately from manual observations;
 - [ ] Follow [Permanent complimentary Plus for beta testers](Complimentary%20Plus%20Beta%20Grant.md): after the final granting beta has been distributed, remove the **NextSeason - Final Complimentary Beta** shared scheme, the **BetaComplimentary** project/target build configurations, and `Config/BetaComplimentary.xcconfig`. Preserve entitlement recognition/persistence and the build guards. These are separately assigned project cleanup actions, not edits performed by following this test document.
 - [ ] Run `python3 Scripts/tests/test-complimentary-plus-build.py` before distribution and again after the approved cleanup; record actual results. Select the normal **NextSeason** scheme and create a new normal **Release** archive for App Store submission. Verify that exact archive/build is selected in App Store Connect; never select the previously uploaded granting beta. A passing TestFlight runtime check does not establish this submission boundary.
 
-- [ ] Use controlled fixtures/test tooling ([SK-27–SK-30](#controlled-data-checks--complete-with-developer-assistance)) to verify qualifying notification events, long titles, duplicate suppression, removed shows, tap behavior, and background refresh. Natural beta use is supplementary evidence.
+- [ ] Review the [engineering coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md) for controlled notification events, catch-up, exact ordering, verification errors and other evidence that ordinary app taps cannot establish. Manual results alone do not close those requirements.
 - [ ] Use [this StoreKit guide](#how-to-use-this-script) and its [result sheet](#result-sheet) to record the detailed coverage below.
 - [ ] Verify monthly and annual purchasing, cancellation, failures, restore, and each of the three tip products with suitable sandbox accounts ([SK-01–SK-19](#pass-1--purchases-catalog-and-transaction-lifecycle), [SK-23](#sk-23--tips-for-free-and-paid-users)). Complimentary beta access must not mask entitlement failures. TestFlight purchasing does not establish production StoreKit correctness; complete applicable production configuration and launch checks separately.
 - [ ] Verify Plus expiration with more than three stored shows ([SK-13–SK-17](#pass-2--losing-and-recovering-paid-access), [SK-22](#sk-22--free-slots-paused-reactivation-and-undo)): preserve all stored shows and their export, and check the specified free-tier behavior. Verify complimentary entitlement persistence using the intended grant and ordinary release configurations.

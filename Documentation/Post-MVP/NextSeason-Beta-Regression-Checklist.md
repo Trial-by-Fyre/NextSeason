@@ -1,20 +1,16 @@
 # NextSeason: beta regression and release testing — checklist
 
-Checklist companion to `NextSeason-Beta-Regression-Test.md`, synchronized October 27, 2026. Check steps only after performing them and recording outcomes; a check means covered, not necessarily passed. Keep Blocked/Not run steps unchecked. Use a fresh copy per candidate build.
+Checklist companion to `NextSeason-Beta-Regression-Test.md`. Check a step after performing it; record Pass, Problem, or Skipped separately. Use a fresh copy per build.
 
-This is the volunteer beta walkthrough, not a record of tests already passed. Use the sections below:
+**Updated October 27, 2026.** A printable/checkable copy is [plain guide](NextSeason-Beta-Regression-Test.md).
 
-- [ ] [Beta tester walkthrough](#beta-tester-walkthrough) — the main 30–45-minute walkthrough and follow-up normal use.
-- [ ] [Optional volunteer purchase checks](#volunteer-purchase-checks--only-if-assigned) — only when assigned; other testers skip them.
-- [ ] [What to record and send](#what-to-record-and-send) — feedback guidance to read before starting.
-
-**Updated October 27, 2026.** Complete the feature walkthrough (1–16) and only the optional purchase checks assigned to you. No separate October or AM pass is required. Developer tools, special test setups and release coordination live in the [developer/QA acceptance document](NextSeason-Developer-QA-Acceptance.md), not in your assignment. A printable/checkable copy is [plain guide](NextSeason-Beta-Regression-Test.md).
+- [ ] [What to record and send](#what-to-record-and-send)
+- [ ] [Beta tester walkthrough](#beta-tester-walkthrough)
+- [ ] [Volunteer purchase checks](#volunteer-purchase-checks)
 
 ## Beta tester walkthrough
 
-Thank you for helping test NextSeason before release! A **regression test** means checking that the app's existing features still work after the latest changes. You don't need technical knowledge: follow the steps below and tell me where the app behaves differently from the expected result.
-
-Plan roughly 30–45 minutes for the main walkthrough, depending on optional branches, plus normal use over the next day or two. This is an estimate, not a measured run time. Perform each flow once; note a result already obtained rather than repeating it under another heading. Assigned volunteers can also complete the purchase checks below; other testers skip that section. Mark each numbered test **Pass**, **Problem**, or **Skipped**. For skipped tests, include the reason. If something goes wrong, keep testing the other areas when possible.
+Allow roughly 30–45 minutes, plus normal use over the next day or two. Perform each flow once. Mark each test **Pass**, **Problem**, or **Skipped**, with a reason for skips. If something goes wrong, continue with other areas when possible.
 
 ## What to record and send
 
@@ -31,8 +27,6 @@ For each problem, include:
 - [ ] Whether it happens again, and approximately when it occurred.
 
 If the app crashes, loses shows, becomes stuck, or unexpectedly asks to reset local data, report that promptly. Do not reset or reinstall before reporting it.
-
-Example: **Test 5 — Problem.** Searching my Watchlist for “Trek” showed no matches even though Star Trek: Enterprise is tracked. Clearing the field brought it back. Happened twice. [Device/iOS/build; screenshot.]
 
 ## Before you start
 
@@ -147,7 +141,7 @@ If simulating the free tier produced paused shows, perform the paused-row checks
 
 ### Paused-row checks
 
-**Start:** Simulate Free Tier is ON, three shows are active and at least one is paused. If this starting state is unavailable, mark this branch Skipped and leave advanced lapse coverage to the StoreKit pass.
+**Start:** Simulate Free Tier is ON, three shows are active and at least one is paused. If this starting state is unavailable, mark this branch Skipped.
 
 - [ ] 1. Confirm the three oldest saved shows stay active and the others appear under **Paused — Plus Required**, with an explanation that they remain saved but are not tracked.
 - [ ] 2. Tap the body of a paused row, avoiding its star. Details must not open from Watchlist.
@@ -226,7 +220,7 @@ Start online with saved shows. For the optional add, Free users need a free slot
 - [ ] 5. If comfortable, briefly enable Increase Contrast, **Show Borders** (called Button Shapes on iOS 18), Reduce Transparency, and Reduce Motion, checking the main screens after changes.
 - [ ] 6. Restore your preferred settings.
 
-**Known issue:** the Severance detail title has an open clipping finding on iPhone 16 / iOS 18.6. If that device is assigned, inspect it during this same appearance pass and record the result; a pass on another model does not close it. See [known failures](../Reviews/Known-Test-Failures.md).
+**Known issue:** the Severance detail title may be clipped on iPhone 16 / iOS 18.6. See [known failures](../Reviews/Known-Test-Failures.md).
 
 **Expected:** Text and controls remain readable and reachable. Important text does not overlap or disappear. Watchlist section headers stay readable. States such as tracked/untracked can be distinguished without relying only on color. Report confusing wording or truncated English text, including on phones using another system language.
 
@@ -253,7 +247,7 @@ Start online with saved shows. For the optional add, Free users need a free slot
 
 ## 16. Time-zone/date check with The Rookie
 
-**Show:** The Rookie, tracked, or another show with a displayed future premiere. When this script was updated on October 27, 2026, TVMaze listed its season 9 premiere as **January 6, 2027** (9 PM Eastern). That date comes from TVMaze and has not been confirmed with the network. If the app shows a different date or none, record what it shows. A different date is not a failure; use the date the app shows as the expected date for this test. If no future premiere is shown, or that premiere has already passed, choose another show with a displayed future premiere and record its name, ID, and date. If none is available, mark this test skipped.
+**Show:** The Rookie, tracked, or another saved show with a displayed future premiere. Use the date the app shows for this test. If choosing another show, record its name, ID, and date. If no future premiere is available, mark this test Skipped.
 
 Use the selected show throughout the following steps, substituting its name for The Rookie if necessary.
 
@@ -267,11 +261,9 @@ If the date doesn't change in the app until you close and reopen it, note that.
 **Expected:** The displayed premiere stays on the same calendar day in both time zones, even if the actual broadcast falls on a different local day in Singapore. Only date formatting may change. **Updated** times are real moments and may display differently. Status calculations use UTC days. Keep the device clock correct, and restore automatic time zone. Use the same displayed provider date across details, Watchlist and the fresh CSV. Notification date wording can be checked when an actual alert is observed; do not wait for a provider change to finish this test.
 
 
-### Volunteer purchase checks — only if assigned
+### Volunteer purchase checks
 
-These checks are for beta testers and need no developer tools. Run them only when Janine assigns purchase testing. Allow about 15 minutes, in the TestFlight build. TestFlight purchases use the sandbox and are not charged.
-
-**Build eligibility:** Janine must identify a normal, non-granting TestFlight build and suitable Free account/install before assigning these checks. A Final Complimentary Beta build grants permanent Plus when eligibility is recognized; recipients cannot establish Free access merely by cancelling a subscription. If all volunteers have complimentary access, record this section Not applicable and obtain purchase evidence through the advanced StoreKit pass. Volunteers should not use Ignore Complimentary Plus or erase their grant.
+Allow about 15 minutes. Use the TestFlight build; purchases are not charged and do not require signing in with a Sandbox Apple Account. If you already have Plus or prefer not to make a test purchase, mark this section Skipped.
 
 **Start:** About shows **Up to 3 shows**, with Simulate Free Tier OFF, and your Watchlist has **exactly three active shows**. Earlier steps may have removed test shows; add untracked test shows such as The Good Place or the long-title show if needed. Existing paused saves do not count toward the active limit. If About shows **Unlimited** because of complimentary beta access, purchases cannot be checked on this device. Mark the checklist **Not applicable** and stop; do not try to remove complimentary access.
 
@@ -284,14 +276,10 @@ These checks are for beta testers and need no developer tools. Run them only whe
 
 **Expected:** Prices come from Apple's sheet and agree with the app. Cancelling grants nothing; purchasing unlocks Plus without Restore. Tips never unlock features. Report the plan you bought, any error text, and the time. Expiration, renewal, refunds, billing problems, and offline purchase cases are covered in the [separate StoreKit guide](NextSeason-StoreKit-Manual-Test-Checklist.md); you do not need to test them.
 
-**Result:** Record Pass / Fail / Blocked / Not applicable for each step, along with the app build, device/iOS, chosen plan, and any error or screenshot.
-
 ---
 
 ## Completion and results
 
-Record one outcome per walkthrough section (1–16), each optional purchase/paused/notification check actually attempted. Use a fresh result copy per build. Record skipped/unavailable branches rather than checking them off, and retain the first evidence of a failure even if a retry succeeds. There is no additional October or developer-test result sheet for volunteers to complete.
+Send your results using the guidance at the top. Record skipped checks and keep the first evidence of a problem even if a retry succeeds.
 
-Restore simulation OFF, network/time-zone/accessibility/notification settings, and any changed test accounts. Remove only test shows you intentionally added; preserve screenshots, CSVs, diagnostics and issue notes. StoreKit results and cleanup belong in its separate documents. No automated or manual test is pre-marked passed here.
-
-For the project owner: [developer/QA acceptance and release coordination](NextSeason-Developer-QA-Acceptance.md) are separate from volunteer testing.
+Restore simulation OFF and any network, time-zone, accessibility, notification, or account settings you changed. Remove only test shows you intentionally added; preserve screenshots, CSVs, and issue notes.

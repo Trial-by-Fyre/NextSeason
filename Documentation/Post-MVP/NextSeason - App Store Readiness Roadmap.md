@@ -42,6 +42,32 @@ Recommended events and properties:
 -   Whether a result was selected
 -   Whether the selected show was already on the watchlist
 
+## Original Broadcast and Regional Availability Clarity (Required Before v1.0)
+
+Status: open; readiness task only. Product changes have not been implemented.
+
+-   Explicitly state that airing status and notifications reflect the original
+    broadcaster / original broadcast schedule, not availability in the user's
+    country or on local or streaming services.
+-   Surface the original broadcaster and its country where known, especially
+    when a show is broadcast outside the user's country. For example, Murdoch
+    Mysteries airing on CBC in Canada must not imply that the same season is
+    already available on US BritBox; use this as a validation scenario, not a
+    permanent availability claim.
+-   Review Watchlist, Show Detail, and notification wording for accurate
+    descriptions of original airing status and schedule. Avoid wording that
+    implies the user can already watch a show locally or on a streaming service.
+-   Use a neutral fallback when the broadcaster's country is unknown, such as
+    “Original broadcast schedule,” without guessing the country or implying
+    local availability.
+-   Keep the original airing logic and notification timing unchanged. This
+    task clarifies presentation; it does not add regional or streaming
+    availability tracking.
+-   Before release, verify wording with a known foreign broadcaster/country,
+    an unknown country, and the CBC Canada / US BritBox example across
+    Watchlist, Show Detail, and notifications. Confirm that airing calculations
+    and notification timing remain unchanged.
+
 ## Watchlist Section Scrolling (Complete)
 
 The watchlist currently uses `List` with `Section`. Native pinned
@@ -126,6 +152,18 @@ reasonably be corrected before release.
 
 Import and restoration from an exported watchlist are not required for
 the initial App Store release; see the Product Evolution Roadmap.
+
+## Restore Purchases Error Wording
+
+Status: open presentation improvement, recorded October 28, 2026 during StoreKit 8C; not implemented.
+
+-   Use “Couldn't Restore Purchases” for restore failures instead of “Couldn't
+    Complete Purchase.”
+-   For an identified network failure, explain: “Couldn't restore purchases.
+    Check your internet connection and try again.” Keep the generic retry
+    message for unknown/other failures; do not assume every failure is offline.
+-   Preserve cancellation, entitlement and retry behavior. See the
+    [8C observation and screenshot](../Reviews/StoreKitRestoreErrorMessaging-2026-10-28.md).
 
 ## StoreKit (Implementation Complete)
 

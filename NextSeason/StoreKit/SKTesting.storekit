@@ -1,0 +1,176 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "A7C3E91F",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "0.99",
+      "familyShareable" : false,
+      "internalID" : "C92F0A14",
+      "localizations" : [
+        {
+          "description" : "Optional support for NextSeason. Does not unlock features.",
+          "displayName" : "Trailer",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.trialbyfyre.nextseason.tip.trailer",
+      "referenceName" : "Trailer",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "2.99",
+      "familyShareable" : false,
+      "internalID" : "D4E61B08",
+      "localizations" : [
+        {
+          "description" : "Optional support for NextSeason. Does not unlock features.",
+          "displayName" : "Pilot",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.trialbyfyre.nextseason.tip.pilot",
+      "referenceName" : "Pilot",
+      "type" : "Consumable"
+    },
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : false,
+      "internalID" : "E8A73C55",
+      "localizations" : [
+        {
+          "description" : "Optional support for NextSeason. Does not unlock features.",
+          "displayName" : "Hit Show",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.trialbyfyre.nextseason.tip.hitshow",
+      "referenceName" : "Hit Show",
+      "type" : "Consumable"
+    }
+  ],
+  "settings" : {
+    "_askToBuyEnabled" : true,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionBundleGroups" : [
+
+  ],
+  "subscriptionGroups" : [
+    {
+      "id" : "F6B29D40",
+      "localizations" : [
+
+      ],
+      "name" : "NextSeason Plus",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "billingPlans" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "commitmentDisplayPrice" : "9.99",
+              "displayPrice" : "9.99",
+              "internalID" : "BC25F348",
+              "isEnabled" : true
+            }
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "9.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "A0C15E88",
+          "introductoryOffers" : [
+
+          ],
+          "localizations" : [
+            {
+              "description" : "Unlimited watchlist for one year, renews annually.",
+              "displayName" : "NextSeason Plus Annual",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.trialbyfyre.nextseason.plus.annual",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Plus Annual",
+          "subscriptionGroupID" : "F6B29D40",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "billingPlans" : [
+            {
+              "billingPlanType" : "BILLED_UPFRONT",
+              "commitmentDisplayPrice" : "1.99",
+              "displayPrice" : "1.99",
+              "internalID" : "0ADAAE39",
+              "isEnabled" : true
+            }
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "1.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "B1D84E27",
+          "introductoryOffers" : [
+
+          ],
+          "localizations" : [
+            {
+              "description" : "Unlimited watchlist for one month, renews monthly.",
+              "displayName" : "NextSeason Plus Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.trialbyfyre.nextseason.plus.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Plus Monthly",
+          "subscriptionGroupID" : "F6B29D40",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "subscriptionSuiteGroups" : [
+
+  ],
+  "version" : {
+    "major" : 6,
+    "minor" : 3
+  }
+}

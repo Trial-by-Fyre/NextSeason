@@ -64,6 +64,8 @@ Complimentary access does not itself prevent testing first-run coaching. A devel
 
 ## AM-04 — Ordinary update result; recovery checks are developer work
 
+**Build that adds Watchlist broadcaster names:** testers delete and reinstall instead of updating, so there is no supported in-place update result for that candidate. Record AM-04 as not applicable for it rather than reusing an earlier result, and install it fresh on your own phone before AM-01 as well.
+
 - [ ] If beta walkthrough 1 already checked that an update preserved your Watchlist on this candidate, reference that result and the previous/new build numbers if known. **No additional action is needed.** If you have not checked an update yet, record that evidence as missing; do not uninstall/reinstall to imitate an update.
 
 The remaining AM-04 material concerns deliberately damaged data and recovery screens. It is **not a procedure for you to perform**: the earlier version did not supply a safe way to create those states. Their requirements remain in the [developer preparation record](../Reviews/DeveloperQAPreparation-2026-10-29.md). A developer must supply a disposable setup and actual instructions before assigning any manual recovery work.

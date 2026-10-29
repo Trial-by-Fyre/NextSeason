@@ -67,6 +67,14 @@ final class ShowDetailViewModel {
         fullShow.map { NextSeasonCalculator.status(for: $0) }
     }
 
+    /// Next Season text naming the original broadcaster where relevant; shared
+    /// by the visible card and its VoiceOver label.
+    var nextSeasonHeadline: String? {
+        guard let fullShow, let status = nextSeasonStatus else { return nil }
+        return status.detailHeadline(
+            broadcaster: fullShow.network, country: fullShow.networkCountry)
+    }
+
     /// Loads full show details (seasons + next episode) and tracked status.
     /// Tracked status is fetched in parallel with the network request so the
     /// toolbar reflects search-row changes without waiting on TVMaze.

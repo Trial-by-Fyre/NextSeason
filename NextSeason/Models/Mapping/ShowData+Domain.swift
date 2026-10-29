@@ -22,7 +22,10 @@ extension ShowData {
     /// `.distantPast` so refresh comparisons treat the show as never updated
     /// rather than colliding with a real timestamp.
     nonisolated func toDomain() -> Show {
-        Show(
+        // Prefer broadcast network; fall back to streaming webChannel. Name and
+        // country come from the same object so they always describe one broadcaster.
+        let broadcaster = network?.name != nil ? network : webChannel
+        return Show(
             id: id,
             name: name,
             tvMazeURL: url.flatMap(URL.init(string:)),
@@ -32,8 +35,8 @@ extension ShowData {
             status: ShowStatus(rawValue: status),
             premiered: TVMazeDate.dateOnly(premiered),
             ended: TVMazeDate.dateOnly(ended),
-            // Prefer broadcast network; fall back to streaming webChannel.
-            network: network?.name ?? webChannel?.name,
+            network: broadcaster?.name,
+            networkCountry: broadcaster?.country?.name,
             genres: genres ?? [],
             averageRuntime: averageRuntime,
             seasons: (embedded?.seasons ?? []).map { $0.toDomain() },

@@ -15,6 +15,9 @@ nonisolated struct TrackedShow: Identifiable, Sendable, Hashable {
     var posterMediumURL: URL?
     var summaryHTML: String?
     var tvMazeURL: URL?
+    /// TVMaze network or web channel name (`Show.network`), shown on airing and
+    /// scheduled Watchlist rows. Display-only: not part of change detection.
+    var broadcasterName: String?
     var status: ShowStatus
     var nextSeason: NextSeasonStatus
     /// TVMaze's `updated` timestamp for this show; used to skip re-fetch when
@@ -41,6 +44,7 @@ nonisolated struct TrackedShow: Identifiable, Sendable, Hashable {
         posterMediumURL: URL?,
         summaryHTML: String? = nil,
         tvMazeURL: URL? = nil,
+        broadcasterName: String? = nil,
         status: ShowStatus,
         nextSeason: NextSeasonStatus,
         sourceUpdatedAt: Date,
@@ -56,6 +60,7 @@ nonisolated struct TrackedShow: Identifiable, Sendable, Hashable {
         self.posterMediumURL = posterMediumURL
         self.summaryHTML = summaryHTML
         self.tvMazeURL = tvMazeURL
+        self.broadcasterName = broadcasterName
         self.status = status
         self.nextSeason = nextSeason
         self.sourceUpdatedAt = sourceUpdatedAt
@@ -84,6 +89,7 @@ nonisolated struct TrackedShow: Identifiable, Sendable, Hashable {
             posterMediumURL: show.posterMediumURL,
             summaryHTML: show.summaryHTML,
             tvMazeURL: show.tvMazeURL,
+            broadcasterName: show.network,
             status: show.status,
             nextSeason: NextSeasonCalculator.status(for: show, at: at),
             sourceUpdatedAt: show.updatedAt,

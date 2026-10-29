@@ -12,7 +12,8 @@ import SwiftData
 /// a frozen snapshot when a later `NextSeasonSchemaV2.TrackedShowEntity` is
 /// added. Do not edit the nested model in place; add a new schema version.
 /// (Pre-release exception: `isPaused` was added in place before public release
-/// because beta testers start from a fresh database.)
+/// because beta testers start from a fresh database. `broadcasterName` was
+/// added in place under the same exception.)
 ///
 /// SwiftData identifies an entity by `Schema.Entity.name` (see
 /// `Schema.entityName(for:)`). There is no entity-level `originalName` —

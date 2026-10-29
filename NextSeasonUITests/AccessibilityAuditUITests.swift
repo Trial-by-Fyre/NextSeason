@@ -22,7 +22,7 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
             searchIdlePrompt,
             "Search tab should show the idle prompt on launch."
         )
-        auditCurrentScreen("Search idle")
+        auditCurrentScreen("Search idle", allowsUnresolvedEmptyStateDescription: true)
     }
 
     func testSearchResultsPassAccessibilityAudit() {
@@ -66,7 +66,7 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
             timeout: UITestTimeout.extended,
             "Watchlist tab should show the empty state when no shows are tracked."
         )
-        auditCurrentScreen("Watchlist empty")
+        auditCurrentScreen("Watchlist empty", allowsUnresolvedEmptyStateDescription: true)
     }
 
     func testPopulatedWatchlistPassesAccessibilityAudit() {
@@ -98,7 +98,10 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
             watchlistNoResults,
             "A non-matching query should surface the no-matches state."
         )
-        auditCurrentScreen("Watchlist search no results")
+        auditCurrentScreen(
+            "Watchlist search no results",
+            allowsUnresolvedEmptyStateDescription: true
+        )
     }
 
     func testWatchlistSearchMatchPassesAccessibilityAudit() {
@@ -138,9 +141,13 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
     ///
     /// Pass `allowsLegacyUnresolvedWatchlistRowText: true` only for screens
     /// showing a tappable watchlist row; see `isLegacyUnresolvedStyledCopy`.
+    /// Pass `allowsUnresolvedEmptyStateDescription: true` only for screens
+    /// whose sole secondary copy is a `ContentUnavailableView` description;
+    /// see `isUnresolvedEmptyStateDescriptionContrast`.
     private func auditCurrentScreen(
         _ name: String,
-        allowsLegacyUnresolvedWatchlistRowText: Bool = false
+        allowsLegacyUnresolvedWatchlistRowText: Bool = false,
+        allowsUnresolvedEmptyStateDescription: Bool = false
     ) {
         var issueSummaries: [String] = []
 
@@ -148,7 +155,8 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
             try app.performAccessibilityAudit { issue in
                 if self.shouldIgnore(
                     issue,
-                    allowsLegacyUnresolvedWatchlistRowText: allowsLegacyUnresolvedWatchlistRowText
+                    allowsLegacyUnresolvedWatchlistRowText: allowsLegacyUnresolvedWatchlistRowText,
+                    allowsUnresolvedEmptyStateDescription: allowsUnresolvedEmptyStateDescription
                 ) {
                     return true
                 }
@@ -191,7 +199,8 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
     /// element. Remove an entry here when the underlying UI is fixed.
     private func shouldIgnore(
         _ issue: XCUIAccessibilityAuditIssue,
-        allowsLegacyUnresolvedWatchlistRowText: Bool
+        allowsLegacyUnresolvedWatchlistRowText: Bool,
+        allowsUnresolvedEmptyStateDescription: Bool
     ) -> Bool {
         if isSystemSearchClearButton(issue) { return true }
         if isUnlabeledWatchlistSearchChrome(issue) { return true }
@@ -203,7 +212,37 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
         if allowsLegacyUnresolvedWatchlistRowText && isLegacyUnresolvedStyledCopy(issue) {
             return true
         }
+        if allowsUnresolvedEmptyStateDescription
+            && isUnresolvedEmptyStateDescriptionContrast(issue)
+        {
+            return true
+        }
         return false
+    }
+
+    /// Observed on iOS 26.5 (iPhone 17 Pro) and iOS 18.6 (iPhone 16 Pro): the
+    /// `.secondary` description in Search idle, Watchlist empty, and Watchlist
+    /// no-matches reports "Contrast nearly passed" with a nil element, so the
+    /// label match in `isKnownSecondaryContrastNearlyPassed` cannot see it.
+    /// Confirmed on both versions by rendering the Search idle description in
+    /// primary text, which cleared the issue.
+    ///
+    /// Limited to the verified versions: iOS 26.0–26.4 is untested and still
+    /// reports it.
+    /// Limitation: within the opted-in states, any other unresolved
+    /// "nearly passed" contrast issue is also hidden.
+    private func isUnresolvedEmptyStateDescriptionContrast(
+        _ issue: XCUIAccessibilityAuditIssue
+    ) -> Bool {
+        if #available(iOS 26.5, *) {
+            // Verified.
+        } else if #available(iOS 26, *) {
+            return false
+        }
+        guard issue.element == nil else { return false }
+        // Exact type match: an issue that also carries any other flag is reported.
+        return issue.auditType == .contrast
+            && issue.compactDescription.hasPrefix("Contrast nearly passed")
     }
 
     /// iOS 18 only: the pre-Liquid Glass undo toast reports "Contrast failed"

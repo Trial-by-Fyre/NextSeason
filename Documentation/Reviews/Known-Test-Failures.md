@@ -6,6 +6,19 @@ Disposition: open accessibility issue; investigate the layout before adding an a
 During Rxx work: this exact failure in this environment does not block unrelated fixes. Report it as a known failure; investigate any different failure or changed symptom.
 Follow-up: include it in our consolidated testing script.
 
+## testWatchlistSearchNoResultsPassAccessibilityAudit — unresolved Dynamic Type issues on iOS 18
+
+Failure: two “Dynamic Type font sizes are partially unsupported” issues with a nil element and empty label, so no label-based exception can match them. Attachments add nothing beyond the failure message.
+Environment: iPhone 16 Pro / iOS 18.6, October 29, 2026. Passes on iPhone 17 Pro / iOS 26.5. Issue counts varied across runs (2 vs. 3) as unresolved contrast issues came and went.
+Isolation (temporary edits, all reverted; one failing test per run):
+1. Removing the title/description custom styling: still 2 issues.
+2. Hiding the notifications banner: still 2.
+3. Adding `.accessibilityElement(children: .contain)` to the no-matches view: still 2.
+4. Replacing the whole no-matches view with a plain `Text`: 1 remains.
+5. Original view without its description: 1 remains.
+Reading: one issue comes from the no-matches description (independent of its styling); the other comes from outside the view — most likely the active watchlist search UI (search field with text and Cancel), since Watchlist empty with the same tab bar passes. Not proven to be false positives.
+Disposition: open; no audit exception added. Next step: isolate the search UI (for example, audit with the search field inactive) and check whether the description's font actually scales at accessibility sizes on iOS 18.
+
 ## StoreKit 4C — Plus before Ask to Buy approval after relaunch
 
 Manual failure observed by owner on October 28, 2026: NextSeason 1.0 build 50, iPhone 18 Pro Max / iOS 27.0 simulator, local Xcode StoreKit. Free/no complimentary access was confirmed before the purchase; the manager still showed pending approval after relaunch granted Plus. Read-only logs show local StoreKit returning a current entitlement before the app finishes the transaction, alongside an unknown-transaction-state diagnostic. Cause and production applicability remain unresolved. No fix, pass, or release waiver recorded. See [evidence and investigation](StoreKitPendingRelaunch-2026-10-28.md).

@@ -697,3 +697,104 @@ private func isolatedDefaults() -> UserDefaults {
     defaults.removePersistentDomain(forName: suiteName)
     return defaults
 }
+
+// MARK: - Stored broadcaster
+
+extension WatchlistRefreshServiceTests {
+    /// `base` with a different TVMaze broadcaster; every other field unchanged.
+    private func withNetwork(_ base: Show, _ network: String?) -> Show {
+        Show(
+            id: base.id, name: base.name, tvMazeURL: base.tvMazeURL,
+            summaryHTML: base.summaryHTML, posterMediumURL: base.posterMediumURL,
+            posterOriginalURL: base.posterOriginalURL, status: base.status,
+            premiered: base.premiered, ended: base.ended, network: network,
+            genres: base.genres, averageRuntime: base.averageRuntime, seasons: base.seasons,
+            nextEpisode: base.nextEpisode, updatedAt: base.updatedAt)
+    }
+
+    @Test(
+        "Refresh stores the latest broadcaster without notifying",
+        arguments: [String?.some("Apple TV+"), nil]
+    )
+    func refreshUpdatesBroadcasterSilently(_ newNetwork: String?) async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        // Scheduled rows are re-fetched every refresh, even without a TVMaze update.
+        let scheduled = show(extraSeason: season(3, premiere: "2026-09-01"))
+        try await repository.add(scheduled)
+        #expect(try await repository.all()[0].broadcasterName == "Apple TV")
+
+        tvMaze.shows[showID] = withNetwork(scheduled, newNetwork)
+        await makeService(repository: repository, tvMaze: tvMaze, notifications: notifications)
+            .refreshAll()
+
+        let stored = try await repository.all()[0]
+        #expect(tvMaze.fetchedShowIDs == [showID])
+        #expect(stored.broadcasterName == newNetwork)
+        #expect(stored.nextSeason == NextSeasonCalculator.status(for: scheduled, at: fixedNow))
+        #expect(stored.pendingChangeSignature == nil)
+        #expect(notifications.delivered.isEmpty)
+    }
+
+    @Test("A failed fetch keeps the stored broadcaster")
+    func failedFetchKeepsBroadcaster() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        try await repository.add(show(extraSeason: season(3, premiere: "2026-09-01")))
+
+        tvMaze.failingShowIDs = [showID]
+        await makeService(repository: repository, tvMaze: tvMaze, notifications: notifications)
+            .refreshAll()
+
+        #expect(try await repository.all()[0].broadcasterName == "Apple TV")
+    }
+
+    @Test("A skipped unchanged show keeps the stored broadcaster")
+    func skippedShowKeepsBroadcaster() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        // Announced-undated rows are not rechecked when TVMaze reports no update.
+        let announced = show(extraSeason: season(3, premiere: nil))
+        try await repository.add(announced)
+        var tracked = try await repository.all()[0]
+        tracked.sourceUpdatedAt = fixedNow
+        try await repository.updateAfterRefresh(tracked)
+
+        tvMaze.shows[showID] = withNetwork(announced, "Apple TV+")
+        await makeService(repository: repository, tvMaze: tvMaze, notifications: notifications)
+            .refreshAll()
+
+        #expect(tvMaze.fetchedShowIDs.isEmpty)
+        #expect(try await repository.all()[0].broadcasterName == "Apple TV")
+    }
+
+    @Test("A row that becomes scheduled gets its broadcaster in the same write")
+    func statusTransitionFillsBroadcaster() async throws {
+        let repository = InMemoryWatchlistRepository()
+        let tvMaze = MockTVMazeService()
+        let notifications = RecordingNotificationService()
+        // Stored without seasons or broadcaster, so it reads as returning.
+        let stub = Show(
+            id: showID, name: "Severance", tvMazeURL: nil, summaryHTML: nil,
+            posterMediumURL: nil, posterOriginalURL: nil, status: .running, premiered: nil,
+            ended: nil, network: nil, genres: [], averageRuntime: nil, seasons: [],
+            nextEpisode: nil, updatedAt: fixedNow)
+        try await repository.add(stub)
+        #expect(try await repository.all()[0].nextSeason == .returningNoSeasonYet)
+        #expect(try await repository.all()[0].broadcasterName == nil)
+
+        tvMaze.shows[showID] = show(extraSeason: season(3, premiere: "2026-09-01"))
+        await makeService(repository: repository, tvMaze: tvMaze, notifications: notifications)
+            .refreshAll()
+
+        let stored = try await repository.all()[0]
+        let premiere = try #require(TVMazeDate.dateOnly("2026-09-01"))
+        #expect(stored.nextSeason == .scheduled(season: 3, premiere: premiere))
+        #expect(stored.broadcasterName == "Apple TV")
+        let row = ShowRowLabel(tracked: stored)
+        #expect(row.subtitle.hasSuffix(" on Apple TV"))
+    }
+}

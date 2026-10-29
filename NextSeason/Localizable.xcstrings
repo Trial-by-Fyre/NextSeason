@@ -67,6 +67,16 @@
         }
       }
     },
+    "%@ (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ (%2$@)"
+          }
+        }
+      }
+    },
     "%@ (%lld)" : {
       "localizations" : {
         "en" : {
@@ -490,17 +500,6 @@
         }
       }
     },
-    "Delivered for %@: %@" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Delivered for %1$@: %2$@"
-          }
-        }
-      }
-    },
     "Detected" : {
       "localizations" : {
         "en" : {
@@ -684,17 +683,6 @@
     },
     "Dismisses this message" : {
 
-    },
-    "Don't see your show? NextSeason shows TVMaze's top matches only. You may find more on TVMaze.com." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Don't see your show? NextSeason shows TVMaze's top matches only. You may find more on TVMaze.com."
-          }
-        }
-      }
     },
     "Done" : {
       "localizations" : {
@@ -1892,17 +1880,6 @@
     "Search metadata provided by TheTVDB" : {
 
     },
-    "Search on TVMaze.com" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Search on TVMaze.com"
-          }
-        }
-      }
-    },
     "Search TV shows" : {
       "localizations" : {
         "en" : {
@@ -1946,6 +1923,16 @@
         }
       }
     },
+    "Season %lld airing on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Season %1$lld airing on %2$@"
+          }
+        }
+      }
+    },
     "Season %lld announced — date to be confirmed" : {
       "localizations" : {
         "en" : {
@@ -1976,6 +1963,9 @@
         }
       }
     },
+    "Season %lld currently airing" : {
+
+    },
     "Season %lld is now airing." : {
       "localizations" : {
         "en" : {
@@ -1992,6 +1982,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Season %lld premieres %@"
+          }
+        }
+      }
+    },
+    "Season %lld premieres %@ on %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Season %1$lld premieres %2$@ on %3$@"
           }
         }
       }
@@ -2061,17 +2061,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Show detail views"
-          }
-        }
-      }
-    },
-    "Shows version and beta diagnostics" : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Shows version and beta diagnostics"
           }
         }
       }
@@ -2286,17 +2275,6 @@
     "That purchase option is not available right now." : {
 
     },
-    "That show couldn't be found." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "That show couldn't be found."
-          }
-        }
-      }
-    },
     "That show isn't available in NextSeason yet." : {
 
     },
@@ -2417,17 +2395,6 @@
     },
     "Try a more specific title — add a subtitle or the year (for example, “Title: Subtitle” or “Title 2019”)." : {
 
-    },
-    "Try a more specific title instead of a single word — add a subtitle or the year (for example, “Title: Subtitle” or “Title 2019”)." : {
-      "extractionState" : "stale",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Try a more specific title instead of a single word — add a subtitle or the year (for example, “Title: Subtitle” or “Title 2019”)."
-          }
-        }
-      }
     },
     "Try Again" : {
       "localizations" : {

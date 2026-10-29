@@ -38,6 +38,7 @@ struct NextSeasonSchemaTests {
         #expect(entity != nil)
         #expect(
             entity?.attributesByName.keys.sorted() == [
+                "broadcasterName",
                 "dateAdded",
                 "isPaused",
                 "isStale",
@@ -129,6 +130,7 @@ struct NextSeasonSchemaTests {
                 string: "https://static.tvmaze.com/uploads/images/medium_portrait/1/1.jpg"),
             summaryHTML: "<p>A workplace thriller.</p>",
             tvMazeURL: URL(string: "https://www.tvmaze.com/shows/44933/severance"),
+            broadcasterName: "Apple TV",
             status: .unknown("Pilot"),
             nextSeason: .scheduled(
                 season: 3,
@@ -154,6 +156,7 @@ struct NextSeasonSchemaTests {
         #expect(entity.posterMediumURL == tracked.posterMediumURL, sourceLocation: sourceLocation)
         #expect(entity.summaryHTML == tracked.summaryHTML, sourceLocation: sourceLocation)
         #expect(entity.tvMazeURL == tracked.tvMazeURL, sourceLocation: sourceLocation)
+        #expect(entity.broadcasterName == tracked.broadcasterName, sourceLocation: sourceLocation)
         #expect(
             entity.statusRaw == tracked.status.persistenceRawValue, sourceLocation: sourceLocation)
         let storedNextSeason = try JSONDecoder().decode(

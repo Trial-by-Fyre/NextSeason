@@ -72,7 +72,7 @@ struct ShowRowLabel: View {
         let updated = tracked.lastCheckedAt.formatted(date: .abbreviated, time: .shortened)
         self.init(
             name: tracked.name,
-            subtitle: tracked.nextSeason.headline,
+            subtitle: tracked.nextSeason.watchlistHeadline(broadcaster: tracked.broadcasterName),
             posterURL: tracked.posterMediumURL,
             isStale: tracked.isStale,
             footer: String(localized: "Updated \(updated)")

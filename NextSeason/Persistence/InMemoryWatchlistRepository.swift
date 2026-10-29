@@ -59,6 +59,7 @@ final class InMemoryWatchlistRepository: WatchlistRepository {
         stored.posterMediumURL = tracked.posterMediumURL
         stored.summaryHTML = tracked.summaryHTML
         stored.tvMazeURL = tracked.tvMazeURL
+        stored.broadcasterName = tracked.broadcasterName
         stored.status = tracked.status
         stored.nextSeason = tracked.nextSeason
         stored.sourceUpdatedAt = tracked.sourceUpdatedAt

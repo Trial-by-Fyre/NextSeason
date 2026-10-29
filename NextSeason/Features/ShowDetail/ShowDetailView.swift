@@ -128,11 +128,6 @@ struct ShowDetailView: View {
                 Text(viewModel.displayShow.status.displayLabel)
                     .font(.subheadline)
                     .appSecondaryText()
-                if let network = viewModel.displayShow.network {
-                    Text(network)
-                        .font(.subheadline)
-                        .appSecondaryText()
-                }
                 if !viewModel.displayShow.genres.isEmpty {
                     Text(viewModel.displayShow.genres.genreDisplayLine)
                         .font(.caption)
@@ -161,9 +156,6 @@ struct ShowDetailView: View {
             viewModel.displayShow.name,
             viewModel.displayShow.status.displayLabel,
         ]
-        if let network = viewModel.displayShow.network {
-            parts.append(network)
-        }
         if !viewModel.displayShow.genres.isEmpty {
             parts.append(viewModel.displayShow.genres.genreDisplayLine)
         }
@@ -220,13 +212,15 @@ struct ShowDetailView: View {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             case .loaded:
-                if let status = viewModel.nextSeasonStatus {
+                if let status = viewModel.nextSeasonStatus,
+                    let headline = viewModel.nextSeasonHeadline
+                {
                     HStack(alignment: .top, spacing: AppSpacing.tight) {
                         Image(systemName: status.statusSymbolName)
                             .font(.subheadline)
                             .foregroundStyle(status.emphasisStyle())
                             .accessibilityHidden(true)
-                        Text(status.headline)
+                        Text(headline)
                             .font(.body)
                             .appSecondaryText()
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -265,8 +259,8 @@ struct ShowDetailView: View {
         case .loading:
             return String(localized: "Next Season, Checking next season status")
         case .loaded:
-            if let status = viewModel.nextSeasonStatus {
-                return String(localized: "Next Season, \(status.headline)")
+            if let headline = viewModel.nextSeasonHeadline {
+                return String(localized: "Next Season, \(headline)")
             }
             return String(localized: "Next Season")
         case .failed(let message):

@@ -407,6 +407,7 @@ final class WatchlistRefreshService {
                 tracked.posterMediumURL = show.posterMediumURL
                 tracked.summaryHTML = show.summaryHTML
                 tracked.tvMazeURL = show.tvMazeURL
+                tracked.broadcasterName = show.network
                 tracked.status = show.status
                 tracked.sourceUpdatedAt = show.updatedAt
 

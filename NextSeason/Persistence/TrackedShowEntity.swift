@@ -21,6 +21,8 @@ import SwiftData
 ///
 /// Pre-release exception: `isPaused` was added in place before public release.
 /// Beta testers reinstall with a fresh database, so no migration exists for it.
+/// `broadcasterName` was added in place the same way (TestFlight testers must
+/// delete and reinstall NextSeason for that build).
 /// From the first App Store release onward, the V2 rule above applies.
 ///
 /// The class name stays `TrackedShowEntity` so `Schema.entityName(for:)` remains
@@ -34,6 +36,8 @@ extension NextSeasonSchemaV1 {
         var posterMediumURL: URL?
         var summaryHTML: String?
         var tvMazeURL: URL?
+        /// Optional, so a store written before this attribute existed reads as nil.
+        var broadcasterName: String?
         var statusRaw: String
         var nextSeasonSnapshot: Data
         var sourceUpdatedAt: Date
@@ -53,6 +57,7 @@ extension NextSeasonSchemaV1 {
             self.posterMediumURL = tracked.posterMediumURL
             self.summaryHTML = tracked.summaryHTML
             self.tvMazeURL = tracked.tvMazeURL
+            self.broadcasterName = tracked.broadcasterName
             self.statusRaw = tracked.status.persistenceRawValue
             self.nextSeasonSnapshot = try JSONEncoder().encode(tracked.nextSeason)
             self.sourceUpdatedAt = tracked.sourceUpdatedAt
@@ -77,6 +82,7 @@ extension NextSeasonSchemaV1 {
             posterMediumURL = tracked.posterMediumURL
             summaryHTML = tracked.summaryHTML
             tvMazeURL = tracked.tvMazeURL
+            broadcasterName = tracked.broadcasterName
             statusRaw = tracked.status.persistenceRawValue
             nextSeasonSnapshot = try JSONEncoder().encode(tracked.nextSeason)
             sourceUpdatedAt = tracked.sourceUpdatedAt
@@ -101,6 +107,7 @@ extension NextSeasonSchemaV1 {
                 posterMediumURL: posterMediumURL,
                 summaryHTML: summaryHTML,
                 tvMazeURL: tvMazeURL,
+                broadcasterName: broadcasterName,
                 status: ShowStatus(rawValue: statusRaw),
                 nextSeason: nextSeason,
                 sourceUpdatedAt: sourceUpdatedAt,

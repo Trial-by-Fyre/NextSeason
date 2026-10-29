@@ -21,6 +21,9 @@ nonisolated struct Show: Identifiable, Sendable, Hashable {
     let premiered: Date?
     let ended: Date?
     let network: String?
+    /// Country of the broadcaster in `network`, from TVMaze. A defaulted `var`
+    /// so the memberwise initializer keeps it optional for callers without one.
+    var networkCountry: String? = nil
     let genres: [String]
     let averageRuntime: Int?
     let seasons: [Season]

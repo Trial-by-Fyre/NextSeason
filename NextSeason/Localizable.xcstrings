@@ -1928,7 +1928,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Season %1$lld airing on %2$@"
+            "value" : "Season %1$@ airing on %2$@"
           }
         }
       }
@@ -1991,7 +1991,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Season %1$lld premieres %2$@ on %3$@"
+            "value" : "Season %1$@ premieres %2$@ on %3$@"
           }
         }
       }

@@ -17,11 +17,11 @@ nonisolated enum StatusChangeDetector {
     static func signature(for status: NextSeasonStatus) -> String {
         switch status {
         case .airing(let season):
-            "airing:\(String(season))"
+            "airing:\(season)"
         case .scheduled(let season, let premiere):
-            "scheduled:\(String(season)):\(premiere.timeIntervalSince1970)"
+            "scheduled:\(season):\(premiere.timeIntervalSince1970)"
         case .announcedUndated(let season):
-            "announcedUndated:\(String(season))"
+            "announcedUndated:\(season)"
         case .returningNoSeasonYet:
             "returningNoSeasonYet"
         case .ended:

@@ -144,11 +144,16 @@ Run this from both Search and Show Detail, using a different sandbox account wit
 
 #### 4C. Transaction completes after relaunch
 
-**Open failure:** build 50 granted Plus before approval in the owner’s iOS 27.0 simulator test, while Xcode still showed pending approval. Keep this case failed until resolved; see [diagnostic evidence](../Reviews/StoreKitPendingRelaunch-2026-10-28.md).
+**Original failure:** build 50 granted Plus before approval in the owner’s iOS 27.0 simulator test, while Xcode still showed pending approval; see [diagnostic evidence](../Reviews/StoreKitPendingRelaunch-2026-10-28.md).
+
+**Owner verification, October 30:** the full 4C sequence passed on the candidate before the Claude-review follow-up. Approved-transaction recovery also cleared the unfinished warning while preserving Plus. These results remain recorded.
+
+**Current candidate passed, owner-reported October 30:** after the [purchase-outcome and cancellation corrections](../Reviews/StoreKitXcodePendingGuard-2026-10-30.md#claude-review-follow-up-purchase-outcomes-and-cancellation), the owner confirmed both requested manual checks passed: fresh 4C and a normal Xcode purchase with simulation ending. Setup included deleting the previous test transaction after an already-owned error. This verifies the fresh-purchase path; repurchase after expiration/refund and an active-plan pending switch remain separate history-sensitive cases. The `SKTesting` scheme retains the [diagnostics](../Reviews/StoreKitPendingDiagnostics-2026-10-29.md).
 
 - Start a blocked add for N.
 - Attempt a Plus purchase, choose **Ask**, and confirm **Pending Ask to Buy** in Xcode’s transaction manager.
 - Terminate and relaunch NextSeason.
+- Before approving, verify access remains Free and N remains untracked. If Plus is already active, capture the pending transaction ID/status and the Xcode console before changing the transaction; the case has failed.
 - In Xcode’s transaction manager, Control-click the pending purchase and choose **Approve**.
 - Verify Plus access is restored.
 - Verify the abandoned Add Show operation does not resume.

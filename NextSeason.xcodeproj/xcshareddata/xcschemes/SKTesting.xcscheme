@@ -76,6 +76,12 @@
             ReferencedContainer = "container:NextSeason.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "-StoreKitPendingDiagnostics"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <StoreKitConfigurationFileReference
          identifier = "../../NextSeason/StoreKit/SKTesting.storekit">
       </StoreKitConfigurationFileReference>

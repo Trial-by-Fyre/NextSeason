@@ -53,6 +53,11 @@ final class StubPurchaseStoreClient: PurchaseStoreClient {
     private(set) var startedEntitlementCheckCount = 0
     private(set) var observeTransactionUpdatesCallCount = 0
     private(set) var stopObservingTransactionUpdatesCallCount = 0
+    private(set) var retryDeferredTransactionsCallCount = 0
+
+    func retryDeferredTransactions() async {
+        retryDeferredTransactionsCallCount += 1
+    }
     /// Ordered record of entitlement and observer calls for test assertions.
     private(set) var recordedCalls: [RecordedCall] = []
 

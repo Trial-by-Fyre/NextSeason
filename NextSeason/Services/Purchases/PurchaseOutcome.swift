@@ -7,7 +7,8 @@ import Foundation
 
 /// Result of a StoreKit purchase or restore attempt, mapped for UI handling.
 ///
-/// `.pending` covers Ask to Buy and other deferred completions. `.failed`
+/// `.pending` covers Ask to Buy and other deferred completions, including local
+/// StoreKit processing that still needs a resolved subscription status. `.failed`
 /// carries a localized message suitable for alerts.
 nonisolated enum PurchaseOutcome: Equatable, Sendable {
     case success

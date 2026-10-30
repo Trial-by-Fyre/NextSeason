@@ -1,0 +1,13 @@
+Read-only focused simulator log, October 30, 2026, America/Los_Angeles.
+Owner reports Plus restored on rebuilding/relaunch, but manager still warns unfinished.
+No transaction or UI state changed by the agent.
+
+Timestamp               Ty Process[PID:TID]
+2026-10-30 13:40:19.604 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:lifecycle] app_launch version=1.0 build=50
+2026-10-30 13:40:20.114 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:Analytics] app_launched
+2026-10-30 13:40:22.388 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:lifecycle] breadcrumb storekit_entitlement product=com.trialbyfyre.nextseason.plus.monthly id=7 originalID=7 reason=PURCHASE purchased=2026-10-30T20:26:04Z signed=2026-10-30T20:27:01Z expires=2026-11-30T21:26:04Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+2026-10-30 13:40:22.482 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:lifecycle] breadcrumb storekit_status queriedID=7 count=1
+2026-10-30 13:40:22.484 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:lifecycle] breadcrumb storekit_status queriedID=7 state=1 verified=true product=com.trialbyfyre.nextseason.plus.monthly id=7 originalID=7 reason=PURCHASE purchased=2026-10-30T20:26:04Z signed=2026-10-30T20:27:01Z expires=2026-11-30T21:26:04Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+2026-10-30 13:40:23.072 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:lifecycle] breadcrumb storekit_entitlement product=com.trialbyfyre.nextseason.plus.monthly id=7 originalID=7 reason=PURCHASE purchased=2026-10-30T20:26:04Z signed=2026-10-30T20:27:01Z expires=2026-11-30T21:26:04Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+2026-10-30 13:40:23.111 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:lifecycle] breadcrumb storekit_status queriedID=7 count=1
+2026-10-30 13:40:23.111 Df NextSeason[44568:1d1b5a8] [com.TrialByFyre.NextSeason:lifecycle] breadcrumb storekit_status queriedID=7 state=1 verified=true product=com.trialbyfyre.nextseason.plus.monthly id=7 originalID=7 reason=PURCHASE purchased=2026-10-30T20:26:04Z signed=2026-10-30T20:27:01Z expires=2026-11-30T21:26:04Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED

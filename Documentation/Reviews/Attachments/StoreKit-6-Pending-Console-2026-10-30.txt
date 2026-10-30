@@ -1,0 +1,26 @@
+Selected lines from owner-supplied Xcode console, October 30, 2026.
+Owner reports transaction #6 Pending Approval at capture.
+Selection preserves source order; unrelated launch/network logs omitted.
+
+app_launch version=1.0 build=50
+breadcrumb complimentary_plus_grant_disabled
+breadcrumb storekit_update_before_finish product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb storekit_entitlement product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb storekit_status queriedID=6 count=1
+breadcrumb storekit_status queriedID=6 state=0 verified=true product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb transaction_update product=com.trialbyfyre.nextseason.plus.monthly new=true customerPurchase=true
+breadcrumb storekit_status queriedID=6 count=1
+breadcrumb storekit_status queriedID=6 state=0 verified=true product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb complimentary_plus_grant_disabled
+breadcrumb storekit_entitlement product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb storekit_status queriedID=6 count=1
+breadcrumb storekit_status queriedID=6 state=0 verified=true product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb watchlist_set_paused:false:1
+breadcrumb watchlist_resumed count=1
+breadcrumb storekit_update_before_finish product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb storekit_status queriedID=6 count=1
+breadcrumb storekit_status queriedID=6 state=0 verified=true product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb transaction_update product=com.trialbyfyre.nextseason.plus.monthly new=false customerPurchase=true
+breadcrumb storekit_entitlement product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED
+breadcrumb storekit_status queriedID=6 count=1
+breadcrumb storekit_status queriedID=6 state=0 verified=true product=com.trialbyfyre.nextseason.plus.monthly id=6 originalID=6 reason=PURCHASE purchased=2026-10-30T20:00:17Z signed=2026-10-30T20:01:13Z expires=2026-11-30T21:00:17Z revoked=nil upgraded=false env=Xcode ownership=PURCHASED

@@ -9,12 +9,15 @@ import Foundation
 ///
 /// Verified transactions are delivered to the application through `onVerified`
 /// (or the observer) *before* the client finishes them, so entitlement and tip
-/// acknowledgement can be applied first.
+/// acknowledgement can be applied first. A local purchase joining an observer's
+/// completed delivery may subsequently receive its own completion acknowledgement.
 @MainActor
 protocol PurchaseStoreClient: AnyObject {
     func loadProducts(ids: [String]) async throws -> [StoreProduct]
-    /// Runs the StoreKit purchase flow. Calls `onVerified` with a checked
-    /// transaction before finishing it so entitlements can update first.
+    /// Runs the StoreKit purchase flow. New deliveries call `onVerified` before
+    /// finishing so entitlements update first. A local purchase joining a shared
+    /// observer delivery acknowledges that already processed transaction afterward,
+    /// without another finish. Unresolved local processing returns `.pending`.
     /// `confirmation` presents StoreKit's sheet from the calling view; test
     /// doubles ignore it.
     func purchase(
@@ -28,12 +31,18 @@ protocol PurchaseStoreClient: AnyObject {
     func plusEntitlementStatus() async -> PlusEntitlementStatus
     /// Triggers App Store sync (Restore Purchases); caller re-reads entitlements.
     func restorePurchases() async throws
+    /// Reprocesses unfinished local test transactions after a lifecycle refresh.
+    func retryDeferredTransactions() async
     /// Long-lived listener for `Transaction.updates` (Ask to Buy, renewals, etc.).
     func observeTransactionUpdates(
         _ onVerified: @escaping @MainActor (StoreTransaction) async -> Void
     )
     /// Cancels the updates task; called from `PurchaseService.deinit`.
     func stopObservingTransactionUpdates()
+}
+
+extension PurchaseStoreClient {
+    func retryDeferredTransactions() async {}
 }
 
 /// Result of scanning StoreKit's current entitlements for Plus.

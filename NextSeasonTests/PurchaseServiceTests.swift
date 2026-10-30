@@ -258,6 +258,26 @@ struct PurchaseServiceTests {
         #expect(purchases.thankYouMessage == nil)
     }
 
+    @Test("Deferred local transactions retry on startup, foreground and successful restore only")
+    func deferredTransactionsRetryAtLifecycleBoundaries() async {
+        let store = StubPurchaseStoreClient()
+        let purchases = makePurchases(store: store, initial: .loading)
+        await purchases.start()
+        #expect(store.retryDeferredTransactionsCallCount == 1)
+        await store.emitVerifiedTransaction(
+            StoreTransaction(id: 90, productID: StoreProductID.plusMonthly.rawValue))
+        #expect(
+            store.retryDeferredTransactionsCallCount == 1,
+            "Transaction callbacks must not recurse into retry")
+        await purchases.handleSceneBecameActive()
+        #expect(store.retryDeferredTransactionsCallCount == 2)
+        #expect(await purchases.restorePurchases() == .success)
+        #expect(store.retryDeferredTransactionsCallCount == 3)
+        store.restoreError = PurchaseError.unverified
+        _ = await purchases.restorePurchases()
+        #expect(store.retryDeferredTransactionsCallCount == 3)
+    }
+
     @Test("Pending consumable tip later completing through a transaction update shows thanks")
     func pendingTipCompletesThroughTransactionUpdate() async throws {
         let store = StubPurchaseStoreClient(purchaseOutcome: .pending)

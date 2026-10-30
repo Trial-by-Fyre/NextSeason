@@ -64,6 +64,10 @@ final class PurchaseService {
     /// Only a pending Plus purchase started in this run may complete through updates.
     /// Cleared whenever simulation is toggled; never persisted across launches.
     private var pendingSimulationProductID: String?
+    /// Evidence for an update that completes before the purchase returns pending.
+    /// Written only for a new customer update resolving actual paid access in the
+    /// same simulation run; existing access alone cannot complete a purchase.
+    private var completedCustomerPurchaseUpdates: [String: UUID] = [:]
     private let simulationAvailability: @MainActor () -> Bool
 
     /// Developer/TestFlight eligibility shared by the control and the access override.
@@ -290,6 +294,7 @@ final class PurchaseService {
         startObservingTransactionsIfNeeded()
         await refreshComplimentaryEntitlement()
         await refreshEntitlements()
+        await store.retryDeferredTransactions()
         await loadProducts()
     }
 
@@ -311,6 +316,7 @@ final class PurchaseService {
         await refreshComplimentaryEntitlement()
         guard hasResolvedStoreEntitlement else { return }
         await refreshEntitlements()
+        await store.retryDeferredTransactions()
     }
 
     /// Waits until the first StoreKit entitlement read has completed.
@@ -399,6 +405,7 @@ final class PurchaseService {
         // Capture the run before StoreKit can suspend; a purchase started outside
         // this simulation (or in an earlier run) must not turn it off.
         let simulationSession = isSimulatingFreeTier ? simulationSessionID : nil
+        let priorCompletedUpdate = completedCustomerPurchaseUpdates[product.productID]
         var verifiedSubscriptionPurchase = false
         do {
             let outcome = try await store.purchase(
@@ -444,6 +451,11 @@ final class PurchaseService {
                     let simulationSession, simulationSessionID == simulationSession
                 {
                     pendingSimulationProductID = product.productID
+                    if completedCustomerPurchaseUpdates[product.productID] != priorCompletedUpdate,
+                        isStoreEntitled, !Task.isCancelled
+                    {
+                        setFreeTierSimulation(false)
+                    }
                 }
             case .cancelled:
                 break
@@ -496,6 +508,7 @@ final class PurchaseService {
         do {
             try await store.restorePurchases()
             await refreshEntitlements()
+            await store.retryDeferredTransactions()
             return .success
         } catch is CancellationError {
             return .cancelled
@@ -625,18 +638,19 @@ final class PurchaseService {
         switch transaction.kind {
         case .plusAnnual, .plusMonthly:
             let simulationSession = simulationSessionID
-            let completesPendingSimulation =
-                fromTransactionUpdate && isNew
-                && transaction.isCustomerPurchase
-                && pendingSimulationProductID == transaction.productID
             await refreshEntitlements()
             // Renewals never complete a test purchase, even for the pending product.
             // Re-check the session after awaiting so an old completion cannot disable
             // a simulation the tester restarted while StoreKit was resolving access.
-            if completesPendingSimulation, isStoreEntitled, !Task.isCancelled,
+            if fromTransactionUpdate, isNew, transaction.isCustomerPurchase,
+                isStoreEntitled, !Task.isCancelled,
                 let simulationSession, simulationSessionID == simulationSession
             {
-                setFreeTierSimulation(false)
+                completedCustomerPurchaseUpdates[transaction.productID] = UUID()
+                // Pending may have been registered while the refresh suspended.
+                if pendingSimulationProductID == transaction.productID {
+                    setFreeTierSimulation(false)
+                }
             }
         case .tip:
             if isNew {

@@ -108,7 +108,7 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
         trackPreviewShowAndOpenWatchlist()
         searchWatchlist(for: UITestPreviewShow.name)
         XCTAssertTrue(
-            watchlistRow(named: UITestPreviewShow.name).waitForExistence(
+            watchlistRow(named: UITestPreviewShow.name).waitForExistenceIfNeeded(
                 timeout: UITestTimeout.standard
             ),
             "A matching query should keep the tracked show visible."
@@ -153,14 +153,16 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
 
         do {
             try app.performAccessibilityAudit { issue in
+                let elementText = AuditIssueElementText(issue.element)
                 if self.shouldIgnore(
                     issue,
+                    elementText: elementText,
                     allowsLegacyUnresolvedWatchlistRowText: allowsLegacyUnresolvedWatchlistRowText,
                     allowsUnresolvedEmptyStateDescription: allowsUnresolvedEmptyStateDescription
                 ) {
                     return true
                 }
-                issueSummaries.append(self.formattedIssue(issue))
+                issueSummaries.append(self.formattedIssue(issue, elementText: elementText))
                 return true
             }
         } catch {
@@ -181,10 +183,12 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
             "Accessibility audit found \(issueSummaries.count) issue(s) on \(name):\n\(summary)")
     }
 
-    private func formattedIssue(_ issue: XCUIAccessibilityAuditIssue) -> String {
-        let element = issue.element
-        let identifier = element?.identifier ?? ""
-        let label = element?.label ?? ""
+    private func formattedIssue(
+        _ issue: XCUIAccessibilityAuditIssue,
+        elementText: AuditIssueElementText
+    ) -> String {
+        let identifier = elementText.identifier
+        let label = elementText.label
         let elementName = identifier.isEmpty ? (label.isEmpty ? "unknown" : label) : identifier
         return """
             \(issue.compactDescription)
@@ -199,16 +203,17 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
     /// element. Remove an entry here when the underlying UI is fixed.
     private func shouldIgnore(
         _ issue: XCUIAccessibilityAuditIssue,
+        elementText: AuditIssueElementText,
         allowsLegacyUnresolvedWatchlistRowText: Bool,
         allowsUnresolvedEmptyStateDescription: Bool
     ) -> Bool {
-        if isSystemSearchClearButton(issue) { return true }
-        if isUnlabeledWatchlistSearchChrome(issue) { return true }
-        if isSystemSearchFieldTextClipped(issue) { return true }
-        if isKnownContentUnavailableTextClipped(issue) { return true }
-        if isKnownSwiftUIDynamicTypeFalsePositive(issue) { return true }
-        if isKnownSecondaryContrastNearlyPassed(issue) { return true }
-        if isLegacyUndoToastContrastFalsePositive(issue) { return true }
+        if isSystemSearchClearButton(issue, elementText) { return true }
+        if isUnlabeledWatchlistSearchChrome(issue, elementText) { return true }
+        if isSystemSearchFieldTextClipped(issue, elementText) { return true }
+        if isKnownContentUnavailableTextClipped(issue, elementText) { return true }
+        if isKnownSwiftUIDynamicTypeFalsePositive(issue, elementText) { return true }
+        if isKnownSecondaryContrastNearlyPassed(issue, elementText) { return true }
+        if isLegacyUndoToastContrastFalsePositive(issue, elementText) { return true }
         if allowsLegacyUnresolvedWatchlistRowText && isLegacyUnresolvedStyledCopy(issue) {
             return true
         }
@@ -248,13 +253,14 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
     /// iOS 18 only: the pre-Liquid Glass undo toast reports "Contrast failed"
     /// for its message, Undo, and OK even though measured ratios are well
     /// above 4.5:1 (about 16.7:1, 5.1:1, and 16.9:1). iOS 26+ passes.
-    private func isLegacyUndoToastContrastFalsePositive(_ issue: XCUIAccessibilityAuditIssue)
-        -> Bool
-    {
+    private func isLegacyUndoToastContrastFalsePositive(
+        _ issue: XCUIAccessibilityAuditIssue,
+        _ elementText: AuditIssueElementText
+    ) -> Bool {
         if #available(iOS 26, *) { return false }
         guard issue.auditType.contains(.contrast) else { return false }
-        let identifier = issue.element?.identifier ?? ""
-        let label = issue.element?.label ?? ""
+        let identifier = elementText.identifier
+        let label = elementText.label
         return identifier == AccessibilityID.Watchlist.undoButton
             || identifier == AccessibilityID.Watchlist.confirmButton
             || label == "Removed from watchlist"
@@ -282,60 +288,74 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
     }
 
     /// System search-field clear button is smaller than 44pt by design.
-    private func isSystemSearchClearButton(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
+    private func isSystemSearchClearButton(
+        _ issue: XCUIAccessibilityAuditIssue,
+        _ elementText: AuditIssueElementText
+    ) -> Bool {
         guard issue.auditType.contains(.hitRegion) else { return false }
-        let label = issue.element?.label ?? ""
+        let label = elementText.label
         return label == "Clear text"
             || issue.detailedDescription.contains("_UITextFieldClearButton")
     }
 
     /// SwiftUI reports an unlabeled node that looks like "Search" on Watchlist
     /// even though the toolbar button already has an accessibility label.
-    private func isUnlabeledWatchlistSearchChrome(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
+    private func isUnlabeledWatchlistSearchChrome(
+        _ issue: XCUIAccessibilityAuditIssue,
+        _ elementText: AuditIssueElementText
+    ) -> Bool {
         guard issue.auditType.contains(.sufficientElementDescription) else { return false }
-        let label = issue.element?.label ?? ""
+        let label = elementText.label
         return label.isEmpty && issue.compactDescription.contains("looks like: Search")
     }
 
     /// System `UISearchBarTextField` predicts clipping at the largest sizes.
     /// Limited to the two known `.searchable` fields; a future search field
     /// must not inherit this exception from the `.searchField` role alone.
-    private func isSystemSearchFieldTextClipped(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
+    private func isSystemSearchFieldTextClipped(
+        _ issue: XCUIAccessibilityAuditIssue,
+        _ elementText: AuditIssueElementText
+    ) -> Bool {
         guard issue.auditType.contains(.textClipped) else { return false }
-        let label = issue.element?.label ?? ""
+        let label = elementText.label
         return label == "Search TV shows" || label == "Search Watchlist"
     }
 
     /// `ContentUnavailableView` titles/descriptions predict clipping at the
     /// largest accessibility sizes even though they use wrapping system styles.
-    private func isKnownContentUnavailableTextClipped(_ issue: XCUIAccessibilityAuditIssue) -> Bool
-    {
+    private func isKnownContentUnavailableTextClipped(
+        _ issue: XCUIAccessibilityAuditIssue,
+        _ elementText: AuditIssueElementText
+    ) -> Bool {
         guard issue.auditType.contains(.textClipped) else { return false }
-        return Self.contentUnavailableCopy.contains(issue.element?.label ?? "")
+        return Self.contentUnavailableCopy.contains(elementText.label)
     }
 
     /// Custom `foregroundStyle` on system text styles trips Dynamic Type even
     /// though the fonts themselves scale. Limited to nodes already observed.
-    private func isKnownSwiftUIDynamicTypeFalsePositive(_ issue: XCUIAccessibilityAuditIssue)
-        -> Bool
-    {
+    private func isKnownSwiftUIDynamicTypeFalsePositive(
+        _ issue: XCUIAccessibilityAuditIssue,
+        _ elementText: AuditIssueElementText
+    ) -> Bool {
         guard issue.auditType.contains(.dynamicType) else { return false }
-        return matchesKnownStyledCopy(issue)
+        return matchesKnownStyledCopy(elementText)
     }
 
     /// Secondary/caption copy is intentionally `.secondary`. "Nearly passed"
     /// is expected at footnote/caption size. Limited to nodes already observed.
-    private func isKnownSecondaryContrastNearlyPassed(_ issue: XCUIAccessibilityAuditIssue) -> Bool
-    {
+    private func isKnownSecondaryContrastNearlyPassed(
+        _ issue: XCUIAccessibilityAuditIssue,
+        _ elementText: AuditIssueElementText
+    ) -> Bool {
         guard issue.auditType.contains(.contrast) else { return false }
         guard issue.compactDescription.hasPrefix("Contrast nearly passed") else { return false }
-        return matchesKnownStyledCopy(issue)
+        return matchesKnownStyledCopy(elementText)
     }
 
     /// True when the issue's element is one of the known styled-copy nodes.
-    private func matchesKnownStyledCopy(_ issue: XCUIAccessibilityAuditIssue) -> Bool {
-        let identifier = issue.element?.identifier ?? ""
-        let label = issue.element?.label ?? ""
+    private func matchesKnownStyledCopy(_ elementText: AuditIssueElementText) -> Bool {
+        let identifier = elementText.identifier
+        let label = elementText.label
 
         if Self.knownStyledCopyIdentifiers.contains(identifier) { return true }
         if Self.knownStyledCopyLabels.contains(label) { return true }
@@ -409,4 +429,21 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
         "No Matches",
     ]
 
+}
+
+/// An audit issue element's label and identifier, each read at most once and only
+/// when a filter needs it. Every read resolves the element again, and on iOS 18 an
+/// element the audit cannot resolve retries for about three seconds per read, so
+/// repeated reads across the `shouldIgnore` checks cost ~40s on populated-watchlist
+/// audits. Values match what `issue.element?.label ?? ""` and friends returned.
+@MainActor
+private final class AuditIssueElementText {
+    private let element: XCUIElement?
+
+    init(_ element: XCUIElement?) {
+        self.element = element
+    }
+
+    private(set) lazy var label: String = element?.label ?? ""
+    private(set) lazy var identifier: String = element?.identifier ?? ""
 }

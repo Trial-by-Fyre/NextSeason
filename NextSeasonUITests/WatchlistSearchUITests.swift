@@ -36,7 +36,9 @@ final class WatchlistSearchUITests: XCTestCase, NextSeasonUITesting {
         searchWatchlist(for: "Sev")
 
         XCTAssertTrue(
-            watchlistRow(named: previewShowName).waitForExistence(timeout: UITestTimeout.standard),
+            watchlistRow(named: previewShowName).waitForExistenceIfNeeded(
+                timeout: UITestTimeout.standard
+            ),
             "A matching query should keep the tracked show visible."
         )
         assertNotExists(
@@ -72,7 +74,9 @@ final class WatchlistSearchUITests: XCTestCase, NextSeasonUITesting {
         clearWatchlistSearchField()
 
         XCTAssertTrue(
-            watchlistRow(named: previewShowName).waitForExistence(timeout: UITestTimeout.standard),
+            watchlistRow(named: previewShowName).waitForExistenceIfNeeded(
+                timeout: UITestTimeout.standard
+            ),
             "Clearing the search should restore the tracked show row."
         )
         assertNotExists(
@@ -91,7 +95,7 @@ final class WatchlistSearchUITests: XCTestCase, NextSeasonUITesting {
         waitForSearchResultRow(named: previewShowName, timeout: UITestTimeout.extended)
 
         let trackButton = searchTrackButton()
-        XCTAssertTrue(trackButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(trackButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         trackButton.tap()
 
         // The watchlist row appearing is the real confirmation that tracking

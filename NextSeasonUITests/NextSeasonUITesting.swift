@@ -26,6 +26,17 @@ enum UITestTimeout {
     static let trackState: TimeInterval = 15
 }
 
+extension XCUIElement {
+    /// `waitForExistence(timeout:)` first checks about one second in, so it costs
+    /// ~1s even when the element is already present (measured on iOS 18.6 with
+    /// Xcode 27). Checking `exists` first returns at once in that case; otherwise
+    /// this waits exactly as before. Use only for waits that expect the element
+    /// to appear — keep `waitForExistence` for checks that something does not.
+    func waitForExistenceIfNeeded(timeout: TimeInterval) -> Bool {
+        exists || waitForExistence(timeout: timeout)
+    }
+}
+
 /// Values that match the stubbed preview show returned during UI testing.
 enum UITestPreviewShow {
     static let name = "Severance"
@@ -131,7 +142,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
         file: StaticString = #filePath,
         line: UInt = #line
     ) {
-        if !element.waitForExistence(timeout: timeout) {
+        if !element.waitForExistenceIfNeeded(timeout: timeout) {
             recordFailureContext(message)
             XCTFail(message, file: file, line: line)
         }
@@ -240,7 +251,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
         timeout: TimeInterval = UITestTimeout.extended
     ) -> XCUIElement {
         let byID = watchlistRow(named: showName, showID: showID)
-        if byID.waitForExistence(timeout: timeout) {
+        if byID.waitForExistenceIfNeeded(timeout: timeout) {
             return byID
         }
 
@@ -251,7 +262,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
             )
         ).firstMatch
         XCTAssertTrue(
-            byLabel.waitForExistence(timeout: timeout),
+            byLabel.waitForExistenceIfNeeded(timeout: timeout),
             "Watchlist should show “\(showName)”."
         )
         return byLabel
@@ -302,7 +313,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             field.tap()
-            if app.keyboards.element.waitForExistence(timeout: 1) {
+            if app.keyboards.element.waitForExistenceIfNeeded(timeout: 1) {
                 return true
             }
         }
@@ -357,7 +368,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
     }
 
     func tapTryExample() {
-        XCTAssertTrue(tryExampleButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(tryExampleButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         tryExampleButton.tap()
     }
 
@@ -421,7 +432,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
             app.buttons["Clear text"],
             app.navigationBars.buttons["Clear text"],
         ]
-        for clearButton in clearCandidates where clearButton.waitForExistence(timeout: 1) {
+        for clearButton in clearCandidates where clearButton.waitForExistenceIfNeeded(timeout: 1) {
             clearButton.tap()
             if enteredText(in: field, placeholder: placeholder) == nil { return }
         }
@@ -431,7 +442,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
         // Prefer select-all over per-character delete; tapping keyboard keys is flaky on
         // narrow simulators (XCTest fails to scroll the delete key into view).
         field.press(forDuration: 1.0)
-        if app.menuItems["Select All"].waitForExistence(timeout: 1) {
+        if app.menuItems["Select All"].waitForExistenceIfNeeded(timeout: 1) {
             app.menuItems["Select All"].tap()
         } else {
             field.typeKey("a", modifierFlags: [.command])
@@ -442,7 +453,7 @@ extension NextSeasonUITesting where Self: XCTestCase {
 
     private func dismissSearchKeyboardIfPresent() {
         let searchKey = app.keyboards.buttons["Search"]
-        guard searchKey.waitForExistence(timeout: 1) else { return }
+        guard searchKey.waitForExistenceIfNeeded(timeout: 1) else { return }
         // The key can exist while the keyboard is still off-screen; tapping it then
         // fails with "failed to scroll to visible" (seen on iOS 27). Return submits
         // the search the same way without needing the key on screen.

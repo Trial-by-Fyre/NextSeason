@@ -76,7 +76,7 @@ final class DynamicTypeUITests: XCTestCase, NextSeasonUITesting {
         scrollIntoView(findAShow, "Find a Show should be reachable by scrolling.")
         findAShow.tap()
         XCTAssertTrue(
-            searchField.waitForExistence(timeout: UITestTimeout.standard),
+            searchField.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "Find a Show should return to Search with its field visible."
         )
     }
@@ -111,7 +111,7 @@ final class DynamicTypeUITests: XCTestCase, NextSeasonUITesting {
     /// Does not require `element` to exist first: List creates off-screen rows
     /// and footers lazily.
     private func scrollIntoView(_ element: XCUIElement, _ message: String) {
-        _ = element.waitForExistence(timeout: UITestTimeout.standard)
+        _ = element.waitForExistenceIfNeeded(timeout: UITestTimeout.standard)
         var swipes = 0
         while !isFullyVisible(element), swipes < maximumSwipes {
             app.swipeUp()
@@ -143,7 +143,9 @@ final class DynamicTypeUITests: XCTestCase, NextSeasonUITesting {
         XCTAssertTrue(watchlistTab.isHittable, "The tab bar should remain usable.")
         watchlistTab.tap()
         XCTAssertTrue(
-            app.navigationBars["Watchlist"].waitForExistence(timeout: UITestTimeout.standard),
+            app.navigationBars["Watchlist"].waitForExistenceIfNeeded(
+                timeout: UITestTimeout.standard
+            ),
             "Selecting Watchlist should still navigate at the largest text size."
         )
     }

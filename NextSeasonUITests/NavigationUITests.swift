@@ -15,15 +15,17 @@ final class NavigationUITests: XCTestCase, NextSeasonUITesting {
     }
     func testLaunchShowsSearchTab() {
         XCTAssertTrue(
-            searchIdlePrompt.waitForExistence(timeout: UITestTimeout.standard),
+            searchIdlePrompt.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "Search tab should show the idle prompt on launch."
         )
         XCTAssertTrue(
-            tryExampleButton.waitForExistence(timeout: UITestTimeout.standard),
+            tryExampleButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "Search idle state should offer Try an Example on launch."
         )
         XCTAssertTrue(
-            app.navigationBars["NextSeason"].waitForExistence(timeout: UITestTimeout.standard))
+            app.navigationBars["NextSeason"].waitForExistenceIfNeeded(
+                timeout: UITestTimeout.standard
+            ))
         XCTAssertTrue(app.tabBars.buttons["Search"].exists)
     }
 
@@ -31,19 +33,21 @@ final class NavigationUITests: XCTestCase, NextSeasonUITesting {
         app.tabBars.buttons["Watchlist"].tap()
 
         XCTAssertTrue(
-            watchlistEmptyState.waitForExistence(timeout: UITestTimeout.extended),
+            watchlistEmptyState.waitForExistenceIfNeeded(timeout: UITestTimeout.extended),
             "Watchlist tab should show the empty state when no shows are tracked."
         )
         XCTAssertTrue(
-            app.navigationBars["Watchlist"].waitForExistence(timeout: UITestTimeout.standard))
+            app.navigationBars["Watchlist"].waitForExistenceIfNeeded(
+                timeout: UITestTimeout.standard
+            ))
     }
 
     func testSwitchBetweenTabs() {
         app.tabBars.buttons["Watchlist"].tap()
-        XCTAssertTrue(watchlistEmptyState.waitForExistence(timeout: UITestTimeout.extended))
+        XCTAssertTrue(watchlistEmptyState.waitForExistenceIfNeeded(timeout: UITestTimeout.extended))
 
         app.tabBars.buttons["Search"].tap()
-        XCTAssertTrue(searchIdlePrompt.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(searchIdlePrompt.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
     }
 
     func testSearchTabReturnsToResultsAfterViewingDetailFromAnotherTab() {
@@ -54,7 +58,7 @@ final class NavigationUITests: XCTestCase, NextSeasonUITesting {
         waitForShowDetail()
 
         app.tabBars.buttons["Watchlist"].tap()
-        XCTAssertTrue(watchlistEmptyState.waitForExistence(timeout: UITestTimeout.extended))
+        XCTAssertTrue(watchlistEmptyState.waitForExistenceIfNeeded(timeout: UITestTimeout.extended))
 
         app.tabBars.buttons["Search"].tap()
 

@@ -26,7 +26,9 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
 
         waitForShowDetail()
         XCTAssertTrue(
-            app.staticTexts["Next Season"].waitForExistence(timeout: UITestTimeout.standard))
+            app.staticTexts["Next Season"].waitForExistenceIfNeeded(
+                timeout: UITestTimeout.standard
+            ))
     }
 
     func testTrackShowAppearsOnWatchlist() {
@@ -34,21 +36,23 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
 
         app.tabBars.buttons["Watchlist"].tap()
         XCTAssertTrue(
-            watchlistRow(named: previewShowName).waitForExistence(timeout: UITestTimeout.extended),
+            watchlistRow(named: previewShowName).waitForExistenceIfNeeded(
+                timeout: UITestTimeout.extended
+            ),
             "Tracked show should appear on the watchlist."
         )
         XCTAssertFalse(watchlistEmptyState.exists)
     }
 
     func testTryExampleButtonRunsSearch() {
-        XCTAssertTrue(searchIdlePrompt.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(searchIdlePrompt.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         tapTryExample()
 
         waitForSearchResultRow(named: previewShowName, timeout: UITestTimeout.extended)
     }
 
     func testTryExamplePopulatesSearchField() {
-        XCTAssertTrue(searchIdlePrompt.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(searchIdlePrompt.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         tapTryExample()
 
         XCTAssertTrue(
@@ -62,17 +66,17 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
 
         waitForSearchResultRow(named: previewShowName, timeout: UITestTimeout.extended)
         XCTAssertTrue(
-            searchResultsHint.waitForExistence(timeout: UITestTimeout.standard),
+            searchResultsHint.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "The first search results should show row guidance below the list."
         )
     }
 
     func testSearchResultsHintDismissesAfterTrack() {
         tapTryExample()
-        XCTAssertTrue(searchResultsHint.waitForExistence(timeout: UITestTimeout.extended))
+        XCTAssertTrue(searchResultsHint.waitForExistenceIfNeeded(timeout: UITestTimeout.extended))
 
         let trackButton = searchTrackButton()
-        XCTAssertTrue(trackButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(trackButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         trackButton.tap()
         XCTAssertTrue(
             waitForButton(
@@ -90,7 +94,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
 
     func testSearchResultsHintDismissesAfterOpeningDetail() {
         tapTryExample()
-        XCTAssertTrue(searchResultsHint.waitForExistence(timeout: UITestTimeout.extended))
+        XCTAssertTrue(searchResultsHint.waitForExistenceIfNeeded(timeout: UITestTimeout.extended))
 
         let result = waitForSearchResultRow(named: previewShowName)
         result.tap()
@@ -109,7 +113,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         search(for: UITestingSearchQuery.noResults)
 
         XCTAssertTrue(
-            searchNoResults.waitForExistence(timeout: UITestTimeout.extended),
+            searchNoResults.waitForExistenceIfNeeded(timeout: UITestTimeout.extended),
             "An empty result set should show the fallback guidance, not imply the show is missing."
         )
         XCTAssertTrue(
@@ -124,12 +128,12 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         search(for: UITestingSearchQuery.failure)
 
         XCTAssertTrue(
-            app.staticTexts["Something Went Wrong"].waitForExistence(
+            app.staticTexts["Something Went Wrong"].waitForExistenceIfNeeded(
                 timeout: UITestTimeout.extended),
             "A failed search should surface an error state."
         )
         XCTAssertTrue(
-            app.buttons["Try Again"].waitForExistence(timeout: UITestTimeout.standard),
+            app.buttons["Try Again"].waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "The failure state should offer a retry action."
         )
     }
@@ -176,7 +180,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         search(for: previewShowName)
 
         let trackButton = searchTrackButton()
-        XCTAssertTrue(trackButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(trackButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         trackButton.tap()
 
         XCTAssertFalse(
@@ -202,7 +206,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         searchTrackButton().tap()
 
         XCTAssertTrue(
-            watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard),
+            watchlistUndoButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "Untracking from the search row should offer Undo."
         )
         XCTAssertTrue(
@@ -216,7 +220,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
 
         app.tabBars.buttons["Watchlist"].tap()
         XCTAssertTrue(
-            watchlistEmptyState.waitForExistence(timeout: UITestTimeout.extended),
+            watchlistEmptyState.waitForExistenceIfNeeded(timeout: UITestTimeout.extended),
             "Confirming removal from search should clear the watchlist."
         )
     }
@@ -230,11 +234,13 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         watchlistTrackButton().tap()
 
         XCTAssertTrue(
-            watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard),
+            watchlistUndoButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "Removing a show should offer Undo."
         )
         XCTAssertTrue(
-            watchlistRow(named: previewShowName).waitForExistence(timeout: UITestTimeout.standard),
+            watchlistRow(named: previewShowName).waitForExistenceIfNeeded(
+                timeout: UITestTimeout.standard
+            ),
             "The watchlist row should stay visible while Undo is offered."
         )
         XCTAssertFalse(
@@ -246,7 +252,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
 
         waitForWatchlistRowToDisappear(named: previewShowName)
         XCTAssertTrue(
-            watchlistEmptyState.waitForExistence(timeout: UITestTimeout.standard),
+            watchlistEmptyState.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "After confirming removal, the watchlist should show its empty state."
         )
 
@@ -264,7 +270,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         waitForWatchlistRow(named: previewShowName)
 
         watchlistTrackButton().tap()
-        XCTAssertTrue(watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(watchlistUndoButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         watchlistUndoButton.tap()
 
         waitForWatchlistRow(named: previewShowName)
@@ -286,7 +292,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         waitForWatchlistRow(named: previewShowName)
 
         watchlistTrackButton().tap()
-        XCTAssertTrue(watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(watchlistUndoButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
 
         watchlistTrackButton().tap()
 
@@ -300,7 +306,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         showDetailTrackButton().tap()
 
         XCTAssertTrue(
-            watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard),
+            watchlistUndoButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "Untracking from detail should offer Undo."
         )
         XCTAssertTrue(
@@ -326,13 +332,13 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         trackShowFromDetail()
 
         showDetailTrackButton().tap()
-        XCTAssertTrue(watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(watchlistUndoButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         watchlistConfirmButton.tap()
 
         app.tabBars.buttons["Watchlist"].tap()
         waitForWatchlistRowToDisappear(named: previewShowName)
         XCTAssertTrue(
-            watchlistEmptyState.waitForExistence(timeout: UITestTimeout.standard),
+            watchlistEmptyState.waitForExistenceIfNeeded(timeout: UITestTimeout.standard),
             "Confirming removal from detail should clear the watchlist."
         )
     }
@@ -343,7 +349,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         waitForSearchResultRow(named: previewShowName)
 
         let trackButton = searchTrackButton()
-        XCTAssertTrue(trackButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(trackButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         // Just left of the star, past the end of the title and subtitle text.
         let star = trackButton.frame
         app.coordinate(withNormalizedOffset: .zero)
@@ -382,7 +388,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         app.tabBars.buttons["Watchlist"].tap()
         waitForWatchlistRow(named: previewShowName).tap()
         showDetailTrackButton().tap()
-        XCTAssertTrue(watchlistUndoButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(watchlistUndoButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
 
         app.navigationBars.buttons.element(boundBy: 0).tap()
 
@@ -401,7 +407,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         search(for: previewShowName)
 
         let trackButton = searchTrackButton()
-        XCTAssertTrue(trackButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(trackButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         trackButton.tap()
         XCTAssertTrue(
             waitForButton(
@@ -421,7 +427,7 @@ final class SearchAndTrackUITests: XCTestCase, NextSeasonUITesting {
         result.tap()
 
         let trackButton = showDetailTrackButton()
-        XCTAssertTrue(trackButton.waitForExistence(timeout: UITestTimeout.standard))
+        XCTAssertTrue(trackButton.waitForExistenceIfNeeded(timeout: UITestTimeout.standard))
         trackButton.tap()
         XCTAssertTrue(
             waitForButton(

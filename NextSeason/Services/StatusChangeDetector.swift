@@ -17,11 +17,11 @@ nonisolated enum StatusChangeDetector {
     static func signature(for status: NextSeasonStatus) -> String {
         switch status {
         case .airing(let season):
-            "airing:\(season)"
+            "airing:\(String(season))"
         case .scheduled(let season, let premiere):
-            "scheduled:\(season):\(premiere.timeIntervalSince1970)"
+            "scheduled:\(String(season)):\(premiere.timeIntervalSince1970)"
         case .announcedUndated(let season):
-            "announcedUndated:\(season)"
+            "announcedUndated:\(String(season))"
         case .returningNoSeasonYet:
             "returningNoSeasonYet"
         case .ended:
@@ -168,13 +168,13 @@ nonisolated struct SeasonNotificationContent: Sendable {
     func body(dateStyle: Date.FormatStyle) -> String {
         switch status {
         case .airing(let season):
-            return String(localized: "Season \(season) is now airing.")
+            return String(localized: "Season \(String(season)) is now airing.")
         case .scheduled(let season, let premiere):
             let date = TVMazeDate.calendarDayString(premiere, style: dateStyle)
             return String(
-                localized: "Season \(season) premieres \(date).", locale: dateStyle.locale)
+                localized: "Season \(String(season)) premieres \(date).", locale: dateStyle.locale)
         case .announcedUndated(let season):
-            return String(localized: "Season \(season) announced — date to be confirmed.")
+            return String(localized: "Season \(String(season)) announced — date to be confirmed.")
         case .returningNoSeasonYet:
             return String(localized: "Returning — watch for next season news.")
         case .ended:

@@ -22,17 +22,21 @@ struct PausedWatchlistSection<Row: View>: View {
             }
             .onDelete(perform: onDelete)
         } header: {
+            // Concrete `Color.primary` (label color) on both lines: list section
+            // headers apply their own dimmed style, and hierarchical
+            // `.primary`/`.secondary` resolve relative to it, rendering too faint.
             VStack(alignment: .leading, spacing: 4) {
                 Text("Paused — Plus Required")
                     .font(.headline)
-                    .appPrimaryText()
+                    .foregroundStyle(Color.primary)
                     .accessibilityAddTraits(.isHeader)
                 Text(
                     "These shows are saved but aren't being tracked. Renew Plus to reactivate them."
                 )
-                .font(.footnote)
-                .appSecondaryText()
+                .font(.subheadline)
+                .foregroundStyle(Color.primary)
                 .textCase(nil)
+                .fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, AppSpacing.tight)

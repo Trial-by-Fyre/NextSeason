@@ -449,12 +449,12 @@
         }
       }
     },
-    "Currently showing Season %lld" : {
+    "Currently showing Season %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Currently showing Season %lld"
+            "value" : "Currently showing Season %@"
           }
         }
       }
@@ -1913,17 +1913,17 @@
         }
       }
     },
-    "Season %lld airing" : {
+    "Season %@ airing" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %lld airing"
+            "value" : "Season %@ airing"
           }
         }
       }
     },
-    "Season %lld airing on %@" : {
+    "Season %@ airing on %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1933,60 +1933,60 @@
         }
       }
     },
-    "Season %lld announced — date to be confirmed" : {
+    "Season %@ announced — date to be confirmed" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %lld announced — date to be confirmed"
+            "value" : "Season %@ announced — date to be confirmed"
           }
         }
       }
     },
-    "Season %lld announced — date to be confirmed." : {
+    "Season %@ announced — date to be confirmed." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %lld announced — date to be confirmed."
+            "value" : "Season %@ announced — date to be confirmed."
           }
         }
       }
     },
-    "Season %lld announced without a date" : {
+    "Season %@ announced without a date" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %lld announced without a date"
+            "value" : "Season %@ announced without a date"
           }
         }
       }
     },
-    "Season %lld currently airing" : {
+    "Season %@ currently airing" : {
 
     },
-    "Season %lld is now airing." : {
+    "Season %@ is now airing." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %lld is now airing."
+            "value" : "Season %@ is now airing."
           }
         }
       }
     },
-    "Season %lld premieres %@" : {
+    "Season %@ premieres %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %lld premieres %@"
+            "value" : "Season %@ premieres %@"
           }
         }
       }
     },
-    "Season %lld premieres %@ on %@" : {
+    "Season %@ premieres %@ on %@" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -1996,12 +1996,12 @@
         }
       }
     },
-    "Season %lld premieres %@." : {
+    "Season %@ premieres %@." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %lld premieres %@."
+            "value" : "Season %@ premieres %@."
           }
         }
       }

@@ -74,6 +74,30 @@ struct ShowDetailBroadcastHeadlineTests {
         #expect(NextSeasonStatus.airing(season: 20).headline == "Currently showing Season 20")
     }
 
+    @Test("Year-based seasons display without grouping separators", arguments: [20, 2026])
+    func seasonIdentifiersAreUngrouped(_ season: Int) throws {
+        let premiere = try #require(TVMazeDate.dateOnly("2027-01-01"))
+        let style = try dateStyle()
+        let identifier = String(season)
+        let airing = NextSeasonStatus.airing(season: season)
+        let scheduled = NextSeasonStatus.scheduled(season: season, premiere: premiere)
+
+        #expect(airing.headline == "Currently showing Season \(identifier)")
+        #expect(
+            airing.detailHeadline(broadcaster: nil, country: nil)
+                == "Season \(identifier) currently airing")
+        #expect(
+            airing.watchlistHeadline(broadcaster: "CBS") == "Season \(identifier) airing on CBS")
+        #expect(
+            scheduled.headline(dateStyle: style) == "Season \(identifier) premieres Jan 1, 2027")
+        #expect(
+            scheduled.detailHeadline(broadcaster: "CBS", country: nil, dateStyle: style)
+                == "Season \(identifier) premieres Jan 1, 2027 on CBS")
+        #expect(
+            NextSeasonStatus.announcedUndated(season: season).headline
+                == "Season \(identifier) announced — date to be confirmed")
+    }
+
     // MARK: - Mapping
 
     @Test("Country comes from the network that supplies the name")

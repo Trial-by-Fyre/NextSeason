@@ -308,14 +308,14 @@ extension NextSeasonStatus {
     fileprivate var headlineSummary: String {
         switch self {
         case .airing(let season):
-            String(localized: "Season \(season) airing")
+            String(localized: "Season \(String(season)) airing")
         case .scheduled(let season, let premiere):
             String(
                 localized:
-                    "Season \(season) premieres \(TVMazeDate.calendarDayString(premiere))"
+                    "Season \(String(season)) premieres \(TVMazeDate.calendarDayString(premiere))"
             )
         case .announcedUndated(let season):
-            String(localized: "Season \(season) announced without a date")
+            String(localized: "Season \(String(season)) announced without a date")
         case .returningNoSeasonYet:
             String(localized: "Returning, no season announced yet")
         case .ended:

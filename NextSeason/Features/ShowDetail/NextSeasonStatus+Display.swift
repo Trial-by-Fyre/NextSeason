@@ -18,15 +18,15 @@ extension NextSeasonStatus {
     nonisolated func headline(dateStyle: Date.FormatStyle) -> String {
         switch self {
         case .airing(let season):
-            String(localized: "Currently showing Season \(season)")
+            String(localized: "Currently showing Season \(String(season))")
         case .scheduled(let season, let premiere):
             String(
                 localized:
-                    "Season \(season) premieres \(TVMazeDate.calendarDayString(premiere, style: dateStyle))",
+                    "Season \(String(season)) premieres \(TVMazeDate.calendarDayString(premiere, style: dateStyle))",
                 locale: dateStyle.locale
             )
         case .announcedUndated(let season):
-            String(localized: "Season \(season) announced — date to be confirmed")
+            String(localized: "Season \(String(season)) announced — date to be confirmed")
         case .returningNoSeasonYet:
             String(localized: "Returning — no next season announced yet")
         case .ended:
@@ -61,14 +61,14 @@ extension NextSeasonStatus {
         switch self {
         case .airing(let season):
             guard let broadcast else {
-                return String(localized: "Season \(season) currently airing")
+                return String(localized: "Season \(String(season)) currently airing")
             }
-            return String(localized: "Season \(season) airing on \(broadcast)")
+            return String(localized: "Season \(String(season)) airing on \(broadcast)")
         case .scheduled(let season, let premiere):
             guard let broadcast else { return headline(dateStyle: dateStyle) }
             return String(
                 localized:
-                    "Season \(season) premieres \(TVMazeDate.calendarDayString(premiere, style: dateStyle)) on \(broadcast)",
+                    "Season \(String(season)) premieres \(TVMazeDate.calendarDayString(premiere, style: dateStyle)) on \(broadcast)",
                 locale: dateStyle.locale
             )
         case .announcedUndated, .returningNoSeasonYet, .ended, .unknown:

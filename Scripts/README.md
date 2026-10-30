@@ -234,6 +234,101 @@ Exits with code 1 if any automated check fails.
 
 ---
 
+## Nightly tests
+
+### `run-nightly-tests.sh`
+
+Runs the complete unit and UI suite (the `SerialTesting` plan) on each supported iOS simulator, one version at a time, against the latest commit of the branch checked out in your working copy. Scheduled nightly by a LaunchAgent; can also be run by hand.
+
+**What it does:**
+
+- Reads which branch your working copy has checked out when the run starts and tests that branch's latest commit. Uncommitted changes are never included, and nothing is fetched. If the working copy is in a detached HEAD state (no branch, for example mid-rebase), the run is skipped and the summary says why. The commit is checked out, detached, in its own Git worktree at `~/Library/Developer/NightlyTests/NextSeason/checkout`. Your working copy, its branch, and its uncommitted changes are never touched; only `git worktree list` shows the extra checkout.
+- Copies the untracked `Config/Secrets.xcconfig` from the main working copy into that checkout (a unit test checks the Aptabase key).
+- Builds once with `build-for-testing` into a dedicated DerivedData folder, then runs `test-without-building` for iOS 18.6 (iPhone 16 Pro), 26.5 (iPhone 17 Pro), and 27.0 (iPhone 18 Pro Max). Parallel testing stays as the test plan sets it (serial).
+- Uses dedicated simulators named `NextSeason Nightly <device> iOS <version>`, created on first use. Each is erased before its run and shut down afterwards. Your other simulators, Xcode's DerivedData, and Xcode's selected run destination are not changed.
+- Sets `DEVELOPER_DIR` explicitly (default `/Applications/Xcode-27.0.0.app`): `xcode-select` on this Mac points at the Command Line Tools, which cannot run simulator tests. Uses `/usr/bin/python3`, because the first `python3` on this Mac's `PATH` is an x86_64 build that does not run.
+- Keeps the Mac from idle-sleeping while it runs (`caffeinate -i`, no settings change), allows one run at a time (a lock left by an interrupted run is detected and cleared), and stops any build or OS step that exceeds 90 minutes.
+- Writes a summary and keeps the newest 14 runs.
+
+**Usage:**
+
+```bash
+./Scripts/run-nightly-tests.sh                          # full run of the checked-out branch
+./Scripts/run-nightly-tests.sh --ref improving-test-performance
+./Scripts/run-nightly-tests.sh --os 27.0 --only-testing "NextSeasonUITests/NavigationUITests/testLaunchShowsSearchTab()"
+```
+
+A full run is estimated at 25–40 minutes (about 8 minutes per iOS version on iOS 18.6, plus the build). In the October 29 smoke run (3 tests per iOS version), a build from scratch took 42 seconds and each iOS version about 1.5–2 minutes, mostly simulator boot. `--os` and `--only-testing` can be repeated; a summary of a subset says it was not a full run.
+
+**Output:** `~/Library/Developer/NightlyTests/NextSeason/`
+
+- `latest/summary.md`: the report for the most recent run (also printed at the end of the run)
+- `history.log`: one line per run, for example `2026-10-30 02:00:04  FAILED  improving-test-performance  d7c88a3bf4  18.6:failed(1)  26.5:ok  27.0:ok  2026-10-30_020004`
+- `runs/<timestamp>/`: `summary.md`, `summary.json`, `run.log`, `build.log`, `run.env` (revision, Xcode, macOS), and one `ios-<version>.xcresult` and `ios-<version>.log` per iOS version. Open a result bundle in Xcode to investigate a failure.
+
+**Reading the summary:** the first line answers whether the run passed. It also gives the revision (full commit hash, branch, and subject), the Xcode and macOS versions, and each iOS version's runtime build, elapsed time, pass/fail/skip counts, and whether the screen was locked when that version's tests started. Each failing test is marked one of two ways:
+
+- *Listed known failure*: its test identifier, iOS version, and device match a line in `Scripts/nightly-known-failures.txt`. The match is by name and environment only, so confirm the message matches the symptom recorded in `Documentation/Reviews/Known-Test-Failures.md`.
+- *Possibly new*: everything else. Each failure also says whether it failed in the previous run. That is context, not proof it is known.
+
+Add a line to `nightly-known-failures.txt` only for a failure confirmed and recorded in `Known-Test-Failures.md`, and remove it when the issue is fixed. The runner reads the file from the main working copy, so the current list applies whichever revision is tested. The summary also notes a listed failure that did not fail.
+
+**Exit status:** 0 passed (or a run skipped for a late start or detached HEAD), 1 test or build failure, 2 setup error, 75 another run still holding the lock, 130/143 interrupted.
+
+**Configuration (environment variables):**
+
+| Variable | Default | Description |
+|---|---|---|
+| `NIGHTLY_REF` | *(checked-out branch)* | Test this branch, tag, or commit instead (`--ref` overrides) |
+| `DEVELOPER_DIR` | `/Applications/Xcode-27.0.0.app/Contents/Developer` | Xcode used to build and test |
+| `DESTINATIONS` | `18.6\|iPhone 16 Pro;26.5\|iPhone 17 Pro;27.0\|iPhone 18 Pro Max` | iOS versions and devices to test |
+| `NIGHTLY_ROOT` | `~/Library/Developer/NightlyTests/NextSeason` | Checkout, DerivedData, and results |
+| `KEEP_RUNS` | `14` | Run folders kept (each is about 60 MB) |
+| `STEP_TIMEOUT_SECONDS` | `5400` | Limit for the build and for each iOS version |
+| `LATE_START_WINDOW` | `02:00-04:00` | Times in which a scheduled run may start (may span midnight) |
+| `NIGHTLY_CLEAN_BUILD=1` | off | Delete the nightly DerivedData before building |
+
+### `install-nightly-tests.sh`
+
+Installs the LaunchAgent `com.trialbyfyre.nextseason.nightly-tests` for the current user, scheduled daily at 2:00 AM. A scheduled run may start until 4:00 AM; changing the time moves this two-hour window with it. It copies `run-nightly-tests.sh` and `nightly-test-report.py` into `~/Library/Developer/NightlyTests/NextSeason/bin` and runs those copies, so the job keeps working when this working copy switches branches. **Re-run the installer after changing either script.** Installing does not need administrator rights and changes no power settings.
+
+```bash
+./Scripts/install-nightly-tests.sh --print        # show the LaunchAgent plist; installs nothing
+./Scripts/install-nightly-tests.sh                # install, or update after script changes
+NIGHTLY_HOUR=3 NIGHTLY_MINUTE=30 ./Scripts/install-nightly-tests.sh   # change the schedule
+./Scripts/install-nightly-tests.sh --uninstall    # stop scheduling; results are kept
+./Scripts/install-nightly-tests.sh --uninstall --remove-simulators
+```
+
+`DEVELOPER_DIR`, `LATE_START_WINDOW`, and `NIGHTLY_REF` (to pin one branch instead of following the checked-out one) can also be set when installing. Check that it is loaded with `launchctl print gui/$(id -u)/com.trialbyfyre.nextseason.nightly-tests`.
+
+**Running manually:** run `./Scripts/run-nightly-tests.sh` (above). `launchctl kickstart gui/$(id -u)/com.trialbyfyre.nextseason.nightly-tests` starts the installed job immediately, but as a scheduled run, so it is skipped outside the late-start window.
+
+**Sleep, log-out, and scheduling behavior:**
+
+- The job runs only while you are logged in: UI tests need your GUI session, and the agent is limited to it. If you are logged out at 2:00 AM, that night is not run.
+- **Not yet verified:** whether UI tests pass with the screen locked. The smoke test ran unlocked. Each summary records the screen state per iOS version; the first run that shows `screen at start: locked` with passing UI tests settles it. If UI tests fail only on locked runs, the Mac must stay unlocked overnight.
+- If the Mac is asleep at 2:00 AM, launchd starts the job when it next wakes, and several missed nights coalesce into one run (see `man launchd.plist`, `StartCalendarInterval`). A scheduled start after 4:00 AM is recorded as skipped rather than loading the Mac during the day. A Mac that is shut down does not run the job.
+- To run reliably at 2:00 AM while the Mac sleeps, schedule a wake shortly before it, for example `sudo pmset repeat wake MTWRFSU 01:55:00` (needs administrator rights; undo with `sudo pmset repeat cancel`). The scripts never change power settings.
+- Once started, the run keeps the Mac awake until it finishes. Closing a laptop lid still sleeps it; the run continues after wake, and a step past its time limit is stopped.
+
+**Troubleshooting:**
+
+- *No new run in `history.log`:* the agent is not loaded (`launchctl print ...` above), you were logged out, or the Mac was off. Check `~/Library/Developer/NightlyTests/NextSeason/logs/launchd.log` for errors that happened before the run started.
+- *SKIPPED, detached HEAD:* the working copy had no branch checked out when the run started (for example during a rebase or after checking out a commit). Check out a branch.
+- *SKIPPED, another run is still running:* a previous run is still going or hung. If it is no longer running, the next run clears its stale lock automatically.
+- *ERROR: iOS X simulator runtime is not installed:* install the runtime (Xcode › Settings › Components), or change `DESTINATIONS` and reinstall.
+- *ERROR: DEVELOPER_DIR not found:* Xcode moved or was renamed; reinstall with the new `DEVELOPER_DIR`.
+- *BUILD FAILED:* read `build.log` in the run folder. If the error suggests stale build state, run once with `NIGHTLY_CLEAN_BUILD=1`.
+- *A failure that does not reproduce in Xcode:* compare devices and iOS versions; the nightly simulators are freshly erased each run. Use `--os` and `--only-testing` to rerun one test the same way.
+- *The checkout is in a bad state:* delete `~/Library/Developer/NightlyTests/NextSeason/checkout`; the next run re-creates the worktree.
+
+### `nightly-test-report.py`
+
+Writes `summary.md`, `summary.json`, and the `history.log` line for one run folder. Normally invoked by `run-nightly-tests.sh`; it can be re-run by hand: `/usr/bin/python3 Scripts/nightly-test-report.py <run folder> --runs-dir <runs> --known Scripts/nightly-known-failures.txt`.
+
+---
+
 ## Shared libraries (`lib/`)
 
 These are sourced by other scripts, not run directly.
@@ -252,6 +347,7 @@ Hermetic Python `unittest` checks using fake commands; no device needed. Run eac
 | `tests/test-complimentary-plus-build.py` | Complimentary Plus build-configuration guard |
 | `tests/test-performance-evidence.py` | Incomplete profiling evidence never establishes readiness |
 | `tests/test-device-log-capture.py` | Both suite scripts' log capture (stream and fallback), including failure and interruption |
+| `tests/test-nightly-tests.py` | Nightly runner and report: branch selection and isolation, detached HEAD, failure classification, build failure, locking, start window, timeouts, interruption, and pruning (run with `/usr/bin/python3`) |
 
 ### Short stress-driver comparison
 

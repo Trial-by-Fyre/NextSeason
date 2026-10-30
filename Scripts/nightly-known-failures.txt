@@ -1,0 +1,12 @@
+# Confirmed known automated-test failures for the nightly report.
+#
+# Only list failures the project owner has confirmed and recorded in
+# Documentation/Reviews/Known-Test-Failures.md. A nightly failure is reported
+# as "listed known" only when its test identifier, iOS version, and device all
+# match a line here; anything else is "possibly new". Remove a line when the
+# issue is fixed. Use * for any iOS version or device. Entries for devices
+# outside the nightly matrix never match, so they are not listed.
+#
+# test identifier | iOS version | device | Known-Test-Failures.md section
+
+AccessibilityAuditUITests/testWatchlistSearchNoResultsPassAccessibilityAudit() | 18.6 | iPhone 16 Pro | testWatchlistSearchNoResultsPassAccessibilityAudit (unresolved Dynamic Type issues on iOS 18)

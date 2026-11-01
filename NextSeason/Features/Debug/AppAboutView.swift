@@ -179,7 +179,7 @@ struct AppAboutView: View {
                     .environment(purchases)
             }
             .alert(
-                "Couldn't Complete Purchase",
+                purchases.lastErrorTitle,
                 isPresented: errorAlertPresented
             ) {
                 Button("OK", role: .cancel) {

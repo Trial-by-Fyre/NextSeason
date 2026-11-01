@@ -52,7 +52,22 @@ final class PurchaseService {
     /// True while a purchase or restore call is in progress.
     private(set) var isPurchasing = false
     /// User-facing purchase or restore error for alerts.
-    private(set) var lastErrorMessage: String?
+    private(set) var lastErrorMessage: String? {
+        // Any new message defaults to a purchase title; Restore sets the flag
+        // after assigning its message. A product load finishing after a failed
+        // restore therefore never inherits the restore title.
+        didSet { lastErrorIsRestoreFailure = false }
+    }
+    /// True when `lastErrorMessage` came from Restore Purchases, so alerts can
+    /// title it as a restore rather than a purchase failure.
+    private(set) var lastErrorIsRestoreFailure = false
+
+    /// Alert title matching the operation that set `lastErrorMessage`.
+    var lastErrorTitle: String {
+        lastErrorIsRestoreFailure
+            ? String(localized: "Couldn't Restore Purchases")
+            : String(localized: "Couldn't Complete Purchase")
+    }
     /// Shown once per verified tip transaction (deduped by transaction ID).
     private(set) var thankYouMessage: String?
 
@@ -513,10 +528,23 @@ final class PurchaseService {
         } catch is CancellationError {
             return .cancelled
         } catch {
-            let message = String(
-                localized: "Couldn't restore purchases. Please try again."
-            )
+            let nsError = error as NSError
+            let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
+            let isConnectivity = StoreConnectivityError.isConnectivityFailure(error)
+            AppDiagnosticsLogger.breadcrumb(
+                "restore_failed domain=\(nsError.domain) code=\(nsError.code) "
+                    + "underlying=\(underlying.map { "\($0.domain):\($0.code)" } ?? "nil") "
+                    + "connectivity=\(isConnectivity)")
+            // Only an identified connectivity failure suggests reconnecting; the
+            // wording matches the app's other offline messages.
+            let message =
+                isConnectivity
+                ? String(
+                    localized:
+                        "Couldn't restore purchases. Check your connection and try again.")
+                : String(localized: "Couldn't restore purchases. Please try again.")
             lastErrorMessage = message
+            lastErrorIsRestoreFailure = true
             return .failed(message)
         }
     }

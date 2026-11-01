@@ -53,7 +53,7 @@ struct PlusStoreView: View {
                 }
             }
             .alert(
-                "Couldn't Complete Purchase",
+                purchases.lastErrorTitle,
                 isPresented: errorAlertPresented
             ) {
                 Button("OK", role: .cancel) {

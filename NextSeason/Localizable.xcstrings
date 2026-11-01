@@ -413,6 +413,12 @@
     "Couldn't refresh your Watchlist. Check your connection and try again." : {
 
     },
+    "Couldn't Restore Purchases" : {
+
+    },
+    "Couldn't restore purchases. Check your connection and try again." : {
+
+    },
     "Couldn't restore purchases. Please try again." : {
 
     },

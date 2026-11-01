@@ -20,3 +20,9 @@ The screenshot confirms the generic body and purchase-specific heading. Code ins
 When implemented, check an identifiable network error, an unrelated/unknown restore error and cancellation; confirm the title/body fit the action and retry remains usable after connectivity returns. Normal no-active-subscription feedback remains a separate result, not a failed network restore.
 
 No app code or tests changed and no app tests ran to record this task. The earlier pending/decline and first-attempt purchase failures remain separate issues.
+
+## October 30 update — implemented, pending TestFlight verification
+
+Failed restores now use the title **Couldn't Restore Purchases** (paywall and About). Only errors that identify a connectivity failure (`StoreKitError.networkError`, or a connectivity `URLError`, directly or as the underlying error) show **Couldn't restore purchases. Check your connection and try again.**, matching the app's existing offline wording. Other failures keep the generic message; cancellation is unchanged. A `restore_failed domain= code= underlying= connectivity=` breadcrumb records the actual error, because what `AppStore.sync()` throws offline has not been observed. See `StoreConnectivityError.swift` and `RestoreConnectivityTests`.
+
+**Owner verification, October 30:** Verified on TestFlight 1.0 (51) during the 8C rerun.

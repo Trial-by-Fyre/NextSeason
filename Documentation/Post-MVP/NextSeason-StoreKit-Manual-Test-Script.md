@@ -161,7 +161,9 @@ Run this from both Search and Show Detail, using a different sandbox account wit
 
 #### 4D. Pending purchase is declined
 
-**Open failure:** owner reported that a new purchase declined in Xcode’s transaction manager was recorded as successful by NextSeason. See the [failure record](../Reviews/StoreKitPendingRelaunch-2026-10-28.md#declined-purchase-reported-as-successful). Cause is not established; keep this case failed until resolved.
+**Original failure:** owner reported that a new purchase declined in Xcode’s transaction manager was recorded as successful by NextSeason. See the [failure record](../Reviews/StoreKitPendingRelaunch-2026-10-28.md#declined-purchase-reported-as-successful).
+
+**Passed, owner-reported October 30:** the owner confirmed the current transaction recovery/purchase-outcome changes also fixed the failure in 4D. See the [acceptance record](../Reviews/StoreKitXcodePendingGuard-2026-10-30.md#owner-verification-decline-failure-resolved). The original failure's precise mechanism was not independently isolated.
 
 - Save evidence of earlier cases before resetting. Use the Ask to Buy setup to delete local subscription transactions, relaunch, and confirm Free access with A–C active and N untracked. Do not carry a previously approved subscription into this case.
 - Start N’s blocked add, choose a Plus plan, and choose **Ask** in Apple’s dialog.

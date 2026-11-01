@@ -25,3 +25,7 @@ The wording matches an application-level purchase-without-effective-access error
 ## Tracking
 
 Attributed to focused **7C** at the owner's request. Focused 7B already exercises an already-saved paused show's purchase/reactivation; 7C reuses that setup and records first-attempt versus retry behavior rather than requiring an unrelated new setup. Keep the original error evidence even if retry succeeds. No app code, test account, scheme or transaction state changed to record this issue; no app tests ran.
+
+## Owner verification, October 30 — no longer reproducing
+
+The owner reports 7C passed on the first attempt with an Xcode build in the simulator (local Xcode StoreKit) and accepted it as resolved. That environment includes `8fa0e61`'s Xcode-only transaction delivery changes, which may account for it; no mechanism was confirmed. 7C was not rerun on TestFlight/sandbox.

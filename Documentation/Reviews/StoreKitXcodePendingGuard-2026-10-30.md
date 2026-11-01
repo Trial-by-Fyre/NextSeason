@@ -1,6 +1,6 @@
 # Xcode pending subscription consistency guard
 
-**October 30, 2026. The Claude-review follow-up is implemented and independently reviewed. The owner passed the requested updated-candidate checks: fresh 4C and normal Xcode purchase/simulation completion. History-sensitive purchases, approval while closed and decline remain separate verification items.**
+**October 30, 2026. The Claude-review follow-up is implemented and independently reviewed. The owner passed the requested updated-candidate checks: fresh 4C and normal Xcode purchase/simulation completion. The owner also confirmed focused 4D resolved. History-sensitive purchases and approval while closed remain separate verification items.**
 
 ## Evidence and scope
 
@@ -136,3 +136,10 @@ After the Claude-review follow-up, the owner confirmed the requested manual test
 The existing approved-transaction recovery pass, the prior full 4C pass and this updated-candidate pass are all preserved. No additional 4C repeat is required for this documentation-only update. Deleting the earlier transaction establishes a fresh-purchase setup; it does not verify repurchase with expired/refunded history, a pending plan change with existing access, approval while closed, or decline. Those remain separate cases, and no broader release/full-suite pass is inferred.
 
 No app code changed and no tests or simulator mutations were performed by the agent to record these results. The owner's StoreKit configuration edits remain untouched.
+
+
+## Owner verification: decline failure resolved
+
+The owner confirmed that the current changes also fixed the observed failure in **4D**, where declining a pending purchase had been reported as success. Focused 4D is recorded as passed on that owner report. No new console or screenshot was supplied, and the original failure's exact mechanism was not independently isolated; the shared correction is observed, not proof of an identical root cause with 4C.
+
+This closes the reported functional decline failure, not every broader SK-08 branch or the separate question of how long an unresolved local candidate keeps retrying. The existing original-failure evidence remains unchanged. No code changes or additional tests were needed to record the result.

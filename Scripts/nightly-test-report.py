@@ -54,7 +54,12 @@ def read_known(path):
     """Parses `test id | iOS version or * | device or * | reference` lines."""
     entries = []
     if path and Path(path).exists():
-        for line in Path(path).read_text().splitlines():
+        try:
+            text = Path(path).read_text()
+        except OSError as error:
+            return entries, 'known-failures list could not be read (%s); every failure is ' \
+                'reported as possibly new' % error
+        for line in text.splitlines():
             line = line.strip()
             if not line or line.startswith('#'):
                 continue
@@ -62,7 +67,10 @@ def read_known(path):
             if len(parts) >= 4:
                 entries.append({'test': parts[0], 'os': parts[1], 'device': parts[2],
                                 'reference': ' | '.join(parts[3:])})
-    return entries
+    elif path:
+        return entries, 'known-failures list not found (%s); every failure is reported as ' \
+            'possibly new' % path
+    return entries, None
 
 
 def match_known(known, test, os_version, device):
@@ -317,11 +325,10 @@ def main():
     parser.add_argument('--history')
     args = parser.parse_args()
     run_dir = Path(args.run_dir)
-    known = read_known(args.known)
+    known, known_warning = read_known(args.known)
     report = build_report(run_dir, known, args.runs_dir)
-    if args.known and not Path(args.known).exists():
-        report['warnings'].append('known-failures list not found (%s); every failure is '
-                                  'reported as possibly new' % args.known)
+    if known_warning:
+        report['warnings'].append(known_warning)
     text = render(report)
     (run_dir / 'summary.md').write_text(text)
     (run_dir / 'summary.json').write_text(json.dumps(report, indent=2))

@@ -302,5 +302,48 @@ class NightlyRunnerTests(unittest.TestCase):
         self.assertIn('not a full run', text)
 
 
+    def test_check_access_reports_ok_and_unreadable_repository(self):
+        ok = self.run_nightly('--check-access')
+        self.assertEqual(ok.returncode, 0, ok.stdout)
+        self.assertIn('Access check OK', ok.stdout)
+        self.assertFalse((self.root / 'runs').exists())  # no run folder for a check
+        self.repo.chmod(0)
+        self.addCleanup(self.repo.chmod, 0o755)
+        blocked = self.run_nightly('--check-access')
+        self.assertEqual(blocked.returncode, 2)
+        self.assertIn('Access check FAILED: Cannot read', blocked.stdout)
+
+    def test_unreadable_repository_is_reported_and_recorded(self):
+        self.repo.chmod(0)
+        self.addCleanup(self.repo.chmod, 0o755)
+        result = self.run_nightly()
+        self.assertEqual(result.returncode, 2)
+        _, data = self.summary()
+        self.assertEqual(data['status'], 'ERROR')
+        self.assertIn('Cannot read', data['headline'])
+        self.assertIn('ERROR', (self.root / 'history.log').read_text())
+
+    def test_unreadable_known_failures_list_still_produces_a_report(self):
+        self.known.chmod(0)
+        self.addCleanup(self.known.chmod, 0o644)
+        result = self.run_nightly()
+        self.assertEqual(result.returncode, 0, result.stdout)
+        _, data = self.summary()
+        self.assertEqual(data['status'], 'PASSED')
+        self.assertTrue(any('could not be read' in w for w in data['warnings']))
+
+
+class NightlyLauncherTests(unittest.TestCase):
+    def test_launcher_runs_sibling_script_with_arguments_and_exit_status(self):
+        tmp = Path(tempfile.mkdtemp(prefix='launcher with space '))
+        self.addCleanup(subprocess.run, ['rm', '-rf', str(tmp)])
+        launcher = tmp / 'nightly-launcher'
+        subprocess.run(['xcrun', 'clang', '-o', str(launcher), str(ROOT / 'Scripts/nightly-launcher.c')],
+                       check=True, env={**os.environ, 'DEVELOPER_DIR': developer_dir()})
+        (tmp / 'run-nightly-tests.sh').write_text('printf "%s|" "$@"; exit 7\n')
+        result = subprocess.run([str(launcher), '--os', '27.0', 'a b'], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 7)
+        self.assertEqual(result.stdout, '--os|27.0|a b|')
+
 if __name__ == '__main__':
     unittest.main()

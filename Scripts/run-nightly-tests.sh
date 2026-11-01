@@ -8,6 +8,7 @@
 # touches the main working copy, Xcode's DerivedData, or existing simulators.
 #
 # Usage: run-nightly-tests.sh [--ref REF] [--os VERSION]... [--only-testing ID]...
+#        run-nightly-tests.sh --check-access    (can this process read the repository?)
 # See Scripts/README.md ("Nightly tests") for installation and configuration.
 #
 # Exit status: 0 all passed (or a late-start / detached-HEAD skip), 1 test/build failure,
@@ -45,8 +46,10 @@ export PATH="${PATH:-}:/usr/bin:/bin:/usr/sbin:/sbin"
 
 ONLY_TESTING=()
 OS_FILTER=()
+CHECK_ACCESS=0
 while [ $# -gt 0 ]; do
     case "$1" in
+        --check-access) CHECK_ACCESS=1; shift ;;
         --ref) NIGHTLY_REF="$2"; shift 2 ;;
         --os) OS_FILTER+=("$2"); shift 2 ;;
         --only-testing) ONLY_TESTING+=("-only-testing:$2"); shift 2 ;;
@@ -54,6 +57,33 @@ while [ $# -gt 0 ]; do
         *) echo "Unknown argument: $1" >&2; exit 2 ;;
     esac
 done
+
+ACCESS_HELP="macOS privacy protection blocks this job from reading the repository folder. Grant Full Disk Access to $NIGHTLY_ROOT/bin/nightly-launcher; see Scripts/README.md, Nightly tests, Folder access."
+
+# Prints why REPO_DIR cannot be read or used by Git; prints nothing if it can.
+repo_access_problem() {
+    local output
+    if ! output=$(ls "$REPO_DIR" 2>&1 > /dev/null); then
+        case "$output" in
+            *"Operation not permitted"*) echo "Cannot read $REPO_DIR: Operation not permitted. $ACCESS_HELP" ;;
+            *) echo "Cannot read $REPO_DIR: $output" ;;
+        esac
+    elif ! output=$(git -C "$REPO_DIR" rev-parse --git-dir 2>&1); then
+        echo "Not a Git repository: $REPO_DIR ($output)"
+    elif ! output=$(cat "$REPO_DIR/.git/HEAD" 2>&1 > /dev/null); then
+        echo "Cannot read $REPO_DIR/.git: $output. $ACCESS_HELP"
+    fi
+}
+
+if [ "$CHECK_ACCESS" = 1 ]; then
+    problem=$(repo_access_problem)
+    if [ -n "$problem" ]; then
+        echo "Access check FAILED: $problem"
+        exit 2
+    fi
+    echo "Access check OK: $REPO_DIR is readable and is a Git repository."
+    exit 0
+fi
 
 CHECKOUT_DIR="$NIGHTLY_ROOT/checkout"
 DERIVED_DATA="$NIGHTLY_ROOT/DerivedData"
@@ -180,7 +210,14 @@ finish() {
         --history "$NIGHTLY_ROOT/history.log" > /dev/null 2>> "$RUN_DIR/run.log" \
         || log "Report generation failed; see run.log"
     ln -sfn "$RUN_DIR" "$NIGHTLY_ROOT/latest"
-    [ -f "$RUN_DIR/summary.md" ] && cat "$RUN_DIR/summary.md"
+    if [ ! -f "$RUN_DIR/summary.md" ]; then
+        # Still answer "did last night's run work?" if the report itself failed.
+        printf '# NextSeason nightly tests: ERROR: report generation failed (exit %s); see run.log\n' \
+            "$status" > "$RUN_DIR/summary.md"
+        printf '%s  ERROR  report-failed  %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$RUN_ID" \
+            >> "$NIGHTLY_ROOT/history.log"
+    fi
+    cat "$RUN_DIR/summary.md"
     prune_old_runs
     if [ "$LOCK_HELD" -eq 1 ]; then
         rm -rf "$LOCK_DIR"
@@ -271,7 +308,8 @@ fi
 # --- Revision and isolated checkout ------------------------------------------
 
 [ -d "$DEVELOPER_DIR" ] || setup_error "DEVELOPER_DIR not found: $DEVELOPER_DIR"
-git -C "$REPO_DIR" rev-parse --git-dir > /dev/null 2>&1 || setup_error "Not a Git repository: $REPO_DIR"
+problem=$(repo_access_problem)
+[ -z "$problem" ] || setup_error "$problem"
 if [ -n "$NIGHTLY_REF" ]; then
     REF="$NIGHTLY_REF"
     BRANCH=""

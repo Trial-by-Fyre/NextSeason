@@ -290,10 +290,11 @@ Add a line to `nightly-known-failures.txt` only for a failure confirmed and reco
 
 ### `install-nightly-tests.sh`
 
-Installs the LaunchAgent `com.trialbyfyre.nextseason.nightly-tests` for the current user, scheduled daily at 2:00 AM. A scheduled run may start until 4:00 AM; changing the time moves this two-hour window with it. It copies `run-nightly-tests.sh` and `nightly-test-report.py` into `~/Library/Developer/NightlyTests/NextSeason/bin` and runs those copies, so the job keeps working when this working copy switches branches. **Re-run the installer after changing either script.** Installing does not need administrator rights and changes no power settings.
+Installs the LaunchAgent `com.trialbyfyre.nextseason.nightly-tests` for the current user, scheduled daily at 2:00 AM. launchd runs `nightly-launcher`, a small program the installer builds from `Scripts/nightly-launcher.c`, which starts the runner (see Folder access below). A scheduled run may start until 4:00 AM; changing the time moves this two-hour window with it. It copies `run-nightly-tests.sh` and `nightly-test-report.py` into `~/Library/Developer/NightlyTests/NextSeason/bin` and runs those copies, so the job keeps working when this working copy switches branches. **Re-run the installer after changing either script.** Installing does not need administrator rights and changes no power settings.
 
 ```bash
 ./Scripts/install-nightly-tests.sh --print        # show the LaunchAgent plist; installs nothing
+./Scripts/install-nightly-tests.sh --check-access # can the job read the repository, as launchd runs it?
 ./Scripts/install-nightly-tests.sh                # install, or update after script changes
 NIGHTLY_HOUR=3 NIGHTLY_MINUTE=30 ./Scripts/install-nightly-tests.sh   # change the schedule
 ./Scripts/install-nightly-tests.sh --uninstall    # stop scheduling; results are kept
@@ -302,12 +303,14 @@ NIGHTLY_HOUR=3 NIGHTLY_MINUTE=30 ./Scripts/install-nightly-tests.sh   # change t
 
 `DEVELOPER_DIR`, `LATE_START_WINDOW`, and `NIGHTLY_REF` (to pin one branch instead of following the checked-out one) can also be set when installing. Check that it is loaded with `launchctl print gui/$(id -u)/com.trialbyfyre.nextseason.nightly-tests`.
 
+**Folder access:** the repository is in `~/Documents`, which macOS privacy protection guards. A LaunchAgent that runs `/bin/bash` directly is refused (“Operation not permitted”, reported by Git as “Not a Git repository”), even though the same script works in Terminal; this made the first scheduled run (October 30) fail. Running through `nightly-launcher` avoids that: on October 30 the same check under launchd failed through `/bin/bash` and passed through the launcher, with no extra grant, and the October 31 scheduled run read the repository normally through it. Why the launcher is allowed was not determined. The installer runs `--check-access` after installing. If it, or a nightly summary, reports the access error, add `~/Library/Developer/NightlyTests/NextSeason/bin/nightly-launcher` under System Settings › Privacy & Security › Full Disk Access (Cmd-Shift-G to enter the path), then run `--check-access` again. The installer rebuilds the launcher only when `nightly-launcher.c` changes, because a rebuilt binary loses any grant.
+
 **Running manually:** run `./Scripts/run-nightly-tests.sh` (above). `launchctl kickstart gui/$(id -u)/com.trialbyfyre.nextseason.nightly-tests` starts the installed job immediately, but as a scheduled run, so it is skipped outside the late-start window.
 
 **Sleep, log-out, and scheduling behavior:**
 
 - The job runs only while you are logged in: UI tests need your GUI session, and the agent is limited to it. If you are logged out at 2:00 AM, that night is not run.
-- **Not yet verified:** whether UI tests pass with the screen locked. The smoke test ran unlocked. Each summary records the screen state per iOS version; the first run that shows `screen at start: locked` with passing UI tests settles it. If UI tests fail only on locked runs, the Mac must stay unlocked overnight.
+- A locked screen is fine: the October 31 scheduled run started each iOS version with the screen locked, and the UI tests ran normally (all passed except the listed known iOS 18.6 failure). Each summary still records the screen state per iOS version, in case this changes with a future macOS or Xcode.
 - If the Mac is asleep at 2:00 AM, launchd starts the job when it next wakes, and several missed nights coalesce into one run (see `man launchd.plist`, `StartCalendarInterval`). A scheduled start after 4:00 AM is recorded as skipped rather than loading the Mac during the day. A Mac that is shut down does not run the job.
 - To run reliably at 2:00 AM while the Mac sleeps, schedule a wake shortly before it, for example `sudo pmset repeat wake MTWRFSU 01:55:00` (needs administrator rights; undo with `sudo pmset repeat cancel`). The scripts never change power settings.
 - Once started, the run keeps the Mac awake until it finishes. Closing a laptop lid still sleeps it; the run continues after wake, and a step past its time limit is stopped.
@@ -317,6 +320,7 @@ NIGHTLY_HOUR=3 NIGHTLY_MINUTE=30 ./Scripts/install-nightly-tests.sh   # change t
 - *No new run in `history.log`:* the agent is not loaded (`launchctl print ...` above), you were logged out, or the Mac was off. Check `~/Library/Developer/NightlyTests/NextSeason/logs/launchd.log` for errors that happened before the run started.
 - *SKIPPED, detached HEAD:* the working copy had no branch checked out when the run started (for example during a rebase or after checking out a commit). Check out a branch.
 - *SKIPPED, another run is still running:* a previous run is still going or hung. If it is no longer running, the next run clears its stale lock automatically.
+- *ERROR: Cannot read … Operation not permitted* (or *Not a Git repository*): macOS blocked folder access; see Folder access above and run `./Scripts/install-nightly-tests.sh --check-access`.
 - *ERROR: iOS X simulator runtime is not installed:* install the runtime (Xcode › Settings › Components), or change `DESTINATIONS` and reinstall.
 - *ERROR: DEVELOPER_DIR not found:* Xcode moved or was renamed; reinstall with the new `DEVELOPER_DIR`.
 - *BUILD FAILED:* read `build.log` in the run folder. If the error suggests stale build state, run once with `NIGHTLY_CLEAN_BUILD=1`.
@@ -347,7 +351,7 @@ Hermetic Python `unittest` checks using fake commands; no device needed. Run eac
 | `tests/test-complimentary-plus-build.py` | Complimentary Plus build-configuration guard |
 | `tests/test-performance-evidence.py` | Incomplete profiling evidence never establishes readiness |
 | `tests/test-device-log-capture.py` | Both suite scripts' log capture (stream and fallback), including failure and interruption |
-| `tests/test-nightly-tests.py` | Nightly runner and report: branch selection and isolation, detached HEAD, failure classification, build failure, locking, start window, timeouts, interruption, and pruning (run with `/usr/bin/python3`) |
+| `tests/test-nightly-tests.py` | Nightly runner, report, and launcher: branch selection and isolation, detached HEAD, folder-access errors, failure classification, build failure, locking, start window, timeouts, interruption, and pruning (run with `/usr/bin/python3`) |
 
 ### Short stress-driver comparison
 

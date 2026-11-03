@@ -98,9 +98,16 @@ nonisolated enum StatusChangeDetector {
     /// A notification is included only when the delta is meaningful, not a duplicate
     /// of `lastNotifiedSignature`, and either date-backed (notify immediately) or
     /// confirmed across two consecutive polls (debounce soft changes).
-    static func evaluate(tracked: TrackedShow, newStatus: NextSeasonStatus, at: Date = .now)
-        -> Evaluation
-    {
+    ///
+    /// `broadcaster` and `country` only word the notification; they never affect
+    /// whether one is sent. Pass both from the same TVMaze response as `newStatus`.
+    static func evaluate(
+        tracked: TrackedShow,
+        newStatus: NextSeasonStatus,
+        broadcaster: String? = nil,
+        country: String? = nil,
+        at: Date = .now
+    ) -> Evaluation {
         let previousStatus = tracked.nextSeason
         var updated = tracked
         updated.lastCheckedAt = at
@@ -118,7 +125,8 @@ nonisolated enum StatusChangeDetector {
             return Evaluation(
                 tracked: updated,
                 notification: SeasonNotificationContent(
-                    showID: tracked.id, showName: tracked.name, status: newStatus)
+                    showID: tracked.id, showName: tracked.name, status: newStatus,
+                    broadcaster: broadcaster, country: country)
             )
         }
 
@@ -141,7 +149,8 @@ nonisolated enum StatusChangeDetector {
             return Evaluation(
                 tracked: updated,
                 notification: SeasonNotificationContent(
-                    showID: tracked.id, showName: tracked.name, status: newStatus)
+                    showID: tracked.id, showName: tracked.name, status: newStatus,
+                    broadcaster: broadcaster, country: country)
             )
         }
 
@@ -155,6 +164,11 @@ nonisolated struct SeasonNotificationContent: Sendable {
     let showID: Int
     let showName: String
     let status: NextSeasonStatus
+    /// Original broadcaster and its country from the TVMaze response that
+    /// produced `status`. Wording only; not part of the dedupe signature.
+    /// Defaulted `var`s so the memberwise initializer keeps them optional.
+    var broadcaster: String? = nil
+    var country: String? = nil
 
     /// The show name leads the notification so it's clear which show updated.
     var title: String { showName }
@@ -166,13 +180,25 @@ nonisolated struct SeasonNotificationContent: Sendable {
     /// `dateStyle` supplies the locale (and, in tests, a fixed device time zone).
     /// The premiere keeps its provider calendar day regardless of time zone.
     func body(dateStyle: Date.FormatStyle) -> String {
+        // TVMaze schedules describe the original broadcast, not availability in
+        // the user's country, so airing and scheduled alerts name the broadcaster
+        // with Show Detail's wording. Without one, keep the generic sentence.
+        switch status {
+        case .airing, .scheduled:
+            if NextSeasonStatus.broadcastLabel(broadcaster: broadcaster, country: country) != nil {
+                return status.detailHeadline(
+                    broadcaster: broadcaster, country: country, dateStyle: dateStyle)
+            }
+        case .announcedUndated, .returningNoSeasonYet, .ended, .unknown:
+            break
+        }
         switch status {
         case .airing(let season):
-            return String(localized: "Season \(String(season)) is now airing.")
+            return String(localized: "Season \(String(season)) is now airing")
         case .scheduled(let season, let premiere):
             let date = TVMazeDate.calendarDayString(premiere, style: dateStyle)
             return String(
-                localized: "Season \(String(season)) premieres \(date).", locale: dateStyle.locale)
+                localized: "Season \(String(season)) premieres \(date)", locale: dateStyle.locale)
         case .announcedUndated(let season):
             return String(localized: "Season \(String(season)) announced — date to be confirmed.")
         case .returningNoSeasonYet:

@@ -1972,12 +1972,12 @@
     "Season %@ currently airing" : {
 
     },
-    "Season %@ is now airing." : {
+    "Season %@ is now airing" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Season %@ is now airing."
+            "value" : "Season %@ is now airing"
           }
         }
       }
@@ -1998,16 +1998,6 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "Season %1$@ premieres %2$@ on %3$@"
-          }
-        }
-      }
-    },
-    "Season %@ premieres %@." : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Season %@ premieres %@."
           }
         }
       }

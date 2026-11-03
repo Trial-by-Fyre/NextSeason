@@ -77,8 +77,9 @@ extension NextSeasonStatus {
     }
 
     /// "CBC Gem (Canada)", or just the broadcaster when the country is missing.
-    /// Blank provider values are treated as missing.
-    private nonisolated static func broadcastLabel(broadcaster: String?, country: String?)
+    /// Blank provider values are treated as missing. Also used by
+    /// `SeasonNotificationContent` to choose its broadcaster wording.
+    nonisolated static func broadcastLabel(broadcaster: String?, country: String?)
         -> String?
     {
         guard let broadcaster = broadcaster?.trimmingCharacters(in: .whitespaces),

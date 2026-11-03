@@ -51,7 +51,7 @@ struct PremiereDateDisplayTests {
         )
         let style = try dateStyle(timeZoneID: timeZoneID)
 
-        #expect(content.body(dateStyle: style) == "Season 2 premieres Jan 1, 2027.")
+        #expect(content.body(dateStyle: style) == "Season 2 premieres Jan 1, 2027")
     }
 
     /// Control: the injected style really carries the device time zone, so the

@@ -83,7 +83,7 @@ struct ShowDetailBroadcastHeadlineTests {
         let scheduled = NextSeasonStatus.scheduled(season: season, premiere: premiere)
         let notification = SeasonNotificationContent(
             showID: 1, showName: "The Price is Right", status: airing)
-        #expect(notification.body == "Season \(identifier) is now airing.")
+        #expect(notification.body == "Season \(identifier) is now airing")
 
         #expect(airing.headline == "Currently showing Season \(identifier)")
         #expect(

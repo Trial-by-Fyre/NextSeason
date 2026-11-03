@@ -436,8 +436,11 @@ final class WatchlistRefreshService {
                     continue
                 }
 
+                // Name and country come from this same response (one TVMaze
+                // network or webChannel), so a retry re-words from fresh data.
                 let evaluation = StatusChangeDetector.evaluate(
-                    tracked: tracked, newStatus: newStatus, at: clock())
+                    tracked: tracked, newStatus: newStatus,
+                    broadcaster: show.network, country: show.networkCountry, at: clock())
 
                 // Saved before scheduling, so termination in between loses the
                 // alert (accepted, R03 scenario 14) rather than risking a repeat.

@@ -42,31 +42,23 @@ Recommended events and properties:
 -   Whether a result was selected
 -   Whether the selected show was already on the watchlist
 
-## Original Broadcast and Regional Availability Clarity (Required Before v1.0)
+## Original Broadcast and Regional Availability Clarity (Complete)
 
-Status: open; readiness task only. Product changes have not been implemented.
+The v1.0 approach combines broadcaster information in the app with an explanation
+of regional availability in the [support FAQ](https://getnextseason.com/support.html).
 
--   Explicitly state that airing status and notifications reflect the original
-    broadcaster / original broadcast schedule, not availability in the user's
-    country or on local or streaming services.
--   Surface the original broadcaster and its country where known, especially
-    when a show is broadcast outside the user's country. For example, Murdoch
-    Mysteries airing on CBC in Canada must not imply that the same season is
-    already available on US BritBox; use this as a validation scenario, not a
-    permanent availability claim.
--   Review Watchlist, Show Detail, and notification wording for accurate
-    descriptions of original airing status and schedule. Avoid wording that
-    implies the user can already watch a show locally or on a streaming service.
--   Use a neutral fallback when the broadcaster's country is unknown, such as
-    “Original broadcast schedule,” without guessing the country or implying
-    local availability.
--   Keep the original airing logic and notification timing unchanged. This
-    task clarifies presentation; it does not add regional or streaming
-    availability tracking.
--   Before release, verify wording with a known foreign broadcaster/country,
-    an unknown country, and the CBC Canada / US BritBox example across
-    Watchlist, Show Detail, and notifications. Confirm that airing calculations
-    and notification timing remain unchanged.
+-   Show Detail names the broadcaster and its country when known; Watchlist
+    airing and scheduled rows name the broadcaster. Missing information is
+    omitted without guessing a country or local availability.
+-   The FAQ explains that NextSeason uses the show's original broadcast schedule
+    and that availability may differ by country or streaming service.
+-   Notifications describe airing, premiere dates, and season announcements.
+    Regional and streaming availability tracking remain outside the v1.0 scope;
+    no additional notification wording is required for this task.
+-   This work clarifies presentation without changing airing calculations or
+    notification timing. The Murdoch Mysteries Show Detail screenshot confirms
+    broadcaster/country presentation on device; existing wording tests cover
+    known and missing country/broadcaster information.
 
 ## Watchlist Section Scrolling (Complete)
 
@@ -153,17 +145,19 @@ reasonably be corrected before release.
 Import and restoration from an exported watchlist are not required for
 the initial App Store release; see the Product Evolution Roadmap.
 
-## Restore Purchases Error Wording
+## Restore Purchases Error Wording (Complete)
 
-Status: open presentation improvement, recorded October 28, 2026 during StoreKit 8C; not implemented.
-
--   Use “Couldn't Restore Purchases” for restore failures instead of “Couldn't
-    Complete Purchase.”
--   For an identified network failure, explain: “Couldn't restore purchases.
-    Check your internet connection and try again.” Keep the generic retry
-    message for unknown/other failures; do not assume every failure is offline.
--   Preserve cancellation, entitlement and retry behavior. See the
-    [8C observation and screenshot](../Reviews/StoreKitRestoreErrorMessaging-2026-10-28.md).
+-   Failed restores use “Couldn't Restore Purchases” in both the paywall and
+    About.
+-   Identified connectivity failures show “Couldn't restore purchases. Check
+    your connection and try again.” Unknown/other failures retain “Couldn't
+    restore purchases. Please try again.”
+-   Cancellation, entitlement and retry behavior are preserved. Focused tests
+    cover error classification, restore feedback, cancellation and subsequent
+    purchase attempts.
+-   Verified by the owner on TestFlight 1.0 (51), October 30, 2026, during the
+    StoreKit 8C rerun. See the
+    [implementation and verification record](../Reviews/StoreKitRestoreErrorMessaging-2026-10-28.md).
 
 ## StoreKit (Implementation Complete)
 
@@ -295,7 +289,7 @@ These tasks are listed in approximately sequential order.
 
 ## Final Quality Pass
 
-### Not Started / Remaining
+### Complete
 
 -   **Pre-release readability fix — paused-show explanation:** The text under
     “Paused — Plus Required” is too small and light to read easily (reported

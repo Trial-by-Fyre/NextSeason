@@ -124,7 +124,7 @@ struct ShowRowLabel: View {
     private var accessibilityLabel: String {
         var parts = [name, subtitle]
         if isPaused {
-            parts.append(String(localized: "NextSeason Plus required"))
+            parts.append(String(localized: "Not being tracked"))
         }
         if isStale {
             parts.append(String(localized: "No longer on TVMaze"))

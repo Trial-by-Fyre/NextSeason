@@ -36,6 +36,24 @@ enum WatchlistTracking {
     ///
     /// Only active shows count toward the free cap. Adding a show that is saved but
     /// paused reactivates that row (via `repository.add`) when a slot is free.
+    ///
+    /// - Parameters:
+    ///   - show: The show to track; full detail is fetched when it has no seasons.
+    ///   - source: Screen that started the add, for analytics.
+    ///   - repository: Saved shows; checked for capacity and written on success.
+    ///   - tvMaze: Loads full show detail for search hits and Watchlist rows.
+    ///   - analytics: Records the `watchlistAdded` event.
+    ///   - notifications: Decides whether to arm the notification prompt.
+    ///   - prompt: Set when the post-add notification prompt should appear.
+    ///   - purchases: Entitlement for the free-tier cap (waits for the first read).
+    ///   - pausedRow: Set when reactivating a paused Watchlist row. The write then
+    ///     happens only if that same saved row (same `dateAdded`) is still saved
+    ///     and paused at persistence; otherwise this returns `.ignored`. A row
+    ///     deleted meanwhile is never re-created, and a row resumed meanwhile is
+    ///     not reported as added (it never received `willReactivate`).
+    ///   - willReactivate: Called for `pausedRow` after every check passes and
+    ///     immediately before the write, with no suspension in between
+    ///     (`WatchlistRefreshService.markForCatchUp`).
     static func add(
         _ show: Show,
         source: WatchlistActionSource,
@@ -44,7 +62,9 @@ enum WatchlistTracking {
         analytics: any AnalyticsTracking,
         notifications: any NotificationManaging,
         prompt: WatchlistNotificationPromptState,
-        purchases: PurchaseService
+        purchases: PurchaseService,
+        reactivating pausedRow: TrackedShow? = nil,
+        willReactivate: @MainActor () -> Void = {}
     ) async throws -> ToggleOutcome {
         let currentCount = try await repository.activeShowIDs().count
         guard await purchases.canAddToWatchlist(currentCount: currentCount) else {
@@ -57,6 +77,12 @@ enum WatchlistTracking {
         // add or an Undo may have taken the last free slot. Nothing between this
         // check and the write suspends (repository calls are main-actor and do
         // not await internally). An already-active show is an idempotent no-op.
+        if let pausedRow {
+            let stored = try await repository.trackedShow(showID: pausedRow.id)
+            guard let stored, stored.isPaused, stored.dateAdded == pausedRow.dateAdded else {
+                return .ignored
+            }
+        }
         let activeIDs = try await repository.activeShowIDs()
         if !activeIDs.contains(showToStore.id),
             !WatchlistLimitPolicy.canAddShow(
@@ -64,6 +90,7 @@ enum WatchlistTracking {
         {
             return .paywallRequired
         }
+        if pausedRow != nil { willReactivate() }
         try await repository.add(showToStore)
         analytics.track(.watchlistAdded(source: source, showID: showToStore.id))
         if await notifications.needsAuthorizationPrompt() {

@@ -10,11 +10,12 @@ the same `WatchlistAccessReconciler` used for real StoreKit changes, through
 downgrade code:
 
 - If more than three shows are active, the three oldest (by date added) stay
-  active and the rest are **paused**. They move to the **Paused — Plus Required**
+  active and the rest are **paused**. They move to the **Paused**
   section, can't be opened, aren't refreshed or notified, and can still be
   removed. The one-time "Some Shows Are Paused" alert appears.
 - Adding a show uses the normal free-tier limit, counting active shows only.
-  Adding a paused show into a free slot reactivates it.
+  Adding a paused show into a free slot reactivates it, as does tapping its
+  paused Watchlist row. With all three slots used, that tap opens Plus instead.
 - Nothing is deleted. Export still includes every saved show.
 
 Turning simulation off restores actual access. If actual Plus (StoreKit or

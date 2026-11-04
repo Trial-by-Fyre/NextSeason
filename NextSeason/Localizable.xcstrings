@@ -87,6 +87,9 @@
         }
       }
     },
+    "%@ is being tracked again." : {
+
+    },
     "%@ per month" : {
 
     },
@@ -423,6 +426,9 @@
 
     },
     "Couldn't Set Up Local Data" : {
+
+    },
+    "Couldn't Track Show" : {
 
     },
     "Couldn't Update Watchlist" : {
@@ -1186,6 +1192,9 @@
     "NextSeason couldn't reset its local data. You can export diagnostics for troubleshooting and try again." : {
 
     },
+    "NextSeason couldn't start tracking %@ again. It's still saved. Check your connection and try again." : {
+
+    },
     "NextSeason couldn't update your Watchlist. Please try again." : {
       "localizations" : {
         "en" : {
@@ -1241,9 +1250,6 @@
 
     },
     "NextSeason Plus removes the watchlist limit." : {
-
-    },
-    "NextSeason Plus required" : {
 
     },
     "No" : {
@@ -1427,6 +1433,9 @@
           }
         }
       }
+    },
+    "Not being tracked" : {
+
     },
     "Not Now" : {
       "localizations" : {
@@ -1627,9 +1636,6 @@
 
     },
     "Paused" : {
-
-    },
-    "Paused — Plus Required" : {
 
     },
     "Pending debounce for %@" : {
@@ -2296,7 +2302,7 @@
         }
       }
     },
-    "These shows are saved but aren't being tracked. Renew Plus to reactivate them." : {
+    "These shows are saved but aren't being tracked. Tap one to track it when one of your %lld free slots is open, or renew Plus to track all your saved shows." : {
 
     },
     "TheTVDB" : {
@@ -2385,6 +2391,9 @@
           }
         }
       }
+    },
+    "Tracks this show again if one of your %lld free slots is open. Otherwise, opens NextSeason Plus." : {
+
     },
     "Trailer" : {
 

@@ -19,6 +19,7 @@ This document captures enhancements planned after the initial App Store release.
 
 - User-selectable sorting.
 - Support marking which shows the user has fully caught up on.
+- Create a show archive so users can keep track of shows they have watched without cluttering the active Watchlist.
 - **Deferred — post-v1.0 usability:** Consider making collapsed Watchlist section counts more noticeable, e.g. a subtle count capsule beside “Airing Now”, after a show in a collapsed section was overlooked. The existing header count is correct; preserve collapsed state without auto-expanding sections. This is not a v1.0 blocker.
 - **Subscription downgrade improvements:** Allow users whose Plus subscription
   expires to choose which three shows remain active, rather than automatically
@@ -154,6 +155,8 @@ Implementation principles:
 
 ## Continuous Improvement
 
+- **Deferred — post-v1.0: Notification routing that cannot miss a request.** `ContentView` starts notification navigation from `onChange(of: pendingShowID)`, which can miss a second request queued before SwiftUI re-renders. Start navigation from the coordinator/routing code instead, preserving the existing ordering (pending-removal commit before leaving Watchlist, routed Search detail kept, deferred Watchlist detail, paused-show root, superseded requests, launch buffering). Medium risk; needs a scenario checklist. Re-enable `newerNotificationSupersedesOlderLookup()`. User impact is very unlikely. See [Known Test Failures](../Reviews/Known-Test-Failures.md).
+- **Deferred — post-v1.0: Damaged-data recovery testing.** Test the recovery process for damaged data; this testing was not completed for v1.0.
 - **Design review proposal — About color consistency:** Review the About page’s text, icons, links, and status colors, especially in Dark Mode, where the assignments can feel arbitrary. Establish a consistent visual hierarchy and meaningful use of color while preserving contrast, accessible status distinctions, and Light Mode readability. No replacement palette is approved. See [suggestion audit S-04](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
 - **Low-priority cleanup proposal:** Use a structured Search failure/retry kind rather than comparing localized error text to decide whether Try Again is available. Preserve restart-only mapping-bootstrap guidance and ordinary retry behavior. See [suggestion audit S-03](../Reviews/DiscussionSuggestionAudit-2026-10-26.md).
 - Consult the [recent discussion suggestion audit](../Reviews/DiscussionSuggestionAudit-2026-10-26.md) for existing technical follow-ups saved in review notes, alternatives that were not selected, and the unresolved blocked-add retry correctness concern. Those entries retain their original status; this index does not defer unresolved defects or approve implementation.

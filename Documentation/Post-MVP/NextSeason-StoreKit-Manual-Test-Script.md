@@ -577,10 +577,10 @@ Reset purchase history using the appropriate environment; establish a genuinely 
 
 1. Leave the app backgrounded while the entitlement expires. Reopen after expiration.
 2. Record active and paused names, alert text, row styles, and saved total.
-3. Open A; tap D–G in Watchlist; swipe-delete one paused row and Undo.
+3. Open A; tap D–G in Watchlist (with A–C active, close each Plus screen without buying); swipe-delete one paused row and Undo.
 4. Acknowledge the pause alert, relaunch, and inspect again.
 
-**Expected:** A–C remain active; later saves are retained in Paused — Plus Required. Paused rows hide old season/timestamp information and cannot open detail from Watchlist. Active rows still open. Paused removal/Undo preserves its pause state. No saved show disappears merely because Plus expired. The acknowledged alert does not recur without a new pause event. If Apple has not actually expired the entitlement, this is not a valid expiration test.
+**Expected:** A–C remain active; later saves are retained in Paused. Paused rows hide old season/timestamp information and cannot open detail from Watchlist; with all three free slots used, tapping one opens the Plus screen and leaves it paused. Active rows still open. Paused removal/Undo preserves its pause state. No saved show disappears merely because Plus expired. The acknowledged alert does not recur without a new pause event. If Apple has not actually expired the entitlement, this is not a valid expiration test.
 
 #### SK-14 — Expiration while the app is open; foreground/background reconciliation
 

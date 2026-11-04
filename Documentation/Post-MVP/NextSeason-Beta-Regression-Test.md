@@ -135,7 +135,7 @@ Use an **active test show you are happy to remove**, such as The Good Place if y
 **Start:** check About. If you have:
 
 - **Up to 3 shows:** you are already Free. If you have fewer than three active shows, add test shows until three are active. Paused shows do not count toward the limit. Do not remove real shows to prepare this test.
-- **Unlimited:** do not cancel anything. Open About → **Diagnostics** → **Subscription Testing** and turn on **Simulate Free Tier**. About now shows **Up to 3 shows (simulated)**. An alert **Some Shows Are Paused** may say Plus is no longer active. This is the simulation: tap OK; your real Plus access is unchanged. With more than three saves, the three oldest shows remain active automatically and the rest move to **Paused — Plus Required**; nothing is deleted. No removal is needed to obtain three active shows. If you have fewer than three saves, add test shows until three are active.
+- **Unlimited:** do not cancel anything. Open About → **Diagnostics** → **Subscription Testing** and turn on **Simulate Free Tier**. About now shows **Up to 3 shows (simulated)**. An alert **Some Shows Are Paused** may say Plus is no longer active. This is the simulation: tap OK; your real Plus access is unchanged. With more than three saves, the three oldest shows remain active automatically and the rest move to **Paused**; nothing is deleted. No removal is needed to obtain three active shows. If you have fewer than three saves, add test shows until three are active.
 
 If simulating the free tier produced paused shows, perform the paused-row checks below; otherwise skip to the main free-limit steps. Keep simulation ON through both parts until main step 6.
 
@@ -143,11 +143,12 @@ If simulating the free tier produced paused shows, perform the paused-row checks
 
 **Start:** Simulate Free Tier is ON, three shows are active and at least one is paused. If this starting state is unavailable, mark this branch Skipped.
 
-1. Confirm the three oldest saved shows stay active and the others appear under **Paused — Plus Required**, with an explanation that they remain saved but are not tracked.
-2. Tap the body of a paused row, avoiding its star. Details must not open from Watchlist.
+1. Confirm the three oldest saved shows stay active and the others appear under **Paused**, with an explanation that they remain saved but are not tracked, and that you can tap one when a free slot is open or renew Plus to track them all.
+2. With three shows active, tap the body of a paused row, avoiding its star. The Plus screen must open instead of details. Close it without buying and check that the show is still paused.
 3. Search Watchlist for that paused show; its paused row must appear. Clear the search, then export and verify the paused show is included in the CSV.
 4. If you have a **paused test show**, swipe-delete it and tap Undo. Verify it returns exactly once and stays paused. If every paused show is valuable, mark only this removal/Undo step Skipped; do not delete a real show for the test.
-5. Leave Simulate Free Tier **ON** and continue to the main free-limit steps. Removing a paused show does not free an active slot, and removing an active show does not automatically reactivate a paused one.
+5. If you have an **active test show**, swipe-delete it and tap OK. Check that no paused show becomes active on its own. Then tap the body of a paused row, avoiding its star: it must move into its status section without opening details, and the other paused shows must stay paused. If you have no active test show, mark only this step Skipped; do not delete a real show for the test.
+6. Leave Simulate Free Tier **ON** and continue to the main free-limit steps. Removing a paused show does not free an active slot, and removing an active show does not automatically reactivate a paused one.
 
 ### Main free-limit steps
 

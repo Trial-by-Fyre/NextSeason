@@ -9,7 +9,8 @@ import SwiftUI
 ///
 /// Rows come from `WatchlistView` (shared frame tracking and removal), render
 /// without a `NavigationLink`, and stay removable via swipe, star, or the
-/// VoiceOver action. Not collapsible: it is the only place paused shows appear.
+/// VoiceOver action. Tapping a row reactivates it into an open free slot, or
+/// opens Plus at capacity. Not collapsible: it is the only place paused shows appear.
 struct PausedWatchlistSection<Row: View>: View {
     let shows: [TrackedShow]
     var onDelete: ((IndexSet) -> Void)?
@@ -26,12 +27,12 @@ struct PausedWatchlistSection<Row: View>: View {
             // headers apply their own dimmed style, and hierarchical
             // `.primary`/`.secondary` resolve relative to it, rendering too faint.
             VStack(alignment: .leading, spacing: 4) {
-                Text("Paused — Plus Required")
+                Text("Paused")
                     .font(.headline)
                     .foregroundStyle(Color.primary)
                     .accessibilityAddTraits(.isHeader)
                 Text(
-                    "These shows are saved but aren't being tracked. Renew Plus to reactivate them."
+                    "These shows are saved but aren't being tracked. Tap one to track it when one of your \(WatchlistLimitPolicy.freeShowLimit) free slots is open, or renew Plus to track all your saved shows."
                 )
                 .font(.subheadline)
                 .foregroundStyle(Color.primary)

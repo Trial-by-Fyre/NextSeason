@@ -87,6 +87,21 @@ final class WatchlistViewModel {
 
     var pendingRemoval: TrackedShow? { removalCoordinator.pendingRemoval }
 
+    /// Paused rows whose reactivation is in flight. A second tap is ignored, and
+    /// the row cannot be removed until the attempt (and its reload) finishes.
+    private(set) var reactivatingShowIDs: Set<Int> = []
+
+    /// The paused row whose last reactivation failed (offline or persistence);
+    /// drives the retry alert. The row stays saved and paused.
+    var reactivationFailure: TrackedShow?
+
+    /// Post-add notification prompt state, shared with the add flow.
+    let notificationPrompt = WatchlistNotificationPromptState()
+
+    /// The most recent post-reactivation catch-up refresh. Not awaited by
+    /// `reactivate`; exposed so tests can wait for it deterministically.
+    private(set) var catchUpTask: Task<Void, Never>?
+
     private let repository: any WatchlistRepository
     private let refreshService: WatchlistRefreshService?
     private let removalCoordinator: WatchlistPendingRemoval
@@ -208,7 +223,89 @@ final class WatchlistViewModel {
         _ tracked: TrackedShow,
         source: WatchlistActionSource = .watchlist
     ) {
+        guard !isReactivating(tracked) else { return }
         removalCoordinator.requestRemoval(tracked, source: source)
+    }
+
+    func isReactivating(_ tracked: TrackedShow) -> Bool {
+        reactivatingShowIDs.contains(tracked.id)
+    }
+
+    /// Tap on a paused row: tracks that saved show again in an open free slot.
+    ///
+    /// Uses the shared admission path (`WatchlistTracking.add`) in reactivation
+    /// mode, so the free cap, entitlement wait, and fresh detail data match every
+    /// other add. A deferred (star) removal still holds its slot until it commits.
+    /// At capacity, calls `onPaywallRequired` and leaves the row unchanged.
+    ///
+    /// Like a Plus resume, the row is marked for catch-up just before it is
+    /// unpaused: it keeps its pre-pause notification signature, and its detail
+    /// may come from TVMaze's cache, so the first refresh must record a silent
+    /// baseline instead of announcing what changed while it was paused.
+    ///
+    /// - Returns: True only when this call reactivated the row.
+    @discardableResult
+    func reactivate(
+        _ tracked: TrackedShow,
+        tvMaze: any TVMazeService,
+        notifications: any NotificationManaging,
+        purchases: PurchaseService,
+        onPaywallRequired: () -> Void
+    ) async -> Bool {
+        guard !isReactivating(tracked) else { return false }
+        reactivatingShowIDs.insert(tracked.id)
+        defer { reactivatingShowIDs.remove(tracked.id) }
+        reactivationFailure = nil
+        do {
+            // Skip the detail fetch when the row was deleted or resumed since it
+            // was displayed (e.g. a paywall retry after Plus resumed everything).
+            guard let stored = try await repository.trackedShow(showID: tracked.id),
+                stored.isPaused, stored.dateAdded == tracked.dateAdded
+            else {
+                await reload()
+                return false
+            }
+            let refreshService = refreshService
+            let outcome = try await WatchlistTracking.add(
+                Show(tracked: stored),
+                source: .watchlist,
+                repository: repository,
+                tvMaze: tvMaze,
+                analytics: analytics,
+                notifications: notifications,
+                prompt: notificationPrompt,
+                purchases: purchases,
+                reactivating: stored,
+                willReactivate: { refreshService?.markForCatchUp([stored]) }
+            )
+            switch outcome {
+            case .added:
+                await reload()
+                startCatchUp(showID: stored.id)
+                return true
+            case .paywallRequired:
+                onPaywallRequired()
+                return false
+            case .ignored, .removalRequested, .undidPendingRemoval:
+                await reload()
+                return false
+            }
+        } catch is CancellationError {
+            return false
+        } catch {
+            analytics.trackNonFatalError(error, context: "watchlist_reactivate")
+            reactivationFailure = tracked
+            return false
+        }
+    }
+
+    /// Catches up just the reactivated show, then reloads its refreshed row.
+    private func startCatchUp(showID: Int) {
+        guard let refreshService else { return }
+        catchUpTask = Task { [weak self] in
+            await refreshService.catchUp(showIDs: [showID])
+            await self?.reload()
+        }
     }
 
     /// Swipe-to-delete: drops rows from the list immediately, then persists and
@@ -230,6 +327,9 @@ final class WatchlistViewModel {
     /// Drops the row from the list synchronously, then persists and shows an
     /// informational undo toast. Distinct from star-button `requestRemoval`.
     func deleteImmediately(_ tracked: TrackedShow) {
+        // A row being reactivated could otherwise be deleted and then written
+        // back, or restored by Undo with its stale paused flag.
+        guard !isReactivating(tracked) else { return }
         removeShow(showID: tracked.id)
         removalCoordinator.requestImmediateRemoval(tracked, source: .watchlist)
     }

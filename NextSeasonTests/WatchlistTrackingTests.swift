@@ -162,10 +162,18 @@ struct WatchlistTrackingTests {
         let analytics = RecordingAnalyticsService()
         let removalCoordinator = WatchlistPendingRemoval(
             repository: repository, analytics: analytics)
+        // Isolated entitlement storage: the default store reads standard defaults
+        // and the Keychain, where a complimentary grant would make this unlimited.
+        let suiteName = "WatchlistTrackingTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
         let purchases = PurchaseService(
             store: StubPurchaseStoreClient(isStoreEntitled: false),
+            entitlementStore: PlusEntitlementStore(
+                userDefaults: defaults, persistence: MemoryComplimentaryPlusPersistence()),
             initialStoreEntitlement: .resolved(isEntitled: false),
             simulationAvailability: { false })
+        #expect(purchases.isUnlimitedWatchlist == false, "Precondition: free access")
         let tvMaze = MockTVMazeService()
         for id in 1...3 { try await repository.add(show(id: id)) }
         let pending = try #require(try await repository.trackedShow(showID: 1))

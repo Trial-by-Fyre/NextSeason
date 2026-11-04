@@ -25,6 +25,7 @@ struct WatchlistView: View {
     @Environment(\.scenePhase) private var scenePhase
     @Environment(PurchaseService.self) private var purchases
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.presentPlusStore) private var presentPlusStore
     /// Optional so previews without the app composition still render.
     @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
         WatchlistAccessReconciler?
@@ -261,15 +262,30 @@ struct WatchlistView: View {
                             Task { await viewModel.undoPendingRemoval() }
                         }
                 } else if tracked.isPaused {
-                    // Paused (Plus lapsed): no NavigationLink, so Show Details
-                    // cannot be opened. Removal stays available.
-                    ShowRowLabel(tracked: tracked)
-                        .accessibilityIdentifier(
-                            "\(AccessibilityID.Watchlist.row).\(tracked.id)"
+                    // Paused: tapping tracks this saved show again in an open
+                    // free slot, or opens Plus at capacity. No NavigationLink, so
+                    // Show Details cannot be opened. Removal stays on the star,
+                    // swipe, and rotor action.
+                    Button {
+                        reactivate(tracked, viewModel: viewModel)
+                    } label: {
+                        ShowRowLabel(tracked: tracked)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(
+                        String(
+                            localized:
+                                "Tracks this show again if one of your \(WatchlistLimitPolicy.freeShowLimit) free slots is open. Otherwise, opens NextSeason Plus."
                         )
-                        .accessibilityAction(named: String(localized: "Remove from watchlist")) {
-                            deleteImmediately(tracked, viewModel: viewModel)
-                        }
+                    )
+                    .accessibilityIdentifier(
+                        "\(AccessibilityID.Watchlist.row).\(tracked.id)"
+                    )
+                    .accessibilityAction(named: String(localized: "Remove from watchlist")) {
+                        deleteImmediately(tracked, viewModel: viewModel)
+                    }
                 } else {
                     NavigationLink(value: tracked) {
                         ShowRowLabel(tracked: tracked)
@@ -292,7 +308,8 @@ struct WatchlistView: View {
                 showID: tracked.id,
                 showName: tracked.name,
                 isTracked: !isPending,
-                isUpdating: false,
+                // Shows progress (and blocks removal) while reactivation runs.
+                isUpdating: viewModel.isReactivating(tracked),
                 isPendingRemoval: isPending,
                 trackButtonIdentifier: AccessibilityID.Watchlist.trackButton
             ) {
@@ -301,6 +318,31 @@ struct WatchlistView: View {
                 } else {
                     viewModel.requestRemoval(tracked, source: .watchlist)
                 }
+            }
+        }
+        .deleteDisabled(viewModel.isReactivating(tracked))
+    }
+
+    /// Paused-row tap. At capacity, presents Plus; if Plus unlocks, the attempt
+    /// runs again (a no-op once the reconciler has resumed every paused show).
+    private func reactivate(_ tracked: TrackedShow, viewModel: WatchlistViewModel) {
+        Task {
+            let reactivated = await viewModel.reactivate(
+                tracked,
+                tvMaze: tvMaze,
+                notifications: notificationService,
+                purchases: purchases,
+                onPaywallRequired: {
+                    presentPlusStore? {
+                        reactivate(tracked, viewModel: viewModel)
+                    }
+                }
+            )
+            // The row moves to another section, so VoiceOver focus cannot follow it.
+            if reactivated {
+                AccessibilityNotification.Announcement(
+                    String(localized: "\(tracked.name) is being tracked again.")
+                ).post()
             }
         }
     }
@@ -428,6 +470,27 @@ struct WatchlistView: View {
                 guard let message else { return }
                 AccessibilityNotification.Announcement(message).post()
             }
+            .alert(
+                "Couldn't Track Show",
+                isPresented: Binding(
+                    get: { viewModel.reactivationFailure != nil },
+                    set: { if !$0 { viewModel.reactivationFailure = nil } }
+                ),
+                presenting: viewModel.reactivationFailure
+            ) { tracked in
+                Button("Try Again") {
+                    reactivate(tracked, viewModel: viewModel)
+                }
+                Button("OK", role: .cancel) {}
+            } message: { tracked in
+                Text(
+                    "NextSeason couldn't start tracking \(tracked.name) again. It's still saved. Check your connection and try again."
+                )
+            }
+            .watchlistNotificationPromptAlerts(
+                prompt: viewModel.notificationPrompt,
+                notificationService: notificationService
+            )
         case .failed(let message):
             ContentUnavailableView {
                 Label {

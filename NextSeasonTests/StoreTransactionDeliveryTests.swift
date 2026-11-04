@@ -12,15 +12,16 @@ struct StoreTransactionDeliveryTests {
     func unknownThenApproval() async {
         let delivery = StoreTransactionDelivery()
         var trace: [String] = []
-        var check = PlusEntitlementCheck.unverified
+        let check = MutableTestValue(PlusEntitlementCheck.unverified)
         delivery.observe { trace.append("process:\($0.id)") }
         let delivered = await delivery.deliver(
-            transaction, validate: { check }, onVerified: { trace.append("process:\($0.id)") },
+            transaction, validate: { check.value },
+            onVerified: { trace.append("process:\($0.id)") },
             finish: { trace.append("finish:6") })
         #expect(!delivered)
         await delivery.retryDeferredTransactions()
         #expect(trace.isEmpty)
-        check = .active
+        check.value = .active
         await delivery.retryDeferredTransactions()
         await delivery.retryDeferredTransactions()
         #expect(trace == ["process:6", "finish:6"])
@@ -134,15 +135,15 @@ struct StoreTransactionDeliveryTests {
         let retry = Task { await delivery.retryDeferredTransactions() }
         await gate.waitForCount(1)
         delivery.observe { _ in newEffects += 1 }
-        var approved = false
+        let approved = MutableTestValue(false)
         await delivery.deliver(
-            transaction, validate: { approved ? .active : .unverified },
+            transaction, validate: { approved.value ? .active : .unverified },
             onVerified: { _ in newEffects += 1 }, finish: { newEffects += 1 })
         gate.resumeFirst(.active)
         await retry.value
         #expect(oldEffects == 0)
         #expect(newEffects == 0)
-        approved = true
+        approved.value = true
         await delivery.retryDeferredTransactions()
         #expect(newEffects == 2)
     }
@@ -160,11 +161,11 @@ struct StoreTransactionDeliveryTests {
             entitlementStore: PlusEntitlementStore(
                 userDefaults: defaults, persistence: MemoryComplimentaryPlusPersistence()))
         await purchases.start()
-        var approved = false
+        let approved = MutableTestValue(false)
         var finishedWithAccess = false
         delivery.observe { await store.emitVerifiedTransaction($0) }
         await delivery.deliver(
-            transaction, validate: { approved ? .active : .unverified },
+            transaction, validate: { approved.value ? .active : .unverified },
             onVerified: { await store.emitVerifiedTransaction($0) },
             finish: { finishedWithAccess = purchases.isUnlimitedWatchlist })
         await sleeper.waitForCalls(1)
@@ -175,7 +176,7 @@ struct StoreTransactionDeliveryTests {
         #expect(store.finishedTransactionIDs.isEmpty)
         #expect(!finishedWithAccess)
         // No transaction event, foreground return or explicit retry is sent.
-        approved = true
+        approved.value = true
         store.isStoreEntitled = true
         store.reportsUnverifiedEntitlement = false
         sleeper.resumeFirst()
@@ -225,16 +226,16 @@ struct StoreTransactionDeliveryTests {
         await sleeper.waitForCalls(1)
         let oldTask = try #require(delivery.automaticRetryTask)
         delivery.observe { _ in newEffects += 1 }
-        var approved = false
+        let approved = MutableTestValue(false)
         await delivery.deliver(
-            transaction, validate: { approved ? .active : .unverified },
+            transaction, validate: { approved.value ? .active : .unverified },
             onVerified: { _ in newEffects += 1 }, finish: { newEffects += 1 })
         await sleeper.waitForCalls(2)
         let newTask = try #require(delivery.automaticRetryTask)
         sleeper.resumeFirst()
         await oldTask.value
         #expect(delivery.automaticRetryTask != nil)
-        approved = true
+        approved.value = true
         sleeper.resumeFirst()
         await newTask.value
         #expect(oldEffects == 0)
@@ -248,7 +249,7 @@ struct StoreTransactionDeliveryTests {
         var delivery: StoreTransactionDelivery? = StoreTransactionDelivery(sleep: {
             await sleeper.wait($0)
         })
-        weak var weakDelivery = delivery
+        weak let weakDelivery = delivery
         delivery?.observe { _ in Issue.record("Unknown transaction was delivered") }
         await delivery?.deliver(
             transaction, validate: { .unverified },
@@ -298,20 +299,20 @@ struct StoreTransactionDeliveryTests {
     func recoverPendingWithoutUpdate() async throws {
         let sleeper = DeliveryRetrySleeper()
         let delivery = StoreTransactionDelivery(sleep: { await sleeper.wait($0) })
-        var approved = false
+        let approved = MutableTestValue(false)
         var trace: [String] = []
         delivery.observe { trace.append("process:\($0.id)") }
         await delivery.recoverUnfinishedTransactions {
             [
                 .init(
-                    transaction: transaction, validate: { approved ? .active : .unverified },
+                    transaction: transaction, validate: { approved.value ? .active : .unverified },
                     finish: { trace.append("finish:6") })
             ]
         }
         await sleeper.waitForCalls(1)
         let task = try #require(delivery.automaticRetryTask)
         #expect(trace.isEmpty)
-        approved = true
+        approved.value = true
         sleeper.resumeFirst()
         await task.value
         #expect(trace == ["process:6", "finish:6"])
@@ -386,6 +387,17 @@ struct StoreTransactionDeliveryTests {
             await Task.yield()
         }
         Issue.record("Delivery did not join the in-flight transaction")
+    }
+}
+
+/// Test input changed after a `@MainActor` (implicitly `Sendable`) closure
+/// captures it; a captured `var` would be flagged as mutated after capture.
+@MainActor
+private final class MutableTestValue<Value> {
+    var value: Value
+
+    init(_ value: Value) {
+        self.value = value
     }
 }
 

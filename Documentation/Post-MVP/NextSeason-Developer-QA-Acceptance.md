@@ -50,7 +50,7 @@ In About → Diagnostics, tap **Send Test Notification**, note the named target 
 
 ### Paused show, without closing the app
 
-- [ ] With real Plus access and more than three saved shows, create an alert for a target **outside the three oldest saves**. After the alert arrives, leave it untapped, return to About → Diagnostics → Subscription Testing, and turn **Simulate Free Tier ON**. Confirm the target now appears under **Paused — Plus Required**. Tap the retained notification from Notification Center: NextSeason should show Watchlist without opening paused details. Turn Simulate Free Tier **OFF** afterward.
+- [ ] With real Plus access and more than three saved shows, create an alert for a target **outside the three oldest saves**. After the alert arrives, leave it untapped, return to About → Diagnostics → Subscription Testing, and turn **Simulate Free Tier ON**. Confirm the target now appears under **Paused**. Tap the retained notification from Notification Center: NextSeason should show Watchlist without opening paused details. Turn Simulate Free Tier **OFF** afterward.
 
 **If the target cannot safely be paused:** the three oldest saves remain active. If the selected target is one of them, do not remove valued shows or rearrange your real data to force the case; mark only this paused check Skipped and record the target/reason.
 

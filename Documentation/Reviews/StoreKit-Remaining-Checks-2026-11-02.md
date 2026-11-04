@@ -65,3 +65,12 @@ Do not attempt forced internal states by repeatedly toggling Airplane Mode or ta
 ## Recording the remainder
 
 Use the [existing checklist](../Post-MVP/NextSeason-StoreKit-Manual-Test-Checklist.md) for exact setup/cleanup. Record each new result once with build/environment. Keep original historical reports unchanged; use later acceptance above to interpret stale open-failure text. No release requirements are waived by this prioritization. Any decision to ship with material unverified behavior remains the owner's decision.
+
+
+## Owner completion update — November 3, 2026
+
+The owner reports finishing **Short recovery and interaction checks** and confirms that all tests under **Release integration and equipment-dependent work** were already performed in previous rounds. Credit those reported completions; do not request repetition solely because the original result sheet is blank. No new per-case build, environment, or outcome detail was supplied with this section-level report, so it does not independently establish a current-candidate pass for every branch or close engineering evidence gaps.
+
+The owner explicitly accepts deferring investigation of the local pending Annual/existing Monthly issue because the exact sequence uses Xcode Ask to Buy simulation and a debug-only paywall entry point. Preserve it as a known local-test limitation, not a fixed or passed scenario; production applicability remains unestablished. See [report and disposition](StoreKitPendingPlanChange-2026-11-03.md).
+
+The separately reported offline-expiration reconnection observation remains unresolved: switching away/back after reconnecting retained Unlimited; restart with complimentary access excluded recognized expiration. This completion update does not establish a fix or waive investigation of that separate observation. Normal automatic renewal was not directly verified from the date-only subscription display. Grace-specific testing was not applicable because Billing Grace Period was disabled. These specific qualifications remain alongside the section-level completion report.

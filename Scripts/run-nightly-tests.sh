@@ -36,6 +36,7 @@ KNOWN_FAILURES_FILE="${KNOWN_FAILURES_FILE:-$REPO_DIR/Scripts/nightly-known-fail
 KEEP_RUNS="${KEEP_RUNS:-14}"
 STEP_TIMEOUT_SECONDS="${STEP_TIMEOUT_SECONDS:-5400}"   # per build or per-OS test step
 NIGHTLY_SCHEDULED="${NIGHTLY_SCHEDULED:-0}"            # set to 1 by the LaunchAgent
+NIGHTLY_EMAIL_SHORTCUT="${NIGHTLY_EMAIL_SHORTCUT:-}"    # optional Apple Shortcuts workflow
 LATE_START_WINDOW="${LATE_START_WINDOW:-02:00-04:00}"  # scheduled runs start only in this window
 NIGHTLY_CLEAN_BUILD="${NIGHTLY_CLEAN_BUILD:-0}"        # 1 deletes DerivedData first
 # /usr/bin/python3, not PATH: a PATH python3 may be an unusable x86_64 build.
@@ -218,6 +219,20 @@ finish() {
             >> "$NIGHTLY_ROOT/history.log"
     fi
     cat "$RUN_DIR/summary.md"
+    if [ "$NIGHTLY_SCHEDULED" = 1 ] && [ -n "$NIGHTLY_EMAIL_SHORTCUT" ]; then
+        # Bound the wait in case Shortcuts needs approval or Mail stalls.
+        "$PYTHON" -c '
+import subprocess
+import sys
+
+try:
+    result = subprocess.run(["/usr/bin/shortcuts", "run", sys.argv[1]], timeout=60)
+except subprocess.TimeoutExpired:
+    sys.exit("Shortcuts timed out after 60 seconds")
+sys.exit(result.returncode)
+' "$NIGHTLY_EMAIL_SHORTCUT" < "$RUN_DIR/summary.md" >> "$RUN_DIR/run.log" 2>&1 \
+            || log "Nightly email shortcut failed; see run.log"
+    fi
     prune_old_runs
     if [ "$LOCK_HELD" -eq 1 ]; then
         rm -rf "$LOCK_DIR"

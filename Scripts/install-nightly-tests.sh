@@ -27,6 +27,7 @@ NIGHTLY_ROOT="${NIGHTLY_ROOT:-$HOME/Library/Developer/NightlyTests/NextSeason}"
 NIGHTLY_HOUR="${NIGHTLY_HOUR:-2}"
 NIGHTLY_MINUTE="${NIGHTLY_MINUTE:-0}"
 NIGHTLY_REF="${NIGHTLY_REF:-}"
+NIGHTLY_EMAIL_SHORTCUT="${NIGHTLY_EMAIL_SHORTCUT:-}"
 # Late-start window: the scheduled time through two hours later (02:00-04:00 by default).
 LATE_START_WINDOW="${LATE_START_WINDOW:-$(printf '%02d:%02d-%02d:%02d' \
     "$NIGHTLY_HOUR" "$NIGHTLY_MINUTE" "$(( (NIGHTLY_HOUR + 2) % 24 ))" "$NIGHTLY_MINUTE")}"
@@ -39,9 +40,12 @@ xml_escape() {
     printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'
 }
 
-optional_ref() {
+optional_environment() {
     if [ -n "$NIGHTLY_REF" ]; then
-        printf '        <key>NIGHTLY_REF</key>\n        <string>%s</string>' "$(xml_escape "$NIGHTLY_REF")"
+        printf '        <key>NIGHTLY_REF</key>\n        <string>%s</string>\n' "$(xml_escape "$NIGHTLY_REF")"
+    fi
+    if [ -n "$NIGHTLY_EMAIL_SHORTCUT" ]; then
+        printf '        <key>NIGHTLY_EMAIL_SHORTCUT</key>\n        <string>%s</string>\n' "$(xml_escape "$NIGHTLY_EMAIL_SHORTCUT")"
     fi
 }
 
@@ -83,7 +87,7 @@ plist_contents() {
         <string>$(xml_escape "$REPO_DIR")</string>
         <key>NIGHTLY_ROOT</key>
         <string>$(xml_escape "$NIGHTLY_ROOT")</string>
-$(optional_ref)
+$(optional_environment)
         <key>LATE_START_WINDOW</key>
         <string>$LATE_START_WINDOW</string>
         <key>DEVELOPER_DIR</key>

@@ -551,6 +551,97 @@ struct WatchlistPausedReactivationTests {
         #expect(harness.notifications.showIDs == [1, 4])
     }
 
+    @Test("Reactivating from Search catches up silently, then reloads; later changes notify")
+    func searchReactivationIsSilent() async throws {
+        let harness = try await Harness()
+        try await harness.freeOneSlot()
+        // While 4 was paused its season 2 was scheduled; the add reads an older
+        // cached body that predates it.
+        harness.tvMaze.cachedShowByID[4] = show(4)
+        harness.publish(4, .scheduled(upcomingPremiere))
+        var watchlistReloads = 0
+        let context = SearchWatchlistTracking.Context(
+            repository: harness.repository, tvMaze: harness.tvMaze,
+            removalCoordinator: harness.removal,
+            notificationService: NotificationService(
+                userDefaults: isolatedDefaults(), authorizationStatusForTesting: .denied,
+                analytics: harness.analytics),
+            notificationPrompt: WatchlistNotificationPromptState(),
+            analytics: harness.analytics, purchases: harness.purchases,
+            refreshService: harness.refresh,
+            onWatchlistChanged: { watchlistReloads += 1 }, onSearchResultsHintDismissed: {},
+            onPaywallRequired: {})
+
+        // The tapped result carries the pre-pause data (so the add itself does
+        // not fetch); hold the catch-up fetch to observe the reload order.
+        harness.tvMaze.holdNextFetch = [4]
+        try await SearchWatchlistTracking().handleTrackButton(for: show(4), context: context)
+        #expect(try await harness.row(4)?.isPaused == false)
+        let catchUp = try #require(harness.refresh.catchUpTask, "Catch-up started at once")
+        await harness.tvMaze.waitForStartedFetches(1)
+        #expect(watchlistReloads == 1, "Reloaded for the add, not yet for the catch-up")
+        harness.tvMaze.release(4)
+        await catchUp.value
+        #expect(watchlistReloads == 2, "Reloaded again once catch-up saved")
+        #expect(harness.notifications.delivered.isEmpty, "Catch-up is silent")
+        #expect(harness.refresh.catchUpShowIDs.isEmpty, "Mark consumed")
+        #expect(
+            try await harness.row(4)?.nextSeason
+                == .scheduled(season: 2, premiere: upcomingPremiere))
+
+        // An ordinary refresh does not announce the historical change, but a
+        // genuinely new one after catch-up notifies.
+        await harness.refresh.refreshAll()
+        #expect(harness.notifications.delivered.isEmpty, "Historical change not announced")
+        harness.publish(4, .scheduled(laterPremiere))
+        await harness.refresh.refreshAll()
+        #expect(harness.notifications.showIDs == [4])
+    }
+
+    @Test("Reactivating from Show Detail catches up silently, then reloads; later changes notify")
+    func detailReactivationIsSilent() async throws {
+        let harness = try await Harness()
+        try await harness.freeOneSlot()
+        harness.tvMaze.cachedShowByID[4] = show(4)
+        harness.publish(4, .scheduled(upcomingPremiere))
+        let viewModel = ShowDetailViewModel(
+            show: show(4), service: harness.tvMaze, repository: harness.repository,
+            notifications: NotificationService(
+                userDefaults: isolatedDefaults(), authorizationStatusForTesting: .denied,
+                analytics: harness.analytics),
+            analytics: harness.analytics, purchases: harness.purchases)
+        await viewModel.load(removalCoordinator: nil)
+        #expect(viewModel.isTracked == false, "Paused: empty star")
+        let fetchesBefore = harness.tvMaze.fetchedShowIDs.count
+
+        // Hold the catch-up fetch to observe the reload order.
+        var watchlistReloads = 0
+        harness.tvMaze.holdNextFetch = [4]
+        await viewModel.handleTrackButton(
+            removalCoordinator: nil, refreshService: harness.refresh,
+            onWatchlistChanged: { watchlistReloads += 1 }, onPaywallRequired: {})
+        #expect(viewModel.isTracked)
+        let catchUp = try #require(harness.refresh.catchUpTask, "Catch-up started at once")
+        await harness.tvMaze.waitForStartedFetches(fetchesBefore + 1)
+        #expect(watchlistReloads == 1, "Reloaded for the add, not yet for the catch-up")
+        harness.tvMaze.release(4)
+        await catchUp.value
+        #expect(watchlistReloads == 2, "Reloaded again once catch-up saved")
+        #expect(harness.notifications.delivered.isEmpty, "Catch-up is silent")
+        #expect(harness.refresh.catchUpShowIDs.isEmpty, "Mark consumed")
+        #expect(
+            try await harness.row(4)?.nextSeason
+                == .scheduled(season: 2, premiere: upcomingPremiere))
+
+        // An ordinary refresh does not announce the historical change, but a
+        // genuinely new one after catch-up notifies.
+        await harness.refresh.refreshAll()
+        #expect(harness.notifications.delivered.isEmpty, "Historical change not announced")
+        harness.publish(4, .scheduled(laterPremiere))
+        await harness.refresh.refreshAll()
+        #expect(harness.notifications.showIDs == [4])
+    }
+
     @Test("Restoring Plus after a reactivation still resumes the remaining paused shows")
     func plusRestoreResumesRemaining() async throws {
         let harness = try await Harness()

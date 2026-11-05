@@ -276,7 +276,7 @@ final class WatchlistViewModel {
                 prompt: notificationPrompt,
                 purchases: purchases,
                 reactivating: stored,
-                willReactivate: { refreshService?.markForCatchUp([stored]) }
+                willReactivate: { refreshService?.markForCatchUp([$0]) }
             )
             switch outcome {
             case .added:

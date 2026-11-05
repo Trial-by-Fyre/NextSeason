@@ -136,9 +136,11 @@ final class ShowDetailViewModel {
     /// Shared track/untrack orchestration; local star state updates from the outcome.
     ///
     /// When the free-tier cap blocks an add, invokes `onPaywallRequired` so the
-    /// view can present the Plus store.
+    /// view can present the Plus store. `refreshService` marks a reactivated
+    /// paused show for a silent catch-up baseline.
     func handleTrackButton(
         removalCoordinator: WatchlistPendingRemoval?,
+        refreshService: WatchlistRefreshService? = nil,
         onWatchlistChanged: @escaping () -> Void,
         onPaywallRequired: @escaping () -> Void
     ) async {
@@ -172,7 +174,9 @@ final class ShowDetailViewModel {
                 analytics: analytics,
                 notifications: notifications,
                 prompt: notificationPrompt,
-                purchases: purchases
+                purchases: purchases,
+                refreshService: refreshService,
+                onCatchUpFinished: onWatchlistChanged
             )
             switch outcome {
             case .undidPendingRemoval:

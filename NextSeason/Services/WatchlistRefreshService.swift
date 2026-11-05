@@ -200,6 +200,25 @@ final class WatchlistRefreshService {
         await refreshAll(force: true, onlyShowIDs: showIDs)
     }
 
+    /// The most recent catch-up started by `startCatchUp`. Not awaited by
+    /// callers; exposed so tests can wait for it deterministically.
+    private(set) var catchUpTask: Task<Void, Never>?
+
+    /// Starts `catchUp` owned by this app-lifetime service rather than the
+    /// caller, so leaving Search or Show Detail right after reactivating a
+    /// paused show does not cancel it. If it is interrupted or fails, the mark
+    /// remains and the next refresh baselines the show instead.
+    ///
+    /// - Parameter onFinished: Called once the catch-up has saved its results,
+    ///   so a Watchlist loaded meanwhile can reload the refreshed row. Pass an
+    ///   app-level hook, not one tied to the originating screen.
+    func startCatchUp(showIDs: Set<Int>, onFinished: @escaping () -> Void = {}) {
+        catchUpTask = Task {
+            await catchUp(showIDs: showIDs)
+            onFinished()
+        }
+    }
+
     /// True when `row` is the same saved row that was marked for catch-up.
     private func needsCatchUp(_ row: TrackedShow) -> Bool {
         catchUpMarks[row.id] == row.dateAdded.timeIntervalSinceReferenceDate

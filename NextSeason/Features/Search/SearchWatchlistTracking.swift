@@ -29,6 +29,8 @@ final class SearchWatchlistTracking {
         let analytics: any AnalyticsTracking
         /// Free-tier cap enforcement for add-to-watchlist from search rows.
         let purchases: PurchaseService
+        /// Marks a reactivated paused show for a silent catch-up baseline.
+        let refreshService: WatchlistRefreshService?
         let onWatchlistChanged: () -> Void
         let onSearchResultsHintDismissed: () -> Void
         /// Presents the Plus store when `WatchlistTracking.toggle` returns
@@ -93,7 +95,9 @@ final class SearchWatchlistTracking {
                 analytics: context.analytics,
                 notifications: context.notificationService,
                 prompt: context.notificationPrompt,
-                purchases: context.purchases
+                purchases: context.purchases,
+                refreshService: context.refreshService,
+                onCatchUpFinished: context.onWatchlistChanged
             )
             switch outcome {
             case .ignored:

@@ -35,6 +35,7 @@ struct SearchView: View {
     @Environment(\.presentPlusStore) private var presentPlusStore
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(PurchaseService.self) private var purchases
+    @Environment(\.watchlistRefreshService) private var refreshService
     /// Optional so previews without the app composition still render.
     @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
         WatchlistAccessReconciler?
@@ -196,6 +197,7 @@ struct SearchView: View {
             notificationPrompt: notificationPrompt,
             analytics: analytics,
             purchases: purchases,
+            refreshService: refreshService,
             onWatchlistChanged: onWatchlistChanged,
             onSearchResultsHintDismissed: dismissSearchResultsHintIfNeeded,
             onPaywallRequired: { presentPlusStore?(onPlusUnlocked) }

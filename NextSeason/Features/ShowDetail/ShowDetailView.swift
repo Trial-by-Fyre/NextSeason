@@ -17,6 +17,7 @@ struct ShowDetailView: View {
     @Environment(\.watchlistPendingRemoval) private var removalCoordinator
     @Environment(\.onAutomationDetailLoaded) private var onAutomationDetailLoaded
     @Environment(\.presentPlusStore) private var presentPlusStore
+    @Environment(\.watchlistRefreshService) private var refreshService
     /// Optional so previews without the app composition still render.
     @Environment(WatchlistAccessReconciler.self) private var accessReconciler:
         WatchlistAccessReconciler?
@@ -165,6 +166,7 @@ struct ShowDetailView: View {
     private func handleTrackButtonTap(viewModel: ShowDetailViewModel) async {
         await viewModel.handleTrackButton(
             removalCoordinator: removalCoordinator,
+            refreshService: refreshService,
             onWatchlistChanged: onWatchlistChanged,
             onPaywallRequired: {
                 presentPlusStore? {

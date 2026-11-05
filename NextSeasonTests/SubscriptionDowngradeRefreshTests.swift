@@ -637,6 +637,7 @@ struct SubscriptionDowngradeStarStateTests {
             removalCoordinator: removal, notificationService: notificationService(),
             notificationPrompt: WatchlistNotificationPromptState(),
             analytics: RecordingAnalyticsService(), purchases: harness.purchases,
+            refreshService: harness.refresh,
             onWatchlistChanged: {}, onSearchResultsHintDismissed: {},
             onPaywallRequired: { paywallShown = true })
         func refreshStars() async {

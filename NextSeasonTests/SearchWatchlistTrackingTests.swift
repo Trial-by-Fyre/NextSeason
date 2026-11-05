@@ -99,6 +99,7 @@ struct SearchWatchlistTrackingTests {
             notificationPrompt: WatchlistNotificationPromptState(),
             analytics: RecordingAnalyticsService(),
             purchases: .stub(),
+            refreshService: nil,
             onWatchlistChanged: {},
             onSearchResultsHintDismissed: {},
             onPaywallRequired: {}

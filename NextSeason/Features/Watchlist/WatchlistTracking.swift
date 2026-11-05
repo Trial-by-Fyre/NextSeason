@@ -36,6 +36,10 @@ enum WatchlistTracking {
     ///
     /// Only active shows count toward the free cap. Adding a show that is saved but
     /// paused reactivates that row (via `repository.add`) when a slot is free.
+    /// Every such reactivation, from any screen, calls `willReactivate` first so
+    /// the row can be marked for a silent catch-up baseline: it keeps its
+    /// pre-pause notification signature and its detail may come from TVMaze's
+    /// cache, so its first refresh must not announce what changed while paused.
     ///
     /// - Parameters:
     ///   - show: The show to track; full detail is fetched when it has no seasons.
@@ -51,8 +55,9 @@ enum WatchlistTracking {
     ///     and paused at persistence; otherwise this returns `.ignored`. A row
     ///     deleted meanwhile is never re-created, and a row resumed meanwhile is
     ///     not reported as added (it never received `willReactivate`).
-    ///   - willReactivate: Called for `pausedRow` after every check passes and
-    ///     immediately before the write, with no suspension in between
+    ///   - willReactivate: Called with the saved paused row (whether or not
+    ///     `pausedRow` was passed) after every check passes and immediately
+    ///     before the write, with no suspension in between
     ///     (`WatchlistRefreshService.markForCatchUp`).
     static func add(
         _ show: Show,
@@ -64,7 +69,7 @@ enum WatchlistTracking {
         prompt: WatchlistNotificationPromptState,
         purchases: PurchaseService,
         reactivating pausedRow: TrackedShow? = nil,
-        willReactivate: @MainActor () -> Void = {}
+        willReactivate: @MainActor (TrackedShow) -> Void = { _ in }
     ) async throws -> ToggleOutcome {
         let currentCount = try await repository.activeShowIDs().count
         guard await purchases.canAddToWatchlist(currentCount: currentCount) else {
@@ -77,8 +82,8 @@ enum WatchlistTracking {
         // add or an Undo may have taken the last free slot. Nothing between this
         // check and the write suspends (repository calls are main-actor and do
         // not await internally). An already-active show is an idempotent no-op.
+        let stored = try await repository.trackedShow(showID: showToStore.id)
         if let pausedRow {
-            let stored = try await repository.trackedShow(showID: pausedRow.id)
             guard let stored, stored.isPaused, stored.dateAdded == pausedRow.dateAdded else {
                 return .ignored
             }
@@ -90,7 +95,9 @@ enum WatchlistTracking {
         {
             return .paywallRequired
         }
-        if pausedRow != nil { willReactivate() }
+        // Search and Show Detail reach a paused row here too (its star shows
+        // untracked), so the catch-up mark cannot depend on `pausedRow`.
+        if let stored, stored.isPaused { willReactivate(stored) }
         try await repository.add(showToStore)
         analytics.track(.watchlistAdded(source: source, showID: showToStore.id))
         if await notifications.needsAuthorizationPrompt() {
@@ -100,6 +107,13 @@ enum WatchlistTracking {
     }
 
     /// Full track/untrack flow: undo a pending removal, request undoable untrack, or add.
+    ///
+    /// - Parameter refreshService: Marks a reactivated paused row for catch-up
+    ///   (see `add`) and starts that catch-up, which records a silent baseline.
+    ///   Optional only for previews and tests without a refresh pipeline.
+    /// - Parameter onCatchUpFinished: Called after that catch-up saves, so the
+    ///   Watchlist reloads the refreshed row. Must not depend on the calling
+    ///   screen still being shown (callers pass their app-level reload hook).
     static func toggle(
         _ show: Show,
         isTracked: Bool,
@@ -110,7 +124,9 @@ enum WatchlistTracking {
         analytics: any AnalyticsTracking,
         notifications: any NotificationManaging,
         prompt: WatchlistNotificationPromptState,
-        purchases: PurchaseService
+        purchases: PurchaseService,
+        refreshService: WatchlistRefreshService? = nil,
+        onCatchUpFinished: @escaping () -> Void = {}
     ) async throws -> ToggleOutcome {
         if removalCoordinator?.pendingRemoval?.id == show.id {
             _ = await removalCoordinator?.undoRemoval()
@@ -126,7 +142,8 @@ enum WatchlistTracking {
             return .removalRequested
         }
 
-        return try await add(
+        var didReactivate = false
+        let outcome = try await add(
             show,
             source: source,
             repository: repository,
@@ -134,8 +151,18 @@ enum WatchlistTracking {
             analytics: analytics,
             notifications: notifications,
             prompt: prompt,
-            purchases: purchases
+            purchases: purchases,
+            willReactivate: { row in
+                refreshService?.markForCatchUp([row])
+                didReactivate = true
+            }
         )
+        // Like the Watchlist's paused-row tap, catch up the reactivated show
+        // right away so the silent baseline covers only the paused period.
+        if outcome == .added, didReactivate {
+            refreshService?.startCatchUp(showIDs: [show.id], onFinished: onCatchUpFinished)
+        }
+        return outcome
     }
 
     /// Uses the caller's show when it already has season data; otherwise fetches detail.

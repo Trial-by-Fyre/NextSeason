@@ -219,7 +219,7 @@ struct AppAboutView: View {
 
     private let notificationsExplanation = String(
         localized:
-            "NextSeason periodically checks your watchlist for new seasons and will notify you when one is found. iOS decides when apps may perform background checks, so opening the app occasionally helps keep your watchlist up to date."
+            "NextSeason checks your watchlist for new season announcements and premiere date changes.\n\nAlerts depend on when updated listings become available, when iOS lets NextSeason check in the background, and your notification settings. An alert may arrive late or may not appear. Opening NextSeason occasionally helps keep your watchlist up to date."
     )
 
     private var notificationsFooterText: String {

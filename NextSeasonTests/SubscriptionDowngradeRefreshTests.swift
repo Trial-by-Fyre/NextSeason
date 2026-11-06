@@ -630,6 +630,8 @@ struct SubscriptionDowngradeStarStateTests {
             repository: harness.repository,
             analytics: RecordingAnalyticsService(),
             purchases: harness.purchases)
+        // Keep the removal pending through the entitlement transitions under test.
+        removal.undoWindowSecondsOverride = 60
         let tracking = SearchWatchlistTracking()
         var paywallShown = false
         let context = SearchWatchlistTracking.Context(
@@ -666,7 +668,8 @@ struct SubscriptionDowngradeStarStateTests {
         #expect(await harness.setPlus(true) == .resumed([4]))
         await refreshStars()
         #expect(tracking.trackedShowIDs == [2, 3, 4], "Resumed 4 filled")
-        _ = await removal.undoRemoval()
+        let undone = await removal.undoRemoval()
+        #expect(undone?.id == 1)
         await refreshStars()
         #expect(tracking.trackedShowIDs == [1, 2, 3, 4])
     }

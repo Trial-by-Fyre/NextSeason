@@ -53,9 +53,24 @@ final class AccessibilityAuditUITests: XCTestCase, NextSeasonUITesting {
 
     func testShowDetailPassesAccessibilityAudit() {
         tapTryExample()
-        waitForSearchResultRow(named: UITestPreviewShow.name, timeout: UITestTimeout.extended)
-            .tap()
+        let result = waitForSearchResultRow(
+            named: UITestPreviewShow.name, timeout: UITestTimeout.extended)
+        result.tap()
         waitForShowDetail()
+
+        // The star is available while detail is still loading. Audit after
+        // navigation and loading have settled so the snapshot uses the final screen.
+        guard result.waitForNonExistence(timeout: UITestTimeout.standard) else {
+            XCTFail("The search result is still exposed after opening show detail.")
+            return
+        }
+        let loadedSeason = app.staticTexts.matching(
+            NSPredicate(format: "label CONTAINS %@", "Season 3 announced — date to be confirmed")
+        ).firstMatch
+        guard loadedSeason.waitForExistenceIfNeeded(timeout: UITestTimeout.extended) else {
+            XCTFail("Show detail did not display the loaded season status.")
+            return
+        }
         auditCurrentScreen("Show detail")
     }
 

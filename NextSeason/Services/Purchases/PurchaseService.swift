@@ -51,11 +51,11 @@ final class PurchaseService {
     private(set) var hasCompletedProductLoad = false
     /// True while a purchase or restore call is in progress.
     private(set) var isPurchasing = false
-    /// User-facing purchase or restore error for alerts.
+    /// User-facing purchase or restore error for alerts. Set only by purchase
+    /// and restore, never by product loading.
     private(set) var lastErrorMessage: String? {
         // Any new message defaults to a purchase title; Restore sets the flag
-        // after assigning its message. A product load finishing after a failed
-        // restore therefore never inherits the restore title.
+        // after assigning its message.
         didSet { lastErrorIsRestoreFailure = false }
     }
     /// True when `lastErrorMessage` came from Restore Purchases, so alerts can
@@ -367,9 +367,13 @@ final class PurchaseService {
     }
 
     /// Loads Plus and tip products from StoreKit and partitions them by kind.
+    /// A failure only leaves the catalog `.unavailable` (the paywall and tip jar
+    /// show their own inline state) and records a breadcrumb. It never touches
+    /// `lastErrorMessage`, so a load never raises the purchase alert, and an
+    /// open purchase or restore error survives a reload (About and the paywall
+    /// reload products when they appear).
     func loadProducts() async {
         isLoadingProducts = true
-        lastErrorMessage = nil
         defer { isLoadingProducts = false }
 
         do {
@@ -390,9 +394,6 @@ final class PurchaseService {
             return
         } catch {
             hasCompletedProductLoad = true
-            lastErrorMessage = String(
-                localized: "Couldn't load purchase options. Please try again."
-            )
             AppDiagnosticsLogger.breadcrumb("purchase_products_load_failed")
         }
     }

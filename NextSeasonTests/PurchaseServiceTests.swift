@@ -161,7 +161,7 @@ struct PurchaseServiceTests {
         #expect(purchases.isPurchasing == false)
     }
 
-    @Test("StoreKit product loading failure records an error and leaves purchase buttons empty")
+    @Test("StoreKit product loading failure is recorded without a purchase alert")
     func productLoadingFailureLeavesCatalogEmpty() async {
         let store = StubPurchaseStoreClient()
         store.loadError = StubStoreError.loadFailed
@@ -170,7 +170,7 @@ struct PurchaseServiceTests {
         await purchases.start()
 
         #expect(purchases.hasCompletedProductLoad)
-        #expect(purchases.lastErrorMessage != nil)
+        #expect(purchases.lastErrorMessage == nil, "No purchase alert for a load failure")
         #expect(purchases.annualProduct == nil)
         #expect(purchases.monthlyProduct == nil)
         #expect(purchases.tipProducts.isEmpty)
@@ -178,11 +178,36 @@ struct PurchaseServiceTests {
         #expect(purchases.tipCatalogAvailability == .unavailable)
         #expect(purchases.hasResolvedStoreEntitlement)
 
+        // Opening About or the paywall reloads; another failure stays silent.
+        await purchases.loadProducts()
+        #expect(purchases.plusCatalogAvailability == .unavailable)
+        #expect(purchases.tipCatalogAvailability == .unavailable)
+        #expect(purchases.lastErrorMessage == nil)
+
         store.loadError = nil
         await purchases.loadProducts()
+        #expect(purchases.plusCatalogAvailability == .available)
+        #expect(purchases.tipCatalogAvailability == .available)
         #expect(purchases.lastErrorMessage == nil)
         #expect(purchases.annualProduct != nil)
         #expect(purchases.tipProducts.count == 3)
+    }
+
+    @Test("A product reload does not dismiss a purchase error")
+    func productReloadKeepsPurchaseError() async {
+        let store = StubPurchaseStoreClient(purchaseOutcome: .failed("Declined"))
+        let purchases = makePurchases(store: store, initial: .resolved(isEntitled: false))
+        await purchases.start()
+        _ = await purchases.purchase(StoreProduct(.tipPilot))
+        #expect(purchases.lastErrorMessage == "Declined")
+
+        await purchases.loadProducts()
+        #expect(purchases.lastErrorMessage == "Declined", "Successful reload keeps the error")
+
+        store.loadError = StubStoreError.loadFailed
+        await purchases.loadProducts()
+        #expect(purchases.lastErrorMessage == "Declined", "Failed reload keeps the error")
+        #expect(purchases.lastErrorTitle == "Couldn't Complete Purchase")
     }
 
     @Test(

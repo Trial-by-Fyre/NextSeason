@@ -120,8 +120,8 @@ struct RestoreConnectivityTests {
         #expect(purchases.isPurchasing == false)
     }
 
-    @Test("A product-load failure after a failed restore uses the purchase title")
-    func loadFailureAfterRestoreFailureUsesPurchaseTitle() async {
+    @Test("A product-load failure after a failed restore keeps the restore error and title")
+    func loadFailureAfterRestoreFailureKeepsRestoreError() async {
         let store = StubPurchaseStoreClient()
         store.restoreError = URLError(.notConnectedToInternet)
         let purchases = makeService(store: store)
@@ -132,8 +132,8 @@ struct RestoreConnectivityTests {
         store.loadError = URLError(.notConnectedToInternet)
         await purchases.loadProducts()
 
-        #expect(purchases.lastErrorMessage == "Couldn't load purchase options. Please try again.")
-        #expect(purchases.lastErrorTitle == "Couldn't Complete Purchase")
+        #expect(purchases.lastErrorMessage == Self.offlineMessage)
+        #expect(purchases.lastErrorTitle == "Couldn't Restore Purchases")
     }
 
     @Test("A purchase failure after a failed restore uses the purchase title")

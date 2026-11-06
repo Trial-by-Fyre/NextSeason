@@ -109,8 +109,14 @@ struct ContentViewNotificationNavigationTests {
         coordinator.selectTabFromTabBar(.search)
         coordinator.searchPath.append(Self.show(82))
         try await waitUntil { analytics.events.contains(.searchResultOpened(showID: 82)) }
+        // Wait for a new Watchlist appearance, not a fixed total: mounting can
+        // record more than one. Otherwise the switch back to Search below can land
+        // in the same main-actor turn, SwiftUI sees Search → Search, the tab-change
+        // commit never runs, and the outcome wait hangs (nightly timeouts, Nov 3–6).
+        let watchlistViews = { analytics.events.filter { $0 == .watchlistViewed }.count }
+        let viewsBeforeReturn = watchlistViews()
         coordinator.selectTabFromTabBar(.watchlist)
-        try await waitUntil { analytics.events.filter { $0 == .watchlistViewed }.count >= 2 }
+        try await waitUntil { watchlistViews() > viewsBeforeReturn }
         let tracked = try #require(try await repository.trackedShow(showID: 10))
         removal.requestRemoval(tracked, source: .watchlist)
 

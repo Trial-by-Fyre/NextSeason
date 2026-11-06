@@ -56,3 +56,12 @@ Disposition: test disabled with `.disabled(...)`; owner accepted deferral. Prope
 ## Local pending Annual with existing Monthly — open November 3
 
 Owner observed three-show mode immediately after selecting Ask for Annual while previously on Monthly. Approval did not restore Plus until switching away and back. Exact Monthly validity at Ask and transaction/status payloads remain unconfirmed; no cause, fix, or production applicability is established. See [failure record](StoreKitPendingPlanChange-2026-11-03.md).
+
+## manualSwitchToSearchReturnsToRoot — intermittent timeout; test fix applied November 6
+
+Failure: `ContentViewNotificationNavigationTests/manualSwitchToSearchReturnsToRoot()` exceeds its 1-minute time limit.
+Environment: nightly runs on iPhone 16 Pro / iOS 18.6 (November 3 and 4) and iPhone 17 Pro / iOS 26.5 (November 5 and the November 6 11:11 manual run): 4 of 8 runs since November 3. Passed on iOS 27.0 in each of those runs. The first failure predates the last changes to the test, `ContentView` and `WatchlistView` (November 4).
+Evidence: in the failing November 6 log, the first leave-Watchlist commit (`watchlist_commit_on_leave_tab`) ran, but the second (the switch back to Search that commits the pending removal) never did, and no `watchlist_write_remove` followed. The passing iOS 27.0 run in the same nightly logged both commits about 0.4 s apart. The attached spindump had no samples.
+Likely cause (not confirmed from a trace): the test waited for a total of two `watchlistViewed` events after returning to Watchlist. If mounting had already recorded two, the wait passed before Watchlist reappeared; the Watchlist → Search selections then landed in one main-actor turn, `onChange(of: selectedTab)` saw no change, and the outcome wait hung. Same `onChange` coalescing as `newerNotificationSupersedesOlderLookup` above.
+User impact: none expected; real tab taps cannot arrive within one main-thread turn.
+Disposition: test now waits for a new `watchlistViewed` event from Watchlist’s `onAppear` after selecting Watchlist again. This confirms another appearance callback ran before the switch to Search. The cause of the earlier timeouts remains unconfirmed. Passed once in isolation (iPhone simulator, November 6); one pass is not evidence for an intermittent failure. Watch the next nightly runs; if it times out again, capture which wait is pending before changing anything else.

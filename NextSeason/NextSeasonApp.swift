@@ -16,6 +16,16 @@ struct NextSeasonApp: App {
     @State private var navigationCoordinator: AppNavigationCoordinator
 
     init() {
+        // Launch-only system registration, done once and before composition can
+        // fall into recovery. Apple requires the background task to be
+        // registered, and the notification delegate set, before launch
+        // finishes; registering twice kills the app. A successful recovery
+        // composes after launch, so composition only attaches services
+        // (`AppCompositionRoot.configureNonUITestRuntime`).
+        if !UITestingConfiguration.isEnabled {
+            NotificationRouting.installDelegate()
+            RefreshScheduler.registerBackgroundTask()
+        }
         _navigationCoordinator = State(initialValue: AppNavigationCoordinator())
         _launchState = State(initialValue: AppLaunchState.bootstrap())
     }

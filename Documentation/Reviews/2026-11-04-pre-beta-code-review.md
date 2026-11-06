@@ -127,6 +127,61 @@ The code is already well commented. Additional comments should be selective:
 - Explain the SQLite destructor sentinel used by `bindText` in
   `ShowIDMappingDatabase`: it requests that SQLite copy the supplied string.
   The `unsafeBitCast(-1, ...)` expression otherwise looks arbitrary.
+- In `WatchlistRefreshService.refreshAll()`, extract the per-show work or mark
+  the main phases so the refresh flow is easier to follow.
+- Document that `PurchaseService.loadProducts()` clears existing errors.
+
+### Additional V2 findings from Claude’s review
+
+The following items are recorded for V2 triage. R2–R4 already cover Claude’s
+mapping transaction, network cancellation, and Reduce Motion findings. R5
+includes the overlapping documentation and readability suggestions.
+
+#### R6. The rebuildable show mapping is included in iCloud backups
+
+Claude reported that the roughly 7 MB mapping copy in Application Support is
+backed up. Consider setting `isExcludedFromBackup` or moving the copy to Caches.
+Verify that the app can rebuild the copy when it is absent.
+
+#### R7. A Release build can ship with a missing TheTVDB key
+
+`Base.xcconfig` optionally includes `Secrets.xcconfig`, and `TheTVDBClient`
+falls back to an empty key. A distributable build with no key can therefore
+launch while Search fails to authenticate. Consider failing the Release build
+when the key is missing or empty. Check which nightly and test builds are
+deliberately configured without credentials before applying the check.
+
+#### R8. Concurrent searches can start duplicate TheTVDB logins
+
+Two searches can both see an empty token cache while the first login is awaiting
+a response. Consider sharing one in-flight login or documenting the behavior if
+duplicate requests are acceptable.
+
+#### R9. A purchase already in progress returns the pending outcome
+
+`PurchaseService.purchase()` returns `.pending` for a second call while a
+purchase is underway. That result also represents a purchase awaiting approval,
+such as Ask to Buy. Consider a separate outcome or document how callers should
+interpret the existing one.
+
+#### R10. Background refresh completion uses a redundant mutex
+
+`BackgroundRefreshCompletion` is main-actor isolated. Expiration and normal
+completion can arrive in either order, but the main actor serializes the calls
+to `finish`. Consider replacing the mutex with a plain Boolean while preserving
+the exactly-once completion guard and its tests.
+
+#### R11. Notification authorization requests an unused badge capability
+
+Claude reported that the app requests `.badge` permission without setting a
+badge. Verify that no supported path uses badges and remove the option if unused.
+
+#### R12. Watchlist outcome handlers can accumulate
+
+`WatchlistViewModel` registers an outcome handler without unregistering it.
+The handler captures the view model weakly, so a recreated view model can leave
+an inactive callback behind. Verify the lifetime of the model and removal
+coordinator, then clean up stale registrations if recreation can occur.
 
 ## Existing release context
 

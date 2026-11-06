@@ -28,8 +28,9 @@ enum NotificationRouting {
         self.analytics = analytics
     }
 
-    /// Wires the review coordinator before `installDelegate()` so foreground
-    /// presentation can record notification delivery.
+    /// Wires the review coordinator once composition succeeds. The delegate is
+    /// installed earlier, at launch; until then, deliveries are saved to
+    /// `unattachedReviewPromptStore` instead.
     static func setReviewPrompt(_ coordinator: ReviewPromptCoordinator?) {
         reviewPrompt = coordinator
     }
@@ -69,12 +70,26 @@ enum NotificationRouting {
         unattachedReviewPromptStore.markNotificationReceived()
     }
 
+    /// Called once from `NextSeasonApp.init`, before composition: Apple requires
+    /// the delegate to be set before launch finishes, including launches that
+    /// fall into persistence recovery.
     static func installDelegate(center: UNUserNotificationCenter = .current()) {
         center.delegate = NotificationCenterDelegate.shared
     }
 
+    /// Drops a tap buffered while no coordinator was attached. Called once
+    /// Reset Local Data has wiped the store (even if reopening then fails), so
+    /// the app does not later open a show whose saved row and delivered
+    /// notification the reset removed. Try Again keeps the buffered tap.
+    static func discardBufferedNavigation() {
+        guard bufferedShowID != nil else { return }
+        bufferedShowID = nil
+        AppDiagnosticsLogger.breadcrumb("notification_tap_discarded_after_reset")
+    }
+
     /// If the coordinator has been set, queue the show from the notification tap.  If it has not, buffer
-    /// (save) it for processing later.
+    /// (save) it for processing later. The buffer holds one tap (the latest) in
+    /// memory for this process only.
     /// - Parameter showID: TVMaze show ID from the notification payload.
     /// - Parameter animated: `true` when the app was already foreground-active at the
     ///   time of the tap (in-app navigation), `false` for a launch/foreground tap.

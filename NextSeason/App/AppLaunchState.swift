@@ -96,7 +96,7 @@ enum AppLaunchState {
         makeRoot: () throws -> AppCompositionRoot = { try AppCompositionRoot() },
         failureTracker: LaunchFailureTracker = LaunchFailureTracker()
     ) -> AppLaunchState {
-        let attempt: LaunchAttemptResult
+        var attempt: LaunchAttemptResult
         if UITestingConfiguration.isEnabled {
             attempt = LaunchAttemptResult(
                 consecutiveUnexpectedLaunchCount: 0,
@@ -104,6 +104,13 @@ enum AppLaunchState {
             )
         } else {
             attempt = failureTracker.beginLaunchAttempt()
+        }
+        if RecoveryFixture.forcesCrashLoop {
+            // DEBUG recovery fixture: present crash-loop recovery on demand.
+            attempt = LaunchAttemptResult(
+                consecutiveUnexpectedLaunchCount: attempt.consecutiveUnexpectedLaunchCount,
+                shouldSkipComposition: true
+            )
         }
 
         if attempt.shouldSkipComposition {
@@ -165,15 +172,25 @@ enum AppLaunchState {
     }
 
     /// Deletes the on-disk watchlist store (after the user confirmed),
-    /// clears scheduled notifications, and retries composition in this
-    /// process. Refused unless persistence has actually failed to open.
+    /// clears scheduled notifications and any buffered notification tap, and
+    /// retries composition in this process. Refused unless persistence has
+    /// actually failed to open.
     mutating func resetLocalData(
         removeStore: () throws -> Void = {
             try PersistentStoreReset.removeProductionStore()
         },
         clearNotifications: () -> Void = {
+            // The DEBUG recovery fixture wipes only its disposable store; the
+            // device's notifications may belong to the real watchlist.
+            guard !RecoveryFixture.isActive else {
+                AppDiagnosticsLogger.breadcrumb("recovery_fixture_notification_clear_skipped")
+                return
+            }
             UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
             UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        },
+        discardBufferedNotificationTap: () -> Void = {
+            NotificationRouting.discardBufferedNavigation()
         },
         makeRoot: () throws -> AppCompositionRoot = { try AppCompositionRoot() },
         failureTracker: LaunchFailureTracker = LaunchFailureTracker()
@@ -190,6 +207,9 @@ enum AppLaunchState {
                 try removeStore()
                 clearNotifications()
             }
+            // The wipe succeeded, so a tap buffered during recovery points at a
+            // show that is no longer saved; drop it even if reopening fails below.
+            discardBufferedNotificationTap()
             AppDiagnosticsLogger.breadcrumb("persistence_store_reset_succeeded")
             AppDiagnosticsLogger.persistBreadcrumbsNow()
 

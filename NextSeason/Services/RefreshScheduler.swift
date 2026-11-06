@@ -11,13 +11,19 @@ import os
 /// Registers and runs the app’s best-effort background watchlist refresh
 /// (`BGAppRefreshTask`, ~12h production cadence via `BackgroundRefreshConfiguration`).
 ///
-/// Lifecycle (wired from `AppCompositionRoot.configureBackgroundRefresh`):
+/// Lifecycle:
 /// 1. `registerBackgroundTask()` — tell the system how to launch this identifier.
+///    Called once from `NextSeasonApp.init`, before composition, because Apple
+///    requires registration before launch finishes and kills the app on a second
+///    registration. A successful persistence recovery composes after launch, so
+///    composition must never register.
 /// 2. `configure(refreshHandler:)` — store the async work to run (typically
-///    `WatchlistRefreshService.refreshAll`).
+///    `WatchlistRefreshService.refreshAll`). Set by every successful composition
+///    (`AppCompositionRoot.configureBackgroundRefresh`), including after recovery.
 /// 3. `scheduleNextRefresh()` — submit the next earliest-begin request.
 /// 4. When iOS launches the task → `handleAppRefresh` runs the handler, then
-///    marks the task completed (or cancelled on expiration).
+///    marks the task completed (or cancelled on expiration). With no handler
+///    (the app is in persistence recovery) it completes with failure at once.
 ///    The launch handler is delivered on the main queue (`using: .main`).
 ///    `expirationHandler` may arrive on another queue and must hop to
 ///    `@MainActor` before cancelling work or completing the `BGAppRefreshTask`.
@@ -41,9 +47,20 @@ enum RefreshScheduler {
         self.refreshHandler = refreshHandler
     }
 
+    /// The process's single system registration (see `registerBackgroundTask`).
+    @MainActor private static let registration = BackgroundTaskRegistration(
+        register: registerWithSystem)
+
     /// Must be called during app launch (before the app finishes launching) so
-    /// the system can associate `taskIdentifier` with our handler.
+    /// the system can associate `taskIdentifier` with our handler. Registers at
+    /// most once per process; later calls are ignored.
+    @MainActor
     static func registerBackgroundTask() {
+        registration.registerIfNeeded()
+    }
+
+    /// The single system registration; call only through `registration`.
+    private static func registerWithSystem() -> Bool {
         BGTaskScheduler.shared.register(
             forTaskWithIdentifier: taskIdentifier,
             using: .main
@@ -71,21 +88,11 @@ enum RefreshScheduler {
         let completion = BackgroundRefreshCompletion(refreshTask: refreshTask)
 
         AppDiagnosticsLogger.breadcrumb("background_task_started")
-        // Chain the next request immediately so a failure/expiration mid-run
-        // does not leave the app without a future schedule.
-        scheduleNextRefresh()
-
-        let work = Task { @MainActor in
-            AppDiagnosticsLogger.logTaskStart("bg_app_refresh")
-            let refreshSucceeded = await refreshHandler?() ?? false
-            if Task.isCancelled {
-                AppDiagnosticsLogger.logTaskCancel("bg_app_refresh")
-                completion.finish(success: false)
-            } else {
-                AppDiagnosticsLogger.logTaskComplete("bg_app_refresh")
-                completion.finish(success: refreshSucceeded)
-            }
-        }
+        let work = startRefresh(
+            handler: refreshHandler,
+            completion: completion,
+            scheduleNext: scheduleNextRefresh
+        )
 
         // Expiration handler: BackgroundTasks may invoke this on a non-main
         // queue. Logging is nonisolated; cancel + `setTaskCompleted` must hop.
@@ -96,17 +103,54 @@ enum RefreshScheduler {
         }
     }
 
+    /// Runs one delivered background refresh and returns its work, if any.
+    ///
+    /// With no `handler` (the app is in persistence recovery, so nothing was
+    /// composed), completes with failure at once, touches no watchlist data, and
+    /// does not reschedule: iOS would otherwise keep waking an app that cannot
+    /// refresh. The next successful composition schedules again.
+    ///
+    /// Otherwise chains the next request first, so a failure or expiration
+    /// mid-run does not leave the app without a future schedule.
+    @MainActor
+    static func startRefresh(
+        handler: (() async -> Bool)?,
+        completion: BackgroundRefreshCompletion,
+        scheduleNext: () -> Void
+    ) -> Task<Void, Never>? {
+        guard let handler else {
+            AppDiagnosticsLogger.logger(for: .tasks).notice("background_task_unconfigured")
+            AppDiagnosticsLogger.breadcrumb("background_task_unconfigured")
+            completion.finish(success: false)
+            return nil
+        }
+        scheduleNext()
+
+        return Task { @MainActor in
+            AppDiagnosticsLogger.logTaskStart("bg_app_refresh")
+            let refreshSucceeded = await handler()
+            if Task.isCancelled {
+                AppDiagnosticsLogger.logTaskCancel("bg_app_refresh")
+                completion.finish(success: false)
+            } else {
+                AppDiagnosticsLogger.logTaskComplete("bg_app_refresh")
+                completion.finish(success: refreshSucceeded)
+            }
+        }
+    }
+
     /// Safe to call from `BGAppRefreshTask.expirationHandler`, which
     /// BackgroundTasks may invoke on a non-main queue.
     ///
     /// Hops to the main actor before cancelling work or completing the BG task
     /// so Swift 6 executor checking does not trap in `setTaskCompleted`.
+    /// `work` is nil when the task already completed without a handler.
     nonisolated static func handleExpiredAppRefresh(
-        work: Task<Void, Never>,
+        work: Task<Void, Never>?,
         completion: BackgroundRefreshCompletion
     ) {
         Task { @MainActor in
-            work.cancel()
+            work?.cancel()
             completion.finish(success: false)
         }
     }
@@ -131,6 +175,42 @@ enum RefreshScheduler {
                 .error(
                     "background_task_schedule_failed error=\(String(describing: error), privacy: .public)"
                 )
+        }
+    }
+}
+
+// MARK: - Registration guard
+
+/// Performs a background-task registration at most once.
+///
+/// The system kills the app on a second registration of the same identifier,
+/// so repeated calls are ignored. A `false` result (the identifier is missing
+/// from the built app's `BGTaskSchedulerPermittedIdentifiers`) is logged and
+/// not retried; later submissions then fail and are logged on their own.
+@MainActor
+final class BackgroundTaskRegistration {
+    private let register: @MainActor () -> Bool
+    /// True once `register` has been called, whatever it returned.
+    private(set) var hasAttempted = false
+    /// What the single `register` call returned.
+    private(set) var didRegister = false
+
+    init(register: @escaping @MainActor () -> Bool) {
+        self.register = register
+    }
+
+    func registerIfNeeded() {
+        guard !hasAttempted else {
+            AppDiagnosticsLogger.breadcrumb("background_task_register_repeat_ignored")
+            return
+        }
+        hasAttempted = true
+        didRegister = register()
+        if didRegister {
+            AppDiagnosticsLogger.breadcrumb("background_task_registered")
+        } else {
+            AppDiagnosticsLogger.logger(for: .tasks).fault("background_task_register_failed")
+            AppDiagnosticsLogger.breadcrumb("background_task_register_failed")
         }
     }
 }

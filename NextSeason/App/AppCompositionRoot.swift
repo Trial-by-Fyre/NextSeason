@@ -53,6 +53,12 @@ struct AppCompositionRoot {
     let watchlistAccessReconciler: WatchlistAccessReconciler
 
     init() throws {
+        // DEBUG recovery fixture only; a no-op otherwise.
+        try RecoveryFixture.throwIfOpenFailureInjected()
+        // Store-tied defaults (refresh watermark, catch-up marks, pause state).
+        // Isolated under the recovery fixture so its disposable store never
+        // advances or prunes state belonging to the real watchlist.
+        let watchlistDefaults = RecoveryFixture.watchlistDefaults ?? .standard
         analyticsService = AnalyticsService()
         notificationService = NotificationService(analytics: analyticsService)
         betaRefreshDiagnostics = BetaRefreshDiagnostics()
@@ -85,12 +91,16 @@ struct AppCompositionRoot {
                 purchaseService = .stub(isStoreEntitled: true)
             }
         } else {
-            modelContainer = try NextSeasonModelContainer.make()
-            // Same defaults as `WatchlistRefreshService` (`.standard`), so the
-            // refresh sees repair marks the repository records.
+            // The default configuration is the production store; the recovery
+            // fixture substitutes a disposable one.
+            modelContainer = try NextSeasonModelContainer.make(
+                configuration: try RecoveryFixture.storeConfiguration() ?? ModelConfiguration()
+            )
+            // Same defaults as `WatchlistRefreshService`, so the refresh sees
+            // repair marks the repository records.
             repository = SwiftDataWatchlistRepository(
                 context: ModelContext(modelContainer),
-                rowMarks: WatchlistRowMarks(userDefaults: .standard),
+                rowMarks: WatchlistRowMarks(userDefaults: watchlistDefaults),
                 analytics: analyticsService)
             // Mapping already retries from the bundled baseline. If that still
             // fails, keep an empty in-memory map for export/reverse lookup but
@@ -121,7 +131,8 @@ struct AppCompositionRoot {
             repository: repository,
             notifications: notificationService,
             analytics: analyticsService,
-            diagnostics: betaRefreshDiagnostics
+            diagnostics: betaRefreshDiagnostics,
+            userDefaults: watchlistDefaults
         )
         watchlistPendingRemoval = WatchlistPendingRemoval(
             repository: repository,
@@ -134,6 +145,7 @@ struct AppCompositionRoot {
         let pendingRemoval = watchlistPendingRemoval
         watchlistAccessReconciler = WatchlistAccessReconciler(
             repository: repository,
+            userDefaults: watchlistDefaults,
             access: { purchases.confirmedWatchlistAccess },
             waitForAccess: { await purchases.waitForInitialEntitlementResolution() },
             // A show in its undo window is about to be deleted; it must not take
@@ -170,22 +182,25 @@ struct AppCompositionRoot {
         #endif
     }
 
-    /// Production-only launch wiring: MetricKit, notification routing,
-    /// background refresh registration, and the launch analytics event.
-    /// Skipped under `-UITesting` so XCUITests stay deterministic.
+    /// Production-only wiring that needs the opened store: MetricKit,
+    /// notification routing services, the background refresh handler and
+    /// schedule, and the launch analytics event. Skipped under `-UITesting` so
+    /// XCUITests stay deterministic.
+    ///
+    /// Runs on every successful composition, which can be after launch when a
+    /// recovery Try Again or Reset Local Data succeeds. So it must not do
+    /// launch-only system registration: `NextSeasonApp.init` registers the
+    /// background task and installs the notification delegate before composing.
     /// Launch-attempt recording lives in `AppLaunchState.bootstrap` so crash
     /// loops can be detected before composition.
     func configureNonUITestRuntime() {
         MetricKitDiagnosticsSubscriber.installIfNeeded()
 
-        // The coordinator that handles notification taps is attached from the view
-        // layer (see ContentView). NotificationRouting is set up here and is able to
-        // handle taps before ContentView is able to set the coordinator. Installing
-        // the delegate here lets a launch-from-notification tap buffer until the
-        // coordinator attaches.
+        // The delegate (installed at launch) buffers a launch-from-notification
+        // tap until ContentView attaches the coordinator; these services let it
+        // record analytics and the review prompt from now on.
         NotificationRouting.setAnalytics(analyticsService)
         NotificationRouting.setReviewPrompt(reviewPromptCoordinator)
-        NotificationRouting.installDelegate()
 
         configureBackgroundRefresh()
         analyticsService.track(.appLaunched)
@@ -196,10 +211,10 @@ struct AppCompositionRoot {
         await showIDMappingRefresh?.refreshIfNeeded()
     }
 
-    /// Registers the ~12h background watchlist refresh task and schedules the
-    /// next run. Show ID mapping refresh stays foreground-only.
+    /// Attaches the ~12h background watchlist refresh to the task registered at
+    /// launch, and schedules the next run. Show ID mapping refresh stays
+    /// foreground-only.
     private func configureBackgroundRefresh() {
-        RefreshScheduler.registerBackgroundTask()
         let refreshServiceForBackground = refreshService
         let purchasesForBackground = purchaseService
         let reconcilerForBackground = watchlistAccessReconciler

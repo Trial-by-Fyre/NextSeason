@@ -14,9 +14,10 @@ import SwiftData
 enum PersistentStoreReset {
     /// SwiftData's default on-disk URL (`Application Support/default.store`).
     /// Must stay aligned with `NextSeasonModelContainer.make()` so recovery
-    /// removes the same files production opens.
+    /// removes the same files production opens. Under the DEBUG recovery
+    /// fixture this is the fixture's disposable store, which the app opens instead.
     static var productionStoreURL: URL {
-        ModelConfiguration().url
+        RecoveryFixture.storeURL ?? ModelConfiguration().url
     }
 
     /// Removes the production watchlist store. Call only from the user-facing

@@ -99,6 +99,14 @@ class ComplimentaryPlusBuildTests(unittest.TestCase):
             self.assertIn('#include "Base.xcconfig"', beta)
             self.assertIn(GRANT, beta)
             self.assertIn(MARKER, beta)
+            active_conditions = " ".join(
+                line.partition("=")[2]
+                for line in beta.splitlines()
+                if line.strip().startswith("SWIFT_ACTIVE_COMPILATION_CONDITIONS =")
+            )
+            self.assertNotIn(GRANT, active_conditions)
+            self.assertNotIn(MARKER, active_conditions)
+            self.assertNotEqual(self.guard("BetaComplimentary", active_conditions).returncode, 0)
             beta_scheme = ET.parse(beta_scheme_path).getroot()
             self.assertEqual(beta_scheme.find("ArchiveAction").get("buildConfiguration"), "BetaComplimentary")
             self.assertEqual(normal.find("BuildAction").find("BuildActionEntries")[0].find("BuildableReference").attrib,

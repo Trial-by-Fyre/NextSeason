@@ -1,5 +1,6 @@
 // Used only by the final complimentary beta archive scheme.
-// Delete this configuration and its scheme after distributing that beta.
+// Dormant by default. Uncomment the flags only to archive a granting beta.
+// Comment them out again after archiving.
 #include "Base.xcconfig"
 
-SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) COMPLIMENTARY_PLUS_BETA_GRANT NEXTSEASON_BETA_COMPLIMENTARY_CONFIGURATION
+// SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) COMPLIMENTARY_PLUS_BETA_GRANT NEXTSEASON_BETA_COMPLIMENTARY_CONFIGURATION

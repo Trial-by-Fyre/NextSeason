@@ -6,7 +6,7 @@ import StoreKit
 #endif
 
 /// TEMPORARY: only the dedicated final beta configuration can enable granting.
-/// Delete that configuration/scheme after distribution; recognition stays intact.
+/// Keep the configuration's grant flags off between granting archives; recognition stays intact.
 @MainActor
 enum TemporaryBetaPlusGrant {
     static func isEligible() async -> Bool {

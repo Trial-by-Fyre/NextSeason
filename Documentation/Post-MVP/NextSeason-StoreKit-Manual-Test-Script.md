@@ -833,8 +833,8 @@ CV-06 and the other non-manual requirements are maintained in the [engineering c
 
 ### StoreKit release coordination
 
-- Follow [Permanent complimentary Plus for beta testers](Complimentary%20Plus%20Beta%20Grant.md): after the final granting beta has been distributed, remove the **NextSeason - Final Complimentary Beta** shared scheme, the **BetaComplimentary** project/target build configurations, and `Config/BetaComplimentary.xcconfig`. Preserve entitlement recognition/persistence and the build guards. These are separately assigned project cleanup actions, not edits performed by following this test document.
-- Run `python3 Scripts/tests/test-complimentary-plus-build.py` before distribution and again after the approved cleanup; record actual results. Select the normal **NextSeason** scheme and create a new normal **Release** archive for App Store submission. Verify that exact archive/build is selected in App Store Connect; never select the previously uploaded granting beta. A passing TestFlight runtime check does not establish this submission boundary.
+- Follow [Permanent complimentary Plus for beta testers](Complimentary%20Plus%20Beta%20Grant.md). Enable the grant flags for the dedicated archive, then disable them again. Preserve entitlement recognition, persistence, and the build guards.
+- Run `python3 Scripts/tests/test-complimentary-plus-build.py` before enabling the grant flags and again after disabling them. Record actual results. Select the normal **NextSeason** scheme and create a new normal **Release** archive for App Store submission. Verify that exact archive/build is selected in App Store Connect. A passing TestFlight runtime check does not establish this submission boundary.
 
 - Review the [engineering coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md) for controlled notification events, catch-up, exact ordering, verification errors and other evidence that ordinary app taps cannot establish. Manual results alone do not close those requirements.
 - Use [this StoreKit guide](#how-to-use-this-script) and its [result sheet](#result-sheet) to record the detailed coverage below.

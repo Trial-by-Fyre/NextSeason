@@ -108,11 +108,21 @@ enum WatchlistTracking {
 
     /// Full track/untrack flow: undo a pending removal, request undoable untrack, or add.
     ///
+    /// - Parameter show: The show whose tracking state should change.
+    /// - Parameter isTracked: Whether the caller currently shows the show as tracked.
+    /// - Parameter source: The screen that initiated the action, used for analytics.
+    /// - Parameter repository: Reads and writes the saved Watchlist.
+    /// - Parameter tvMaze: Fetches show details if season data is missing on add.
+    /// - Parameter removalCoordinator: Handles pending removals and Undo when available.
+    /// - Parameter analytics: Records the Watchlist add event.
+    /// - Parameter notifications: Checks whether to offer notification authorization after adding.
+    /// - Parameter prompt: Holds the pending notification prompt state.
+    /// - Parameter purchases: Checks whether the current entitlement allows an add.
     /// - Parameter refreshService: Marks a reactivated paused row for catch-up
     ///   (see `add`) and starts that catch-up, which records a silent baseline.
     ///   Optional only for previews and tests without a refresh pipeline.
-    /// - Parameter onCatchUpFinished: Called after that catch-up saves, so the
-    ///   Watchlist reloads the refreshed row. Must not depend on the calling
+    /// - Parameter onCatchUpFinished: Called when the catch-up attempt finishes,
+    ///   so the Watchlist can reload any saved changes. Must not depend on the calling
     ///   screen still being shown (callers pass their app-level reload hook).
     static func toggle(
         _ show: Show,

@@ -209,8 +209,9 @@ final class WatchlistRefreshService {
     /// paused show does not cancel it. If it is interrupted or fails, the mark
     /// remains and the next refresh baselines the show instead.
     ///
-    /// - Parameter onFinished: Called once the catch-up has saved its results,
-    ///   so a Watchlist loaded meanwhile can reload the refreshed row. Pass an
+    /// - Parameter showIDs: The TVMaze IDs of the reactivated shows to refresh.
+    /// - Parameter onFinished: Called when the catch-up attempt finishes, so
+    ///   a Watchlist loaded meanwhile can reload any saved changes. Pass an
     ///   app-level hook, not one tied to the originating screen.
     func startCatchUp(showIDs: Set<Int>, onFinished: @escaping () -> Void = {}) {
         catchUpTask = Task {

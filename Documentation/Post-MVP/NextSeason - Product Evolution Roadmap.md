@@ -11,6 +11,27 @@ This document captures enhancements planned after the initial App Store release.
 - Support common abbreviations and acronyms if users demonstrate a need.
 - Continue refining search quality based on analytics and user feedback.
 
+## Watchlist-Centered Navigation Redesign
+
+**Proposal — future enhancement:** Replace the current Watchlist/Search tab bar with a Watchlist-centered interface. Scheduling and final design are not yet approved.
+
+### Proposed Design
+
+- Make **Watchlist** the primary screen.
+- Provide a prominent **Add Shows** action that opens a dedicated show-discovery screen, potentially presented as a full-screen sheet.
+- Let users search the show catalog, inspect Show Details, and add multiple shows without leaving discovery.
+- Dismissing discovery returns directly to Watchlist.
+- Retain a separate name-search field in Watchlist for finding tracked shows.
+- Add Watchlist filtering and sorting, potentially including airing status, upcoming seasons, paused shows, and alphabetical ordering. Coordinate this with the user-selectable sorting item under Watchlist Management.
+
+### Rationale
+
+Searching for new shows primarily supports Watchlist management rather than requiring a separate navigation destination. This arrangement simplifies navigation, clearly separates catalog search from Watchlist search, and avoids leaving users on Search after they finish adding shows.
+
+### Design Considerations
+
+Evaluate discoverability of Add Shows, empty-Watchlist onboarding, Show Detail navigation, paywall flows, accessibility, and the changes needed to existing UI tests before implementation. Confirm the discovery presentation and specific filtering and sorting options during design.
+
 ## Watchlist Management
 
 - **Future navigation improvement — close removed-show details:** Reported October 27, 2026: open a saved show’s details in Watchlist, switch to Search, remove the same show there and complete removal, then return to Watchlist; the removed show’s details remain open. After removal commits, returning to Watchlist should show the list instead. Preserve the detail while removal is still undoable; if removal is undone, the detail may remain. Ordinary tab switching should continue to preserve details for shows that are still saved. Not yet implemented or independently reproduced.

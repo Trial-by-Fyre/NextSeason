@@ -379,14 +379,14 @@ These tasks are listed in approximately sequential order.
 -   Select countries and regions.
 -   Configure and verify the age rating.
 -   Complete App Review contact information.
-
-### Remaining
-
 -   Create/configure the v1.0 App Store version.
 -   Select the final release-candidate build.
 -   Write App Review notes explaining anything reviewers need to know, particularly the free/Plus behavior and purchases.
 -   Complete final pricing and availability checks for the app and IAPs.
 -   Perform a final App Store Connect review as if seeing the listing for the first time, checking URLs, spelling, screenshots, pricing, territories, privacy information, and review notes.
+
+### Remaining
+
 -   Submit the final build and metadata for App Review.
 -   Monitor App Review status and respond promptly to reviewer questions.
 

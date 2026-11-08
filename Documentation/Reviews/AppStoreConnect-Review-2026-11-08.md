@@ -2,7 +2,21 @@
 
 Reviewed the signed-in NextSeason TV record, Apple ID 6784502780, through App Store Connect. This is a release-configuration review, with a focused comparison to the working repository and published website. Findings describe the state observed on this date. App Store Connect settings were inspected only.
 
-## Recheck after owner updates — November 8, 2026
+## Final configuration and screenshot recheck — November 8, 2026
+
+The findings below reflect the latest pass and supersede the earlier recheck's outstanding screenshot items.
+
+- Version 1.0 remains Ready for Review with build 55 selected. The standard Terms of Use URL and corrected notification wording remain present. Manual release is selected.
+- The draft contains seven ready items — version 1.0 (55), three tips, two subscriptions, and their subscription group. Submit for Review is enabled after the draft panel loads.
+- The live Media Manager now contains the replacement five-image set for the medium Dynamic Island display, named 01-Watchlist, 02-Show-Details, 03-Search, 04-Notifications, and 05-NextSeason-Plus.
+- The live notification preview shows the NextSeason Search screen behind the alert. The Calculator concern is resolved.
+- All five revised images were inspected using the owner's supplied screenshot, including cropped views for legibility. The sequence, headings, and app content are consistent with the listing. The Plus image shows Annual at $9.99 per year and Monthly at $1.99 per month, Restore Purchases, automatic-renewal disclosures, and Terms of Use and Privacy Policy links. No further issue was identified at the supplied resolution. Original-resolution pixel inspection and runtime comparison to the selected binary are outside this finding.
+- Tip reviewer navigation is sufficient, as clarified by the owner. No additional step is required.
+- The website update is acknowledged as pending. Its App Store destination remains a launch follow-up.
+
+All identified App Store Connect configuration findings are resolved. Submission remains pending, and final-build runtime acceptance remains a separate verification task. The final pass inspected the changed screenshots and reconfirmed the version and draft. It relies on the prior recheck for the category, rights response, and six-country availability results.
+
+## Earlier recheck after owner updates — November 8, 2026
 
 All six main findings from the initial inspection are resolved at the configuration level.
 

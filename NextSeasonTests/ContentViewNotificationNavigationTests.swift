@@ -101,6 +101,18 @@ struct ContentViewNotificationNavigationTests {
 
     @Test("Manual Watchlist to Search returns to root and commits the pending removal")
     func manualSwitchToSearchReturnsToRoot() async throws {
+        // Report only on cancellation so normal runs keep their original timing.
+        var stage = "mounting Watchlist"
+        defer {
+            if Task.isCancelled {
+                let details =
+                    "Manual Search return timed out while \(stage); "
+                    + "tab=\(coordinator.selectedTab), searchDepth=\(coordinator.searchPath.count), "
+                    + "pendingRemoval=\(removal.pendingRemoval != nil), "
+                    + "outcomes=\(outcomes.outcomes), events=\(analytics.events)"
+                Issue.record(Comment(rawValue: details))
+            }
+        }
         try await repository.add(Self.show(10))
         let window = try await mountLandingOnWatchlist()
         defer { unmount(window) }
@@ -108,6 +120,7 @@ struct ContentViewNotificationNavigationTests {
         // Leave a Search detail open, then go back to Watchlist.
         coordinator.selectTabFromTabBar(.search)
         coordinator.searchPath.append(Self.show(82))
+        stage = "waiting for Search detail appearance"
         try await waitUntil { analytics.events.contains(.searchResultOpened(showID: 82)) }
         // Wait for a new Watchlist appearance, not a fixed total: mounting can
         // record more than one. Otherwise the switch back to Search below can land
@@ -116,11 +129,13 @@ struct ContentViewNotificationNavigationTests {
         let watchlistViews = { analytics.events.filter { $0 == .watchlistViewed }.count }
         let viewsBeforeReturn = watchlistViews()
         coordinator.selectTabFromTabBar(.watchlist)
+        stage = "waiting for Watchlist reappearance"
         try await waitUntil { watchlistViews() > viewsBeforeReturn }
         let tracked = try #require(try await repository.trackedShow(showID: 10))
         removal.requestRemoval(tracked, source: .watchlist)
 
         coordinator.selectTabFromTabBar(.search)
+        stage = "waiting for pending-removal commit"
         try await waitUntil { !outcomes.outcomes.isEmpty }
         await settleMainActor()
 

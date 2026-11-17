@@ -1,6 +1,6 @@
 # StoreKit engineering coverage and remaining evidence
 
-**Updated October 28, 2026.** This is an engineering coverage record, not a manual test assignment. The [manual guide](../Post-MVP/NextSeason-StoreKit-Manual-Test-Script.md) contains steps achievable through app actions or documented Apple test controls. Its [checklist](../Post-MVP/NextSeason-StoreKit-Manual-Test-Checklist.md) excludes requirements needing custom control of internal state, provider data, or request timing.
+**Updated October 28, 2026.** This is an engineering coverage record, not a manual test assignment. The [manual guide](../Post-MVP/NextSeason-StoreKit-Manual-Test-Script.md) contains steps achievable through app actions or documented Apple test controls. Its [checklist](../Post-MVP/NextSeason-StoreKit-Manual-Test-Script.md) excludes requirements needing custom control of internal state, provider data, or request timing.
 
 Moving a case here does not pass it, waive it, or establish release readiness. Record current-candidate automated results and any missing integration/UI evidence. Existing test files are starting points, not executed results. Add a case back to the manual script only after there is a repeatable setup with concrete instructions. This change does not authorize building new test modes or running full suites.
 

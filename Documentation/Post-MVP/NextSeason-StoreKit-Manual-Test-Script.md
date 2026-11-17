@@ -1,13 +1,13 @@
 # NextSeason — StoreKit manual regression and release testing
 
-**Updated October 28, 2026.** These are executable manual checks, not recorded passes. Record the exact installed build; working-copy changes are not proof of TestFlight behavior. Use the [matching checklist](NextSeason-StoreKit-Manual-Test-Checklist.md). Case IDs are retained for existing results; removed controlled cases are tracked in the [engineering coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md).
+**Updated October 28, 2026.** These are executable manual checks, not recorded passes. Record the exact installed build; working-copy changes are not proof of TestFlight behavior. Case IDs are retained for existing results; removed controlled cases are tracked in the [engineering coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md).
 
 - [Recent-fix regression pass](#focused-regression-pass--recent-purchase-fixes)
 - [Setup and broader release checks](#how-to-use-this-script)
 - [Entitlement ordering — OC-11](#oc-11--entitlement-ordering-in-real-purchaserestore-flows-item-1)
 - [Results](#result-sheet) and [cleanup](#completion-and-cleanup)
 
-**Audience:** advanced technical testers and developers; this work can be delegated. Janine coordinates release decisions. The volunteer purchase checks live in the [beta regression guide](NextSeason-Beta-Regression-Test.md#purchase-checks) and its matching checklist. Ordinary beta testers do not need this document. Start with the TestFlight checks; use Xcode only for the explicitly labeled local tests. No custom UI test mode is needed for the steps retained here.
+**Audience:** advanced technical testers and developers; this work can be delegated. Janine coordinates release decisions. The volunteer purchase checks live in the [beta regression guide](NextSeason-Beta-Regression-Test.md#purchase-checks). Ordinary beta testers do not need this document. Start with the TestFlight checks; use Xcode only for the explicitly labeled local tests. No custom UI test mode is needed for the steps retained here.
 
 ### Choose your testing session
 

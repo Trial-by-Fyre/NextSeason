@@ -259,7 +259,6 @@
 		E1F26BE52FEE285B006D0E58 /* 6-25-2026 Discuss Fix for Genre Breaking Before Separator.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Discuss Fix for Genre Breaking Before Separator.md"; sourceTree = "<group>"; };
 		E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Complimentary Plus Beta Grant.md"; sourceTree = "<group>"; };
 		E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FreeTierSimulation.md; sourceTree = "<group>"; };
-		E1F5B6D0307C5B3B00B73B0D /* NextSeason-Beta-Regression-Checklist.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-Beta-Regression-Checklist.md"; sourceTree = "<group>"; };
 		E1F5B6D1307C5B3B00B73B0D /* NextSeason-Beta-Regression-Test.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-Beta-Regression-Test.md"; sourceTree = "<group>"; };
 		E1F5B6D2307C5B3B00B73B0D /* NextSeason-StoreKit-Manual-Test-Script.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-StoreKit-Manual-Test-Script.md"; sourceTree = "<group>"; };
 		E1UI00012FE400000076FCDD /* NextSeasonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextSeasonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -375,7 +374,6 @@
 		E102F0FC2FE5F1F40076FCDD /* Post-MVP */ = {
 			isa = PBXGroup;
 			children = (
-				E1F5B6D0307C5B3B00B73B0D /* NextSeason-Beta-Regression-Checklist.md */,
 				E1F5B6D1307C5B3B00B73B0D /* NextSeason-Beta-Regression-Test.md */,
 				E1F5B6D2307C5B3B00B73B0D /* NextSeason-StoreKit-Manual-Test-Script.md */,
 				E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */,

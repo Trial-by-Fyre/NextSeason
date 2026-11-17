@@ -1,8 +1,6 @@
 # NextSeason: beta regression and release testing
 
-**Updated October 27, 2026.** A printable/checkable copy is [here](NextSeason-Beta-Regression-Checklist.md).
-
-> **Required for this build — delete and reinstall first.** The TestFlight build that adds broadcaster names to Watchlist rows (build number to be confirmed when uploaded) changes how the Watchlist is stored. If you already have NextSeason installed, **delete NextSeason and then install this build from TestFlight before testing**. Deleting the app **erases your local Watchlist**; note or screenshot it first if you want to re-add shows. For this build only, this replaces the update-in-place instruction in “Before you start” steps 2 and 6 and the “do not reset or reinstall” guidance below. In test 1, mark step 2 and “Your existing shows remain” Skipped (reason: reinstall), and save at least one show, such as The Rookie, before step 5. Expect first-run screens and the notification permission prompt to appear again, and app settings to return to their defaults. Subscriptions can be restored from About; complimentary beta access is normally recovered automatically. If the app still shows a recovery or reset screen after a fresh install, report it.
+Use this as a regression coverage reference. For volunteer testing, assign a focused subset that fits roughly 10–15 minutes. Coordinate longer checks separately.
 
 - [Beta tester walkthrough](#beta-tester-walkthrough)
 - [What to record and send](#what-to-record-and-send)
@@ -10,7 +8,7 @@
 
 ## Beta tester walkthrough
 
-Allow roughly 30–45 minutes, plus normal use over the next day or two. Perform each flow once. Mark each test **Pass**, **Problem**, or **Skipped**, with a reason for skips. If something goes wrong, continue with other areas when possible.
+For a full regression pass, perform each assigned flow once. Follow any build-specific setup supplied with the assignment. Mark each test **Pass**, **Problem**, or **Skipped**, with a reason for skips. If something goes wrong, continue with other areas when possible.
 
 ## What to record and send
 

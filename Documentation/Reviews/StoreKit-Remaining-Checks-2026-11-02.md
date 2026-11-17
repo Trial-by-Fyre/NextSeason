@@ -64,7 +64,7 @@ Do not attempt forced internal states by repeatedly toggling Airplane Mode or ta
 
 ## Recording the remainder
 
-Use the [existing checklist](../Post-MVP/NextSeason-StoreKit-Manual-Test-Checklist.md) for exact setup/cleanup. Record each new result once with build/environment. Keep original historical reports unchanged; use later acceptance above to interpret stale open-failure text. No release requirements are waived by this prioritization. Any decision to ship with material unverified behavior remains the owner's decision.
+Use the [existing checklist](../Post-MVP/NextSeason-StoreKit-Manual-Test-Script.md) for exact setup/cleanup. Record each new result once with build/environment. Keep original historical reports unchanged; use later acceptance above to interpret stale open-failure text. No release requirements are waived by this prioritization. Any decision to ship with material unverified behavior remains the owner's decision.
 
 
 ## Owner completion update — November 3, 2026

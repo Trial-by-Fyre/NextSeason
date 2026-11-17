@@ -9,8 +9,7 @@ saves a local watchlist, and delivers a local notification when
 ``NextSeasonCalculator`` finds a new next-season status.
 
 This catalog is the in-Xcode map of the app target. Symbol pages come from
-in-source comments. Broader design notes and transcripts live under
-`Documentation/` in the repository, not here.
+in-source comments. See the repository README for current maintenance guides and GitHub Issues for working history.
 
 ## Topics
 

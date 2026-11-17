@@ -78,4 +78,4 @@ on before the first reconcile (compiled out of Release).
 
 Like simulation, toggling writes only pause flags (and the paused-alert flag);
 resumed shows get a catch-up refresh. Manual test steps and limitations:
-`Documentation/Reviews/IgnoreComplimentaryPlus-2026-10-21.md`.
+[the entitlement decision note](https://github.com/Trial-by-Fyre/NextSeason/issues/16).

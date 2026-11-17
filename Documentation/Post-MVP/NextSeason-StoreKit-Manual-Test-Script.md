@@ -144,12 +144,6 @@ Run this from both Search and Show Detail, using a different sandbox account wit
 
 #### 4C. Transaction completes after relaunch
 
-**Original failure:** build 50 granted Plus before approval in the owner’s iOS 27.0 simulator test, while Xcode still showed pending approval; see [diagnostic evidence](../Reviews/StoreKitPendingRelaunch-2026-10-28.md).
-
-**Owner verification, October 30:** the full 4C sequence passed on the candidate before the Claude-review follow-up. Approved-transaction recovery also cleared the unfinished warning while preserving Plus. These results remain recorded.
-
-**Current candidate passed, owner-reported October 30:** after the [purchase-outcome and cancellation corrections](../Reviews/StoreKitXcodePendingGuard-2026-10-30.md#claude-review-follow-up-purchase-outcomes-and-cancellation), the owner confirmed both requested manual checks passed: fresh 4C and a normal Xcode purchase with simulation ending. Setup included deleting the previous test transaction after an already-owned error. This verifies the fresh-purchase path; repurchase after expiration/refund and an active-plan pending switch remain separate history-sensitive cases. The `SKTesting` scheme retains the [diagnostics](../Reviews/StoreKitPendingDiagnostics-2026-10-29.md).
-
 - Start a blocked add for N.
 - Attempt a Plus purchase, choose **Ask**, and confirm **Pending Ask to Buy** in Xcode’s transaction manager.
 - Terminate and relaunch NextSeason.
@@ -160,10 +154,6 @@ Run this from both Search and Show Detail, using a different sandbox account wit
 - Verify N remains untracked until explicitly added.
 
 #### 4D. Pending purchase is declined
-
-**Original failure:** owner reported that a new purchase declined in Xcode’s transaction manager was recorded as successful by NextSeason. See the [failure record](../Reviews/StoreKitPendingRelaunch-2026-10-28.md#declined-purchase-reported-as-successful).
-
-**Passed, owner-reported October 30:** the owner confirmed the current transaction recovery/purchase-outcome changes also fixed the failure in 4D. See the [acceptance record](../Reviews/StoreKitXcodePendingGuard-2026-10-30.md#owner-verification-decline-failure-resolved). The original failure's precise mechanism was not independently isolated.
 
 - Save evidence of earlier cases before resetting. Use the Ask to Buy setup to delete local subscription transactions, relaunch, and confirm Free access with A–C active and N untracked. Do not carry a previously approved subscription into this case.
 - Start N’s blocked add, choose a Plus plan, and choose **Ask** in Apple’s dialog.
@@ -242,8 +232,6 @@ Run through Search and Show Detail. Use the expired state from section 5: three 
 
 #### 7C. Monthly purchase first attempt for an already-saved show
 
-**Open failure:** owner reports the first Monthly purchase attempt displays **Couldn't Complete Purchase** / “The purchase wasn't completed, so NextSeason Plus wasn't unlocked. Please try again.” It has occurred intermittently elsewhere and appears consistent when purchasing to reactivate an already-saved show; the second attempt succeeds. See [report and screenshot](../Reviews/StoreKitMonthlyFirstAttempt-2026-10-28.md).
-
 Reuse 7B’s starting state and Monthly purchase actions. Record the first attempt separately from any retry, including whether Apple’s sheet appeared and whether Plus/the saved show became active. If retry succeeds, preserve the first-attempt failure; do not mark it passed merely because retry worked. Expected: a valid purchase succeeds on the first attempt and reactivates the saved show once.
 
 **Result:** Pass / Fail / Blocked / Not applicable / Not run; record each subcase separately with build, environment and evidence.
@@ -263,10 +251,6 @@ Reuse 7B’s starting state and Monthly purchase actions. Record the first attem
 - Verify the paywall remains available.
 
 #### 8C. Offline Restore and reconnect
-
-**Open recovery failure:** after an offline Restore error, the owner restored connectivity, dismissed the error and retried a purchase; the app displayed the purchase-not-unlocked error. Reported as repeatable; see the [8C recovery report and screenshot](../Reviews/StoreKitReconnectPurchaseFailure-2026-10-28.md). Keep this separate from the wording improvement below.
-
-**Open presentation improvement:** the observed alert uses a purchase-specific title and generic restore error. Record clearer restore/network wording as a follow-up; see the [8C report](../Reviews/StoreKitRestoreErrorMessaging-2026-10-28.md). This does not establish the underlying error code.
 
 - Start Free with N untracked and three active shows; trigger the paywall through N's blocked add.
 - Turn on Airplane Mode and explicitly turn Wi-Fi off.
@@ -823,11 +807,10 @@ This document does not itself alter repository or App Store Connect settings. It
 
 CV-06 and the other non-manual requirements are maintained in the [engineering coverage record](../Reviews/StoreKitEngineeringCoverage-2026-10-28.md#controlled-verification-register), outside this tester checklist. No coverage is passed or waived by moving it.
 
-### Source and decision references
+### Related procedures and verification
 
-- [October 26 manual-coverage review dispositions](../Reviews/ManualTestCoverageReview-2026-10-26.md).
 
-- [Entitlement ordering review](../Reviews/EntitlementCheckOrderingReview-2026-10-19.md), [expiration and restore feedback](../Reviews/ExpirationRecheckAndRestoreFeedback-2026-10-21.md), and [Ignore Complimentary Plus review](../Reviews/IgnoreComplimentaryPlus-2026-10-21.md).
+- [StoreKit lifecycle verification](https://github.com/Trial-by-Fyre/NextSeason/issues/5) and [entitlement decisions](https://github.com/Trial-by-Fyre/NextSeason/issues/16).
 - [Testing override behavior](FreeTierSimulation.md).
 - [Apple Ask to Buy testing](https://developer.apple.com/documentation/storekit/testing-ask-to-buy-in-xcode): use local Xcode approval/decline controls for pending completion; do not assume those controls exist in TestFlight.
 

@@ -219,7 +219,7 @@ Start online with saved shows. For the optional add, Free users need a free slot
 5. If comfortable, briefly enable Increase Contrast, **Show Borders** (called Button Shapes on iOS 18), Reduce Transparency, and Reduce Motion, checking the main screens after changes.
 6. Restore your preferred settings.
 
-**Known issue:** the Severance detail title may be clipped on iPhone 16 / iOS 18.6. See [known failures](../Reviews/Known-Test-Failures.md).
+**Known issue:** the Severance detail title may be clipped on iPhone 16 / iOS 18.6. See [known failures](https://github.com/Trial-by-Fyre/NextSeason/issues/9).
 
 **Expected:** Text and controls remain readable and reachable. Important text does not overlap or disappear. Watchlist section headers stay readable. States such as tracked/untracked can be distinguished without relying only on color. Report confusing wording or truncated English text, including on phones using another system language.
 

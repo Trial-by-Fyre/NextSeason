@@ -139,14 +139,6 @@ Use **“implemented, pending verification”** or **“implemented with known l
 >
 > **Acceptance:** Obtain independent behavioral review for high-risk work; report actual test results, gaps, and limitations. Do not call the feature complete just because tests pass.
 
-## 8. Calibration examples
-
-Project-specific retrospectives can help evaluate discovery without becoming universal
-requirements. Keep them separate from this reusable process. For NextSeason, see
-[the subscription calibration example](FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md).
-Include that companion file only where relevant, or replace this reference with an
-appropriate example for another project.
-
-## 9. Keep it lightweight
+## 8. Keep it lightweight
 
 The behavior matrix can live in the task description or a short Markdown file; it need not become permanent documentation for every feature. Retain only meaningful decisions and constraints in the repository. Prefer a few high-value scenarios and explicit unknowns over a huge generic checklist. Revisit the process after a few features and remove steps that do not catch real problems.

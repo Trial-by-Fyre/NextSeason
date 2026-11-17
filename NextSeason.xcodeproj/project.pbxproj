@@ -29,241 +29,22 @@
 
 /* Begin PBXFileReference section */
 		653746CCA38B4CEBAE028220 /* FEATURE_DEVELOPMENT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT.md; sourceTree = "<group>"; };
-		C34096CBBCD74A298971F04A /* COLLABORATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = COLLABORATION.md; sourceTree = "<group>"; };
-		D67093EB364E4F8CB5A54C91 /* SWIFT_SWIFTUI.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SWIFT_SWIFTUI.md; sourceTree = "<group>"; };
-		D8C588A84910441B99E38042 /* FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md; sourceTree = "<group>"; };
-		E102EAA32FE356E70076FCDD /* 6-14-2026 Phase3.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-14-2026 Phase3.md"; sourceTree = "<group>"; };
-		E102EAA42FE356E70076FCDD /* 6-14-2026 Post Review Updates.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-14-2026 Post Review Updates.md"; sourceTree = "<group>"; };
-		E102EAA72FE356E70076FCDD /* 6-15-2026 Phase 4 Slice 1 Implement Review Items.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-15-2026 Phase 4 Slice 1 Implement Review Items.md"; sourceTree = "<group>"; };
-		E102EAA82FE356E70076FCDD /* 6-15-2026 Phase 4 Slice 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-15-2026 Phase 4 Slice 1.md"; sourceTree = "<group>"; };
-		E102EAAB2FE356E70076FCDD /* 6-16-2026 Implement Remaining MVP Items.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-16-2026 Implement Remaining MVP Items.md"; sourceTree = "<group>"; };
-		E102EAAC2FE356E70076FCDD /* 6-16-2026 Phase 4 Slice 1 Wrap Up.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-16-2026 Phase 4 Slice 1 Wrap Up.md"; sourceTree = "<group>"; };
-		E102EAAD2FE356E70076FCDD /* 6-16-2026 Phase 4 Slice 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-16-2026 Phase 4 Slice 2.md"; sourceTree = "<group>"; };
-		E102EAAE2FE356E70076FCDD /* 6-16-2026 Phase 4 Slice 2 Implement Review Items.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-16-2026 Phase 4 Slice 2 Implement Review Items.md"; sourceTree = "<group>"; };
-		E102EAB12FE356E70076FCDD /* 6-17-2026 MVP Implement Review Items.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-17-2026 MVP Implement Review Items.md"; sourceTree = "<group>"; };
-		E102EAB32FE3572D0076FCDD /* 6-17-2026 Improve Transcript File Organization.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-17-2026 Improve Transcript File Organization.md"; sourceTree = "<group>"; };
-		E102EFC62FE36AE50076FCDD /* 6-17-2026 Add UI Tests.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-17-2026 Add UI Tests.md"; sourceTree = "<group>"; };
-		E102F0F82FE5E84C0076FCDD /* 6-18-2026 Implement Review Items for Notifications.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-18-2026 Implement Review Items for Notifications.md"; sourceTree = "<group>"; };
-		E117D3C62FEB2C2900C02ADC /* 6-23-2026 Search Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-23-2026 Search Discussion.md"; sourceTree = "<group>"; };
-		E117D4592FEB342D00C02ADC /* 6-23-2026 Implement Search Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-23-2026 Implement Search Improvements.md"; sourceTree = "<group>"; };
-		E117D57E2FEB389E00C02ADC /* 6-23-2026 Add Additional UI Tests.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-23-2026 Add Additional UI Tests.md"; sourceTree = "<group>"; };
-		E117D5802FEC40CD00C02ADC /* 6-23-2026 Implement Watchlist Discovery.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-23-2026 Implement Watchlist Discovery.md"; sourceTree = "<group>"; };
-		E117D58D2FEC85ED00C02ADC /* 6-24-2026 Implement Watchlist Redesign.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-24-2026 Implement Watchlist Redesign.md"; sourceTree = "<group>"; };
 		E13811CD2FDB795C009C141B /* NextSeason.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = NextSeason.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E13811E42FDCAFE0009C141B /* AGENTS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = AGENTS.md; sourceTree = "<group>"; };
-		E167043A30230010007F7098 /* 8-4-2026 Human Code Review - Questions and Cleanup.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-4-2026 Human Code Review - Questions and Cleanup.md"; sourceTree = "<group>"; };
-		E167068D3023BA77007F7098 /* 8-4-2026 Add diagnostics cleanup to pre-App Store Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-4-2026 Add diagnostics cleanup to pre-App Store Roadmap.md"; sourceTree = "<group>"; };
-		E167068E3023BA77007F7098 /* 8-4-2026 Add fatalError to pre-App Store Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-4-2026 Add fatalError to pre-App Store Roadmap.md"; sourceTree = "<group>"; };
-		E167068F3023BA77007F7098 /* 8-4-2026 Discuss Analytics Counters.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-4-2026 Discuss Analytics Counters.md"; sourceTree = "<group>"; };
-		E16706903023BA77007F7098 /* 8-4-2026 Remove unused files.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-4-2026 Remove unused files.md"; sourceTree = "<group>"; };
-		E16708CD3023CB86007F7098 /* 8-5-2026 Set up swift-format.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-5-2026 Set up swift-format.md"; sourceTree = "<group>"; };
-		E1670B083023D507007F7098 /* 8-5-2026 Fix Empty Watchlist Alignment.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-5-2026 Fix Empty Watchlist Alignment.md"; sourceTree = "<group>"; };
-		E1670D433023D83E007F7098 /* 8-5-2026 Fix Text Color on Empty Result Views.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-5-2026 Fix Text Color on Empty Result Views.md"; sourceTree = "<group>"; };
-		E1670F7E30240FE5007F7098 /* 8-5-2026 Discuss Adding Swipe-to-Delete to Watchlist.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-5-2026 Discuss Adding Swipe-to-Delete to Watchlist.md"; sourceTree = "<group>"; };
-		E1670F7F30241008007F7098 /* 8-5-2026 Implement Swipe-to-Delete.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-5-2026 Implement Swipe-to-Delete.md"; sourceTree = "<group>"; };
-		E16711BA302415B5007F7098 /* 8-5-2026 Discussion of Platform Support.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-5-2026 Discussion of Platform Support.md"; sourceTree = "<group>"; };
-		E16713F6302512D0007F7098 /* 7-31-2026 Post-MVP Documentation Review and Cleanup.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-31-2026 Post-MVP Documentation Review and Cleanup.md"; sourceTree = "<group>"; };
-		E16713F730251340007F7098 /* 8-6-2026 Discuss Floating Section Header Fix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Discuss Floating Section Header Fix.md"; sourceTree = "<group>"; };
-		E16713F930251376007F7098 /* 8-6-2026 Implement Floating Section Header Fix.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Implement Floating Section Header Fix.md"; sourceTree = "<group>"; };
-		E167187630253A2C007F7098 /* 8-4-2026 Discuss ProfileFlow Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-4-2026 Discuss ProfileFlow Implementation.md"; sourceTree = "<group>"; };
-		E167187730253A58007F7098 /* 8-6-2026 Improve ProfileFlow Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = "8-6-2026 Improve ProfileFlow Implementation.md"; sourceTree = "<group>"; };
-		E167187830255850007F7098 /* 8-6-2026 Review Changes to ProfileFlow Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Review Changes to ProfileFlow Implementation.md"; sourceTree = "<group>"; };
-		E1671AB930255D9C007F7098 /* 8-6-2026 Discuss Making Undo Toast More Visible.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Discuss Making Undo Toast More Visible.md"; sourceTree = "<group>"; };
-		E1671ABA30256106007F7098 /* 8-6-2026 Implement Visibility Improvements to Undo Toast.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Implement Visibility Improvements to Undo Toast.md"; sourceTree = "<group>"; };
-		E1671CF93025678A007F7098 /* 8-6-2026 Decision to Not Consolidate Duplicated Code For Tracking Button.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = "8-6-2026 Decision to Not Consolidate Duplicated Code For Tracking Button.md"; sourceTree = "<group>"; };
-		E1671F3A30259521007F7098 /* 8-6-2026 Review String Extraction.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Review String Extraction.md"; sourceTree = "<group>"; };
-		E1671F3B302595B1007F7098 /* 8-6-2026 Discuss String Extraction.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Discuss String Extraction.md"; sourceTree = "<group>"; };
-		E1671F3C3025960B007F7098 /* 8-6-2026 Implement String Extraction (by Cursor).md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-6-2026 Implement String Extraction (by Cursor).md"; sourceTree = "<group>"; };
-		E16722A6302693BA007F7098 /* 8-7-2026 Discuss Overly Complex Undo Toast.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-7-2026 Discuss Overly Complex Undo Toast.md"; sourceTree = "<group>"; };
-		E16722A7302693F7007F7098 /* 8-7-2026 Implement Simplifying Undo Toast.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-7-2026 Implement Simplifying Undo Toast.md"; sourceTree = "<group>"; };
-		E16724EE30269D54007F7098 /* 8-7-2026 Discuss Watchlist Search Bar.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-7-2026 Discuss Watchlist Search Bar.md"; sourceTree = "<group>"; };
-		E16724EF30269D7B007F7098 /* 8-7-2026 Implement Watchlist Search Changes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-7-2026 Implement Watchlist Search Changes.md"; sourceTree = "<group>"; };
-		E167285930291CC5007F7098 /* 8-9-2026 Discuss Placement of Info Button.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-9-2026 Discuss Placement of Info Button.md"; sourceTree = "<group>"; };
-		E167285A30291D09007F7098 /* 8-9-2026 DIscuss and Implement About Footer.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-9-2026 DIscuss and Implement About Footer.md"; sourceTree = "<group>"; };
-		E1672AA23029988F007F7098 /* 8-9-2026 Fix Undo Toast Bug.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-9-2026 Fix Undo Toast Bug.md"; sourceTree = "<group>"; };
-		E1672FC7302BEB62007F7098 /* 8-11-2026 Discuss and Review Search Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-11-2026 Discuss and Review Search Improvements.md"; sourceTree = "<group>"; };
-		E1672FC8302BEBDA007F7098 /* 8-11-2026 Implement Search Improvements 3.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-11-2026 Implement Search Improvements 3.md"; sourceTree = "<group>"; };
-		E1672FC9302BEC38007F7098 /* 8-11-2026 Implement Search Improvements 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-11-2026 Implement Search Improvements 2.md"; sourceTree = "<group>"; };
-		E1672FCA302BEC7A007F7098 /* 8-11-2026 Implement Search Improvements 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-11-2026 Implement Search Improvements 1.md"; sourceTree = "<group>"; };
-		E1672FDF302FA34D007F7098 /* 8-13-2026 Review and Discuss Search Improvements .md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-13-2026 Review and Discuss Search Improvements .md"; sourceTree = "<group>"; };
-		E1672FE0302FA60B007F7098 /* 8-13-2026 Implement Review Items.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-13-2026 Implement Review Items.md"; sourceTree = "<group>"; };
-		E16732A7302FD9CD007F7098 /* 8-14-2026 Implement Search Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-14-2026 Implement Search Improvements.md"; sourceTree = "<group>"; };
-		E16732A8302FDAEC007F7098 /* 8-14-2026 Review Search Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-14-2026 Review Search Improvements.md"; sourceTree = "<group>"; };
-		E1673693302FF5F2007F7098 /* 8-14-2026 Discuss and Review Aptabase Integration.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-14-2026 Discuss and Review Aptabase Integration.md"; sourceTree = "<group>"; };
-		E1673694302FF63F007F7098 /* 8-14-2026 Implement Aptabase Integration.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-14-2026 Implement Aptabase Integration.md"; sourceTree = "<group>"; };
-		E1678D3C2FFC5604007F7098 /* 7-6-2026 Add Notification Settings to About.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-6-2026 Add Notification Settings to About.md"; sourceTree = "<group>"; };
-		E1678D412FFC650E007F7098 /* 7-6-2026 Refresh Time and Notification Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-6-2026 Refresh Time and Notification Improvements.md"; sourceTree = "<group>"; };
-		E16792EC2FFC77BB007F7098 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		E16797C12FFEE58C007F7098 /* 7-8-2026 Implement Items from Indepth Code Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-8-2026 Implement Items from Indepth Code Review.md"; sourceTree = "<group>"; };
-		E16799C930004ACC007F7098 /* 7-9-2026 Bug fixes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-9-2026 Bug fixes.md"; sourceTree = "<group>"; };
-		E1679BD1300549E5007F7098 /* 7-13-2026 Fix Dark Mode bugs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-13-2026 Fix Dark Mode bugs.md"; sourceTree = "<group>"; };
-		E1679DD9300551EC007F7098 /* 7-13-2026 Launch on non-empty Watchlist.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-13-2026 Launch on non-empty Watchlist.md"; sourceTree = "<group>"; };
-		E1679DDA300561BD007F7098 /* 7-13-2026 Improve Notifications.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-13-2026 Improve Notifications.md"; sourceTree = "<group>"; };
-		E167A3ED30058305007F7098 /* 7-13-2026 Remove Example Button.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-13-2026 Remove Example Button.md"; sourceTree = "<group>"; };
-		E167A5F430058C25007F7098 /* 7-13-2026 Post-MVP-Roadmap-Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-13-2026 Post-MVP-Roadmap-Discussion.md"; sourceTree = "<group>"; };
-		E167A7FD30070C2E007F7098 /* 7-14-2026 Post-MVP Roadmap Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-14-2026 Post-MVP Roadmap Discussion.md"; sourceTree = "<group>"; };
-		E167A7FE30070D23007F7098 /* 6-13-2026 Phase 1 and 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-13-2026 Phase 1 and 2.md"; sourceTree = "<group>"; };
-		E167A80030070E36007F7098 /* 6-14-2026 Review of Phases 1-3.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-14-2026 Review of Phases 1-3.md"; sourceTree = "<group>"; };
-		E167A80230070E95007F7098 /* 6-15-2026 Review of Phase 4 Slice 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-15-2026 Review of Phase 4 Slice 1.md"; sourceTree = "<group>"; };
-		E167A80330070EEE007F7098 /* 6-16-2026 Review of Phase 4 Slice 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-16-2026 Review of Phase 4 Slice 2.md"; sourceTree = "<group>"; };
-		E167A80430070F31007F7098 /* 6-17-2026 MVP Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-17-2026 MVP Review.md"; sourceTree = "<group>"; };
-		E167A80530070FAF007F7098 /* 6-23-2026 Plan Search Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-23-2026 Plan Search Improvements.md"; sourceTree = "<group>"; };
-		E167A80630071025007F7098 /* 6-23-2026 Review and Watchlist Planning.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-23-2026 Review and Watchlist Planning.md"; sourceTree = "<group>"; };
-		E167A8073007105D007F7098 /* 6-24-2026 Add Accessibility Details.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-24-2026 Add Accessibility Details.md"; sourceTree = "<group>"; };
-		E167A808300710A5007F7098 /* 6-25-2026 Update Release Readiness for Feedback and Analytics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Update Release Readiness for Feedback and Analytics.md"; sourceTree = "<group>"; };
-		E167A809300710E8007F7098 /* 6-25-2026 Code Review and Analytics Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Code Review and Analytics Discussion.md"; sourceTree = "<group>"; };
-		E167A80A3008155B007F7098 /* 6-28-2026 Instruments Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-28-2026 Instruments Discussion.md"; sourceTree = "<group>"; };
-		E167A80B300815C4007F7098 /* 6-29-2026 Instruments Post-Report Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-29-2026 Instruments Post-Report Discussion.md"; sourceTree = "<group>"; };
-		E167A80C30081624007F7098 /* 7-2-2026 Diagnostics Work with ChatGPT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-2-2026 Diagnostics Work with ChatGPT.md"; sourceTree = "<group>"; };
-		E167A80D300816BF007F7098 /* 7-2-2026 Discussion of Upcoming Tasks.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-2-2026 Discussion of Upcoming Tasks.md"; sourceTree = "<group>"; };
-		E167A80E30081700007F7098 /* 7-3-2026 Update Diagrams.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-3-2026 Update Diagrams.md"; sourceTree = "<group>"; };
-		E167A80F3008176C007F7098 /* 7-3-2026 Discuss Search Change.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-3-2026 Discuss Search Change.md"; sourceTree = "<group>"; };
-		E167A810300817AA007F7098 /* 7-6-2026 Accessibility and Notification Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-6-2026 Accessibility and Notification Discussion.md"; sourceTree = "<group>"; };
-		E167A811300817EE007F7098 /* 7-7-2026 Final Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-7-2026 Final Review.md"; sourceTree = "<group>"; };
-		E167A8123008181C007F7098 /* 7-8-2026 Indepth Code Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-8-2026 Indepth Code Review.md"; sourceTree = "<group>"; };
-		E167A813300818BE007F7098 /* 6-19-2026 Building Post-MVP Planning Documents.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-19-2026 Building Post-MVP Planning Documents.md"; sourceTree = "<group>"; };
-		E167AA1C30093F55007F7098 /* 7-16-2026 Fix Notification Bug.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-16-2026 Fix Notification Bug.md"; sourceTree = "<group>"; };
-		E167AC23300941D9007F7098 /* 7-16-2026 Feature Removal Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-16-2026 Feature Removal Discussion.md"; sourceTree = "<group>"; };
-		E167AC2430094782007F7098 /* 7-16-2026 Implement Removal of Tappable Actor Names.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-16-2026 Implement Removal of Tappable Actor Names.md"; sourceTree = "<group>"; };
-		E167AE2F30099758007F7098 /* 7-16-2026 Product MVP Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-16-2026 Product MVP Discussion.md"; sourceTree = "<group>"; };
-		E167AE3130099B9C007F7098 /* 7-16-2026 Implement Watchlist Search.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-16-2026 Implement Watchlist Search.md"; sourceTree = "<group>"; };
-		E167B03B3009D883007F7098 /* 7-16-2026 Add Note about Notification Reliability.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-16-2026 Add Note about Notification Reliability.md"; sourceTree = "<group>"; };
 		E167BA9D300AD59C007F7098 /* SerialTesting.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = SerialTesting.xctestplan; sourceTree = "<group>"; };
-		E167BDBF300ADE10007F7098 /* 7-16-2026 Clean up duplicated code paths.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-16-2026 Clean up duplicated code paths.md"; sourceTree = "<group>"; };
-		E167BFD8300D5DE7007F7098 /* 7-19-2026 Remove Code Duplication Part 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-19-2026 Remove Code Duplication Part 1.md"; sourceTree = "<group>"; };
-		E167BFDD300D61D5007F7098 /* 7-19-2026 Remove Code Duplication Part 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-19-2026 Remove Code Duplication Part 2.md"; sourceTree = "<group>"; };
-		E167BFE2300D67DF007F7098 /* 7-19-2026 Remove Code Duplication Part 3.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-19-2026 Remove Code Duplication Part 3.md"; sourceTree = "<group>"; };
-		E167CAF1300ED865007F7098 /* 7-20-2026 Implement Code Review Findings.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-20-2026 Implement Code Review Findings.md"; sourceTree = "<group>"; };
-		E167CC0E300EDAEA007F7098 /* 7-20-2026 Set Theme to Teal and Hide Switcher.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-20-2026 Set Theme to Teal and Hide Switcher.md"; sourceTree = "<group>"; };
-		E167CE47300EE881007F7098 /* 7-20-2026 Project Code and Documentation Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-20-2026 Project Code and Documentation Review.md"; sourceTree = "<group>"; };
-		E167D080301040BB007F7098 /* NextSeason - App Store Readiness Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason - App Store Readiness Roadmap.md"; sourceTree = "<group>"; };
-		E167D081301040BB007F7098 /* NextSeason - Product Evolution Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason - Product Evolution Roadmap.md"; sourceTree = "<group>"; };
-		E167D0823010418F007F7098 /* 7-21-2026 Post-MVP Roadmap Split 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-21-2026 Post-MVP Roadmap Split 1.md"; sourceTree = "<group>"; };
-		E167D0833010419B007F7098 /* 7-21-2026 Post-MVP Roadmap Split 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-21-2026 Post-MVP Roadmap Split 2.md"; sourceTree = "<group>"; };
-		E167D084301041A4007F7098 /* 7-21-2026 Add AI Feature to Post-App Store Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-21-2026 Add AI Feature to Post-App Store Roadmap.md"; sourceTree = "<group>"; };
-		E167D2C13011533D007F7098 /* 7-22-2026 Watchlist Improvement Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-22-2026 Watchlist Improvement Discussion.md"; sourceTree = "<group>"; };
-		E167D2C230115379007F7098 /* 7-22-2026 Watchlist Bug Fixes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-22-2026 Watchlist Bug Fixes.md"; sourceTree = "<group>"; };
-		E167D2C330115406007F7098 /* 7-22-2026 Watchlist Improvement Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-22-2026 Watchlist Improvement Implementation.md"; sourceTree = "<group>"; };
-		E167D73A301170C6007F7098 /* 7-13-2026 Watchlist vs Search Design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-13-2026 Watchlist vs Search Design.md"; sourceTree = "<group>"; };
-		E167D73B30117162007F7098 /* 7-20-2026 MVP vs App Store Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-20-2026 MVP vs App Store Roadmap.md"; sourceTree = "<group>"; };
-		E167D73F3011732D007F7098 /* 7-21-2026 MVP Completion Checklist.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-21-2026 MVP Completion Checklist.md"; sourceTree = "<group>"; };
-		E167DDF53012B34E007F7098 /* 7-23-2026 Transcript Comparison and Edits.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-23-2026 Transcript Comparison and Edits.md"; sourceTree = "<group>"; };
-		E167E0323017F0C9007F7098 /* 7-27-2026 HIG and Liquid Glass Audit.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-27-2026 HIG and Liquid Glass Audit.md"; sourceTree = "<group>"; };
-		E167E0333017F0D7007F7098 /* 7-27-2026 UI Audit Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-27-2026 UI Audit Implementation.md"; sourceTree = "<group>"; };
-		E167E27030180120007F7098 /* 7-27-2026 Fix Watchlist Reload Bug.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-27-2026 Fix Watchlist Reload Bug.md"; sourceTree = "<group>"; };
-		E167ED91301A8BB1007F7098 /* 7-29-2026 App Icon Discussion.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-29-2026 App Icon Discussion.md"; sourceTree = "<group>"; };
-		E167ED92301A8BDC007F7098 /* 7-29-2026 Refactor theming and colors.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-29-2026 Refactor theming and colors.md"; sourceTree = "<group>"; };
-		E167F0EA301AB58A007F7098 /* MVPArchitecture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MVPArchitecture.md; sourceTree = "<group>"; };
-		E167F0EB301AC74B007F7098 /* MVPAnalytics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MVPAnalytics.md; sourceTree = "<group>"; };
-		E167F330301D2F41007F7098 /* 7-29-2026 Documentation Review and Cleanup.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-29-2026 Documentation Review and Cleanup.md"; sourceTree = "<group>"; };
-		E167FE83301D42A3007F7098 /* 7-31-2026 Remove soak test code.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-31-2026 Remove soak test code.md"; sourceTree = "<group>"; };
-		E17E04942FDE291A00708D7A /* MVPDefinition.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MVPDefinition.md; sourceTree = "<group>"; };
-		E17E04952FDE291A00708D7A /* ProblemStatement.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProblemStatement.md; sourceTree = "<group>"; };
-		E197008E2FF72BFF00D34A28 /* 7-2-2026 Diagnostics Work with Cursor.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-2-2026 Diagnostics Work with Cursor.md"; sourceTree = "<group>"; };
-		E197EC972FF06ED800D34A28 /* 6-27-2026 Fix UI Test Failure.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-27-2026 Fix UI Test Failure.md"; sourceTree = "<group>"; };
-		E197EF202FF31C0B00D34A28 /* 6-28-2026 Instruments Report Stage 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-28-2026 Instruments Report Stage 1.md"; sourceTree = "<group>"; };
-		E197EF212FF31C3B00D34A28 /* 6-29-2026 Instruments Report Stage 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-29-2026 Instruments Report Stage 2.md"; sourceTree = "<group>"; };
-		E197F2752FF39AF100D34A28 /* 6-29-2026 Fix Watchlist Refresh Crash.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-29-2026 Fix Watchlist Refresh Crash.md"; sourceTree = "<group>"; };
-		E197F2762FF39B3B00D34A28 /* 6-29-2026 Plan for Fixing Watchlist Refresh Crash.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-29-2026 Plan for Fixing Watchlist Refresh Crash.md"; sourceTree = "<group>"; };
-		E197F4242FF43B5000D34A28 /* 6-30-2026 Discuss Potential ModelContainer Init Failures.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-30-2026 Discuss Potential ModelContainer Init Failures.md"; sourceTree = "<group>"; };
-		E197F42E2FF46A7800D34A28 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		E197F42F2FF47B1700D34A28 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		E197F4302FF48AA200D34A28 /* 6-30-2026 Improve Theme Switcher.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-30-2026 Improve Theme Switcher.md"; sourceTree = "<group>"; };
-		E197F5E72FF48E4100D34A28 /* 6-30-2026 Add Notification Options to Diagnostics Menu.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-30-2026 Add Notification Options to Diagnostics Menu.md"; sourceTree = "<group>"; };
-		E19A222F303E9C0A00CC7190 /* 8-25-2026 Discuss StoreKit Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Discuss StoreKit Implementation.md"; sourceTree = "<group>"; };
-		E19A2230303E9C5100CC7190 /* 8-25-2026 Discuss and Implement StoreKit.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Discuss and Implement StoreKit.md"; sourceTree = "<group>"; };
-		E19A223230424F7500CC7190 /* 8-25-2025 Review Subscription Page Design.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2025 Review Subscription Page Design.md"; sourceTree = "<group>"; };
-		E19A223330424FCB00CC7190 /* 8-25-2026 Review StoreKit Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Review StoreKit Implementation.md"; sourceTree = "<group>"; };
-		E19A22343042503000CC7190 /* 8-25-2026 Implement StoreKit Review Items 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Implement StoreKit Review Items 1.md"; sourceTree = "<group>"; };
-		E19A22353042521700CC7190 /* 8-28-2026 Re-Review StoreKit Implementation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-28-2026 Re-Review StoreKit Implementation.md"; sourceTree = "<group>"; };
-		E19A2237304255F500CC7190 /* 8-28-2026 Implement StoreKit Review Items 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-28-2026 Implement StoreKit Review Items 2.md"; sourceTree = "<group>"; };
-		E19A25643044D17E00CC7190 /* 8-30-2026 Implement App Review Request.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Implement App Review Request.md"; sourceTree = "<group>"; };
-		E19A25653044D1DD00CC7190 /* 8-30-2026 Review App Review Request.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Review App Review Request.md"; sourceTree = "<group>"; };
-		E19A288E3044D27D00CC7190 /* 8-30-2026 Discuss and Document Additional Notification Features.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Discuss and Document Additional Notification Features.md"; sourceTree = "<group>"; };
-		E19A2D4B3044D80A00CC7190 /* 8-30-2026 Review and Update Background Colors.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Review and Update Background Colors.md"; sourceTree = "<group>"; };
-		E19A30743044E01300CC7190 /* 8-30-2026 Discuss and Review Fixing Crash-Loop Detection in Xcode.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Discuss and Review Fixing Crash-Loop Detection in Xcode.md"; sourceTree = "<group>"; };
-		E19A30753044E04600CC7190 /* 8-30-2026 Implement Fixing Crash-Loop Detection in Xcode.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Implement Fixing Crash-Loop Detection in Xcode.md"; sourceTree = "<group>"; };
-		E19A33A33044F66B00CC7190 /* 8-30-2026 Implement Accessibility Audit Suite.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Implement Accessibility Audit Suite.md"; sourceTree = "<group>"; };
-		E19A33A43044F6D700CC7190 /* 8-30-2026 Review Accessibility Audit Suite.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Review Accessibility Audit Suite.md"; sourceTree = "<group>"; };
-		E19A37033045063D00CC7190 /* 8-30-2026 Implement Watchlist Export.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Implement Watchlist Export.md"; sourceTree = "<group>"; };
-		E19A37043045068800CC7190 /* 8-30-2026 Review Watchlist Export.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-30-2026 Review Watchlist Export.md"; sourceTree = "<group>"; };
-		E19A3DA7304601F800CC7190 /* 8-31-2026 Review Roadmap Updates.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-31-2026 Review Roadmap Updates.md"; sourceTree = "<group>"; };
-		E19A42AC304604B900CC7190 /* 8-31-2026 Review Comments.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-31-2026 Review Comments.md"; sourceTree = "<group>"; };
-		E19A49653046508E00CC7190 /* 8-31-2026 Implement Fix to Recovery Process.md */ = {isa = PBXFileReference; lastKnownFileType = text; path = "8-31-2026 Implement Fix to Recovery Process.md"; sourceTree = "<group>"; };
-		E19A49663046514900CC7190 /* 8-31-2026 Review Fix to Recovery Process.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-31-2026 Review Fix to Recovery Process.md"; sourceTree = "<group>"; };
 		E19A58AF3047A29B00CC7190 /* Search-Results.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Search-Results.png"; sourceTree = "<group>"; };
 		E19A58B03047A29B00CC7190 /* Show-Detail.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Show-Detail.png"; sourceTree = "<group>"; };
 		E19A58B13047A29B00CC7190 /* Watchlist.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Watchlist.png; sourceTree = "<group>"; };
-		E19A5A673047A99C00CC7190 /* 9-1-2026 Documentation Review and Update.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-1-2026 Documentation Review and Update.md"; sourceTree = "<group>"; };
-		E1AB79793033D2680045498C /* 8-17-2026 Discuss and Review SwiftData Migration Plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-17-2026 Discuss and Review SwiftData Migration Plan.md"; sourceTree = "<group>"; };
-		E1AB797A3033D2C30045498C /* 8-17-2026 Implement SwiftData Migration Plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-17-2026 Implement SwiftData Migration Plan.md"; sourceTree = "<group>"; };
-		E1AB8180303628370045498C /* 8-14-2026 Improving App Icon 1.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-14-2026 Improving App Icon 1.md"; sourceTree = "<group>"; };
-		E1AB8181303628420045498C /* 8-16-2026 Improving App Icon 2.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-16-2026 Improving App Icon 2.md"; sourceTree = "<group>"; };
-		E1AB81823036284D0045498C /* 8-16-2026 Improving App Icon 3.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-16-2026 Improving App Icon 3.md"; sourceTree = "<group>"; };
-		E1AB8183303628590045498C /* 8-18-2026 Improving App Icon 4.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-18-2026 Improving App Icon 4.md"; sourceTree = "<group>"; };
-		E1AB86D530362CAE0045498C /* 8-18-2026 Implement Persistence Recovery Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-18-2026 Implement Persistence Recovery Improvements.md"; sourceTree = "<group>"; };
-		E1AB86D630362CD10045498C /* 8-18-2026 Review Persistence Recovery Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-18-2026 Review Persistence Recovery Improvements.md"; sourceTree = "<group>"; };
-		E1AB898D30363B1D0045498C /* 8-19-2026 Review Crash Prevention Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-19-2026 Review Crash Prevention Improvements.md"; sourceTree = "<group>"; };
-		E1AB899030363B590045498C /* 8-19-2026 Implement Crash Prevention Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-19-2026 Implement Crash Prevention Improvements.md"; sourceTree = "<group>"; };
-		E1AB8C4B30379D070045498C /* 8-20-2026 Discuss App Pricing And More.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-20-2026 Discuss App Pricing And More.md"; sourceTree = "<group>"; };
-		E1AB8C4C3037BB410045498C /* NextSeason - Monetization Strategy Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason - Monetization Strategy Roadmap.md"; sourceTree = "<group>"; };
-		E1AB9736303CF9DA0045498C /* 8-24-2026 Fix Git Snafu.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-24-2026 Fix Git Snafu.md"; sourceTree = "<group>"; };
-		E1AB9A18303D09AE0045498C /* 8-24-2026 Discuss Watchlist Import and Export.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-24-2026 Discuss Watchlist Import and Export.md"; sourceTree = "<group>"; };
-		E1AB9CFA303E38810045498C /* 8-25-2026 Discuss Small UI Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Discuss Small UI Improvements.md"; sourceTree = "<group>"; };
-		E1AB9CFB303E38A30045498C /* 8-25-2026 Implement Small UI Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Implement Small UI Improvements.md"; sourceTree = "<group>"; };
-		E1AB9FC8303E3DA90045498C /* 8-25-2026 Discuss Watchlist Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Discuss Watchlist Improvements.md"; sourceTree = "<group>"; };
-		E1AB9FC9303E3DC70045498C /* 8-25-2026 Implement Watchlist Improvements.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "8-25-2026 Implement Watchlist Improvements.md"; sourceTree = "<group>"; };
-		E1B6B58E78BE4AB0A8F11162 /* LEARNING.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LEARNING.md; sourceTree = "<group>"; };
-		E1BA91943052739F00C1572B /* 9-9-2026 Discuss Beta Crash Report.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-9-2026 Discuss Beta Crash Report.md"; sourceTree = "<group>"; };
-		E1BA9195305273F900C1572B /* 9-9-2026 Fix Crash.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-9-2026 Fix Crash.md"; sourceTree = "<group>"; };
-		E1BCCDC5304A65970049DE1D /* 9-3-2026 Final Full Review.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-3-2026 Final Full Review.md"; sourceTree = "<group>"; };
-		E1BCD132304A73520049DE1D /* Search-Results.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Search-Results.jpeg"; sourceTree = "<group>"; };
-		E1BCD133304A73520049DE1D /* Show-Detail.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = "Show-Detail.jpeg"; sourceTree = "<group>"; };
-		E1BCD134304A73520049DE1D /* Watchlist.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = Watchlist.jpeg; sourceTree = "<group>"; };
-		E1BCD136304A765D0049DE1D /* 9-3-2026 Review Beta Feedback Fixes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-3-2026 Review Beta Feedback Fixes.md"; sourceTree = "<group>"; };
-		E1BCD4A3304A85D20049DE1D /* 9-3-2026 Clean Up List Spacing.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-3-2026 Clean Up List Spacing.md"; sourceTree = "<group>"; };
-		E1BCD4A8304C7FF10049DE1D /* 9-5-2026 Identify Conditionals in Views and Review Changes.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-5-2026 Identify Conditionals in Views and Review Changes.md"; sourceTree = "<group>"; };
-		E1BCD4A9304C80470049DE1D /* 9-5-2026 Implement Fixes for Conditionals.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-5-2026 Implement Fixes for Conditionals.md"; sourceTree = "<group>"; };
-		E1C40B093063882B0006BBCD /* NextSeason TV - Trademark Research - 2026-09-22.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason TV - Trademark Research - 2026-09-22.md"; sourceTree = "<group>"; };
-		E1C40B0A306391F20006BBCD /* 9-22-2026 Discussion of Updating App Store Readiness Roadmap.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "9-22-2026 Discussion of Updating App Store Readiness Roadmap.md"; sourceTree = "<group>"; };
 		E1DA26BC2FDDD99700C37DAC /* safety.mdc */ = {isa = PBXFileReference; lastKnownFileType = text; name = safety.mdc; path = .cursor/rules/safety.mdc; sourceTree = "<group>"; };
-		E1DA26BD2FDDD99700C37DAC /* swiftui-project-style.mdc */ = {isa = PBXFileReference; lastKnownFileType = text; name = "swiftui-project-style.mdc"; path = ".cursor/rules/swiftui-project-style.mdc"; sourceTree = "<group>"; };
-		E1DA26C02FDDDE7400C37DAC /* ProjectKickoff.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ProjectKickoff.md; sourceTree = "<group>"; };
-		E1DAC54D2FDE2E1F00BD81E5 /* UserStories.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = UserStories.md; sourceTree = "<group>"; };
-		E1DAC54F2FDF358800BD81E5 /* InitialArchitecture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = InitialArchitecture.md; sourceTree = "<group>"; };
-		E1DAC5502FDF358800BD81E5 /* Implementation Plan.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Implementation Plan.md"; sourceTree = "<group>"; };
-		E1DAC5512FDF358800BD81E5 /* TVMazeResearch.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TVMazeResearch.md; sourceTree = "<group>"; };
 		E1DAC5592FDF5A4B00BD81E5 /* NextSeasonTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextSeasonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		E1E246BB2FF82FF700E5FD11 /* 01-app-architecture.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "01-app-architecture.md"; sourceTree = "<group>"; };
-		E1E246BC2FF82FF700E5FD11 /* 02-navigation-and-screens.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "02-navigation-and-screens.md"; sourceTree = "<group>"; };
-		E1E246BD2FF82FF700E5FD11 /* 03-watchlist-refresh-and-notifications.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "03-watchlist-refresh-and-notifications.md"; sourceTree = "<group>"; };
-		E1E246BE2FF82FF700E5FD11 /* 04-data-and-persistence.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "04-data-and-persistence.md"; sourceTree = "<group>"; };
-		E1E246C02FF82FF700E5FD11 /* 05-search-flow.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "05-search-flow.md"; sourceTree = "<group>"; };
-		E1E246C12FF82FF700E5FD11 /* 06-show-detail-and-tracking.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "06-show-detail-and-tracking.md"; sourceTree = "<group>"; };
-		E1E246C22FF82FF700E5FD11 /* 07-beta-diagnostics-and-testing.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "07-beta-diagnostics-and-testing.md"; sourceTree = "<group>"; };
-		E1E246C32FF82FF700E5FD11 /* 08-background-refresh-scheduling.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "08-background-refresh-scheduling.md"; sourceTree = "<group>"; };
-		E1E246C42FF82FF700E5FD11 /* 09-analytics-and-diagnostics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "09-analytics-and-diagnostics.md"; sourceTree = "<group>"; };
-		E1E24A552FF8393B00E5FD11 /* 7-3-2026 Clean up Scripts.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-3-2026 Clean up Scripts.md"; sourceTree = "<group>"; };
-		E1E24C242FF84A2300E5FD11 /* 7-3-2026 Add to Diagnostics View.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-3-2026 Add to Diagnostics View.md"; sourceTree = "<group>"; };
-		E1E24DF42FF86FEB00E5FD11 /* 7-3-2026 Implement Search Change.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-3-2026 Implement Search Change.md"; sourceTree = "<group>"; };
-		E1E24FD42FFC30DA00E5FD11 /* 7-6-2026 Improve VoiceOver.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "7-6-2026 Improve VoiceOver.md"; sourceTree = "<group>"; };
 		E1F0A0012FE200000076FCDD /* App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "App-Info.plist"; sourceTree = "<group>"; };
-		E1F2592C2FECA491006D0E58 /* 6-24-2026 Implement Visual and UI Polish.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-24-2026 Implement Visual and UI Polish.md"; sourceTree = "<group>"; };
-		E1F25DCF2FEDB3D8006D0E58 /* 6-24-2026 Implement First Run Experience.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-24-2026 Implement First Run Experience.md"; sourceTree = "<group>"; };
-		E1F25DD82FEDC3D6006D0E58 /* 6-25-2026 Implement Analytics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Implement Analytics.md"; sourceTree = "<group>"; };
-		E1F25F392FEDC87B006D0E58 /* 6-25-2026 Fix Search Keyboard Bug.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Fix Search Keyboard Bug.md"; sourceTree = "<group>"; };
-		E1F260B22FEDD75E006D0E58 /* 6-25-2026 Implement Color Theme Switcher.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Implement Color Theme Switcher.md"; sourceTree = "<group>"; };
-		E1F2680C2FEDDC26006D0E58 /* 6-25-2026 Move Target iOS Version to 18.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Move Target iOS Version to 18.md"; sourceTree = "<group>"; };
-		E1F268CD2FEDF477006D0E58 /* 6-25-2026 Improve App Icon.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Improve App Icon.md"; sourceTree = "<group>"; };
-		E1F26A542FEE1B3A006D0E58 /* 6-25-2026 Implement Additional Analytics.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Implement Additional Analytics.md"; sourceTree = "<group>"; };
-		E1F26BE52FEE285B006D0E58 /* 6-25-2026 Discuss Fix for Genre Breaking Before Separator.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "6-25-2026 Discuss Fix for Genre Breaking Before Separator.md"; sourceTree = "<group>"; };
 		E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Complimentary Plus Beta Grant.md"; sourceTree = "<group>"; };
 		E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FreeTierSimulation.md; sourceTree = "<group>"; };
 		E1F5B6D1307C5B3B00B73B0D /* NextSeason-Beta-Regression-Test.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-Beta-Regression-Test.md"; sourceTree = "<group>"; };
 		E1F5B6D2307C5B3B00B73B0D /* NextSeason-StoreKit-Manual-Test-Script.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "NextSeason-StoreKit-Manual-Test-Script.md"; sourceTree = "<group>"; };
 		E1UI00012FE400000076FCDD /* NextSeasonUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = NextSeasonUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		EC4E558F91EC4AFEB7363072 /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CLAUDE.md; sourceTree = "<group>"; };
-		F31B0BA7E120440A8A97C5E6 /* PROJECT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PROJECT.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -335,42 +116,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		E102F0622FE4A8D10076FCDD /* Diagrams */ = {
-			isa = PBXGroup;
-			children = (
-				E1E246BB2FF82FF700E5FD11 /* 01-app-architecture.md */,
-				E1E246BC2FF82FF700E5FD11 /* 02-navigation-and-screens.md */,
-				E1E246BD2FF82FF700E5FD11 /* 03-watchlist-refresh-and-notifications.md */,
-				E1E246BE2FF82FF700E5FD11 /* 04-data-and-persistence.md */,
-				E1E246C02FF82FF700E5FD11 /* 05-search-flow.md */,
-				E1E246C12FF82FF700E5FD11 /* 06-show-detail-and-tracking.md */,
-				E1E246C22FF82FF700E5FD11 /* 07-beta-diagnostics-and-testing.md */,
-				E1E246C32FF82FF700E5FD11 /* 08-background-refresh-scheduling.md */,
-				E1E246C42FF82FF700E5FD11 /* 09-analytics-and-diagnostics.md */,
-				E197F42E2FF46A7800D34A28 /* README.md */,
-			);
-			path = Diagrams;
-			sourceTree = "<group>";
-		};
-		E102F0FA2FE5F18F0076FCDD /* MVP */ = {
-			isa = PBXGroup;
-			children = (
-				E1BCD135304A73520049DE1D /* Screenshots */,
-				E102F0622FE4A8D10076FCDD /* Diagrams */,
-				E1DAC54B2FDE2E1F00BD81E5 /* AI Transcripts */,
-				E17E04952FDE291A00708D7A /* ProblemStatement.md */,
-				E1DA26C02FDDDE7400C37DAC /* ProjectKickoff.md */,
-				E17E04942FDE291A00708D7A /* MVPDefinition.md */,
-				E1DAC54F2FDF358800BD81E5 /* InitialArchitecture.md */,
-				E167F0EA301AB58A007F7098 /* MVPArchitecture.md */,
-				E1DAC5502FDF358800BD81E5 /* Implementation Plan.md */,
-				E1DAC5512FDF358800BD81E5 /* TVMazeResearch.md */,
-				E1DAC54D2FDE2E1F00BD81E5 /* UserStories.md */,
-				E167F0EB301AC74B007F7098 /* MVPAnalytics.md */,
-			);
-			path = MVP;
-			sourceTree = "<group>";
-		};
 		E102F0FC2FE5F1F40076FCDD /* Post-MVP */ = {
 			isa = PBXGroup;
 			children = (
@@ -379,83 +124,8 @@
 				E1F5AA07307AD30F00B73B0D /* Complimentary Plus Beta Grant.md */,
 				E1F5AA08307AD37300B73B0D /* FreeTierSimulation.md */,
 				E19A58B23047A29B00CC7190 /* Screenshots */,
-				E167D080301040BB007F7098 /* NextSeason - App Store Readiness Roadmap.md */,
-				E1AB8C4C3037BB410045498C /* NextSeason - Monetization Strategy Roadmap.md */,
-				E167D081301040BB007F7098 /* NextSeason - Product Evolution Roadmap.md */,
-				E1C40B093063882B0006BBCD /* NextSeason TV - Trademark Research - 2026-09-22.md */,
-				E102F0FD2FE5F2100076FCDD /* AI Transcripts */,
 			);
 			path = "Post-MVP";
-			sourceTree = "<group>";
-		};
-		E102F0FD2FE5F2100076FCDD /* AI Transcripts */ = {
-			isa = PBXGroup;
-			children = (
-				E167A813300818BE007F7098 /* 6-19-2026 Building Post-MVP Planning Documents.md */,
-				E167A5F430058C25007F7098 /* 7-13-2026 Post-MVP-Roadmap-Discussion.md */,
-				E167A7FD30070C2E007F7098 /* 7-14-2026 Post-MVP Roadmap Discussion.md */,
-				E167D0823010418F007F7098 /* 7-21-2026 Post-MVP Roadmap Split 1.md */,
-				E167D0833010419B007F7098 /* 7-21-2026 Post-MVP Roadmap Split 2.md */,
-				E167D084301041A4007F7098 /* 7-21-2026 Add AI Feature to Post-App Store Roadmap.md */,
-				E1672FC7302BEB62007F7098 /* 8-11-2026 Discuss and Review Search Improvements.md */,
-				E1672FCA302BEC7A007F7098 /* 8-11-2026 Implement Search Improvements 1.md */,
-				E1672FC9302BEC38007F7098 /* 8-11-2026 Implement Search Improvements 2.md */,
-				E1672FC8302BEBDA007F7098 /* 8-11-2026 Implement Search Improvements 3.md */,
-				E1672FDF302FA34D007F7098 /* 8-13-2026 Review and Discuss Search Improvements .md */,
-				E1672FE0302FA60B007F7098 /* 8-13-2026 Implement Review Items.md */,
-				E16732A7302FD9CD007F7098 /* 8-14-2026 Implement Search Improvements.md */,
-				E16732A8302FDAEC007F7098 /* 8-14-2026 Review Search Improvements.md */,
-				E1673693302FF5F2007F7098 /* 8-14-2026 Discuss and Review Aptabase Integration.md */,
-				E1673694302FF63F007F7098 /* 8-14-2026 Implement Aptabase Integration.md */,
-				E1AB8180303628370045498C /* 8-14-2026 Improving App Icon 1.md */,
-				E1AB8181303628420045498C /* 8-16-2026 Improving App Icon 2.md */,
-				E1AB81823036284D0045498C /* 8-16-2026 Improving App Icon 3.md */,
-				E1AB79793033D2680045498C /* 8-17-2026 Discuss and Review SwiftData Migration Plan.md */,
-				E1AB797A3033D2C30045498C /* 8-17-2026 Implement SwiftData Migration Plan.md */,
-				E1AB8183303628590045498C /* 8-18-2026 Improving App Icon 4.md */,
-				E1AB86D530362CAE0045498C /* 8-18-2026 Implement Persistence Recovery Improvements.md */,
-				E1AB86D630362CD10045498C /* 8-18-2026 Review Persistence Recovery Improvements.md */,
-				E1AB899030363B590045498C /* 8-19-2026 Implement Crash Prevention Improvements.md */,
-				E1AB898D30363B1D0045498C /* 8-19-2026 Review Crash Prevention Improvements.md */,
-				E1AB8C4B30379D070045498C /* 8-20-2026 Discuss App Pricing And More.md */,
-				E1AB9736303CF9DA0045498C /* 8-24-2026 Fix Git Snafu.md */,
-				E1AB9A18303D09AE0045498C /* 8-24-2026 Discuss Watchlist Import and Export.md */,
-				E1AB9CFA303E38810045498C /* 8-25-2026 Discuss Small UI Improvements.md */,
-				E1AB9CFB303E38A30045498C /* 8-25-2026 Implement Small UI Improvements.md */,
-				E1AB9FC8303E3DA90045498C /* 8-25-2026 Discuss Watchlist Improvements.md */,
-				E1AB9FC9303E3DC70045498C /* 8-25-2026 Implement Watchlist Improvements.md */,
-				E19A222F303E9C0A00CC7190 /* 8-25-2026 Discuss StoreKit Implementation.md */,
-				E19A2230303E9C5100CC7190 /* 8-25-2026 Discuss and Implement StoreKit.md */,
-				E19A223230424F7500CC7190 /* 8-25-2025 Review Subscription Page Design.md */,
-				E19A223330424FCB00CC7190 /* 8-25-2026 Review StoreKit Implementation.md */,
-				E19A22343042503000CC7190 /* 8-25-2026 Implement StoreKit Review Items 1.md */,
-				E19A22353042521700CC7190 /* 8-28-2026 Re-Review StoreKit Implementation.md */,
-				E19A2237304255F500CC7190 /* 8-28-2026 Implement StoreKit Review Items 2.md */,
-				E19A25643044D17E00CC7190 /* 8-30-2026 Implement App Review Request.md */,
-				E19A25653044D1DD00CC7190 /* 8-30-2026 Review App Review Request.md */,
-				E19A288E3044D27D00CC7190 /* 8-30-2026 Discuss and Document Additional Notification Features.md */,
-				E19A2D4B3044D80A00CC7190 /* 8-30-2026 Review and Update Background Colors.md */,
-				E19A30743044E01300CC7190 /* 8-30-2026 Discuss and Review Fixing Crash-Loop Detection in Xcode.md */,
-				E19A30753044E04600CC7190 /* 8-30-2026 Implement Fixing Crash-Loop Detection in Xcode.md */,
-				E19A33A33044F66B00CC7190 /* 8-30-2026 Implement Accessibility Audit Suite.md */,
-				E19A33A43044F6D700CC7190 /* 8-30-2026 Review Accessibility Audit Suite.md */,
-				E19A37033045063D00CC7190 /* 8-30-2026 Implement Watchlist Export.md */,
-				E19A37043045068800CC7190 /* 8-30-2026 Review Watchlist Export.md */,
-				E19A42AC304604B900CC7190 /* 8-31-2026 Review Comments.md */,
-				E19A3DA7304601F800CC7190 /* 8-31-2026 Review Roadmap Updates.md */,
-				E19A49653046508E00CC7190 /* 8-31-2026 Implement Fix to Recovery Process.md */,
-				E19A49663046514900CC7190 /* 8-31-2026 Review Fix to Recovery Process.md */,
-				E19A5A673047A99C00CC7190 /* 9-1-2026 Documentation Review and Update.md */,
-				E1BCCDC5304A65970049DE1D /* 9-3-2026 Final Full Review.md */,
-				E1BCD136304A765D0049DE1D /* 9-3-2026 Review Beta Feedback Fixes.md */,
-				E1BCD4A3304A85D20049DE1D /* 9-3-2026 Clean Up List Spacing.md */,
-				E1BCD4A8304C7FF10049DE1D /* 9-5-2026 Identify Conditionals in Views and Review Changes.md */,
-				E1BCD4A9304C80470049DE1D /* 9-5-2026 Implement Fixes for Conditionals.md */,
-				E1BA91943052739F00C1572B /* 9-9-2026 Discuss Beta Crash Report.md */,
-				E1BA9195305273F900C1572B /* 9-9-2026 Fix Crash.md */,
-				E1C40B0A306391F20006BBCD /* 9-22-2026 Discussion of Updating App Store Readiness Roadmap.md */,
-			);
-			path = "AI Transcripts";
 			sourceTree = "<group>";
 		};
 		E13811C42FDB795C009C141B = {
@@ -468,12 +138,7 @@
 				E1DA26BE2FDDD9A800C37DAC /* Cursor Rules */,
 				E13811E42FDCAFE0009C141B /* AGENTS.md */,
 				EC4E558F91EC4AFEB7363072 /* CLAUDE.md */,
-				C34096CBBCD74A298971F04A /* COLLABORATION.md */,
-				E1B6B58E78BE4AB0A8F11162 /* LEARNING.md */,
-				D67093EB364E4F8CB5A54C91 /* SWIFT_SWIFTUI.md */,
-				F31B0BA7E120440A8A97C5E6 /* PROJECT.md */,
 				653746CCA38B4CEBAE028220 /* FEATURE_DEVELOPMENT.md */,
-				D8C588A84910441B99E38042 /* FEATURE_DEVELOPMENT_NEXTSEASON_CALIBRATION.md */,
 				E1F0A0012FE200000076FCDD /* App-Info.plist */,
 				E13811CF2FDB795C009C141B /* NextSeason */,
 				E1SHARED012FE400000076FCDD /* NextSeasonShared */,
@@ -500,24 +165,13 @@
 				E19A58B03047A29B00CC7190 /* Show-Detail.png */,
 				E19A58B13047A29B00CC7190 /* Watchlist.png */,
 			);
-			path = Screenshots;
-			sourceTree = "<group>";
-		};
-		E1BCD135304A73520049DE1D /* Screenshots */ = {
-			isa = PBXGroup;
-			children = (
-				E1BCD132304A73520049DE1D /* Search-Results.jpeg */,
-				E1BCD133304A73520049DE1D /* Show-Detail.jpeg */,
-				E1BCD134304A73520049DE1D /* Watchlist.jpeg */,
-			);
-			path = Screenshots;
+			path = "Readme Screenshots";
 			sourceTree = "<group>";
 		};
 		E1DA26BE2FDDD9A800C37DAC /* Cursor Rules */ = {
 			isa = PBXGroup;
 			children = (
 				E1DA26BC2FDDD99700C37DAC /* safety.mdc */,
-				E1DA26BD2FDDD99700C37DAC /* swiftui-project-style.mdc */,
 			);
 			name = "Cursor Rules";
 			sourceTree = "<group>";
@@ -525,141 +179,9 @@
 		E1DA26BF2FDDDE6000C37DAC /* Documentation */ = {
 			isa = PBXGroup;
 			children = (
-				E102F0FA2FE5F18F0076FCDD /* MVP */,
 				E102F0FC2FE5F1F40076FCDD /* Post-MVP */,
 			);
 			path = Documentation;
-			sourceTree = "<group>";
-		};
-		E1DAC54B2FDE2E1F00BD81E5 /* AI Transcripts */ = {
-			isa = PBXGroup;
-			children = (
-				E16792EC2FFC77BB007F7098 /* README.md */,
-				E167A7FE30070D23007F7098 /* 6-13-2026 Phase 1 and 2.md */,
-				E102EAA32FE356E70076FCDD /* 6-14-2026 Phase3.md */,
-				E102EAA42FE356E70076FCDD /* 6-14-2026 Post Review Updates.md */,
-				E167A80030070E36007F7098 /* 6-14-2026 Review of Phases 1-3.md */,
-				E167A80230070E95007F7098 /* 6-15-2026 Review of Phase 4 Slice 1.md */,
-				E102EAA72FE356E70076FCDD /* 6-15-2026 Phase 4 Slice 1 Implement Review Items.md */,
-				E102EAA82FE356E70076FCDD /* 6-15-2026 Phase 4 Slice 1.md */,
-				E167A80330070EEE007F7098 /* 6-16-2026 Review of Phase 4 Slice 2.md */,
-				E102EAAB2FE356E70076FCDD /* 6-16-2026 Implement Remaining MVP Items.md */,
-				E102EAAC2FE356E70076FCDD /* 6-16-2026 Phase 4 Slice 1 Wrap Up.md */,
-				E102EAAD2FE356E70076FCDD /* 6-16-2026 Phase 4 Slice 2.md */,
-				E102EAAE2FE356E70076FCDD /* 6-16-2026 Phase 4 Slice 2 Implement Review Items.md */,
-				E167A80430070F31007F7098 /* 6-17-2026 MVP Review.md */,
-				E102EAB12FE356E70076FCDD /* 6-17-2026 MVP Implement Review Items.md */,
-				E102EAB32FE3572D0076FCDD /* 6-17-2026 Improve Transcript File Organization.md */,
-				E102EFC62FE36AE50076FCDD /* 6-17-2026 Add UI Tests.md */,
-				E102F0F82FE5E84C0076FCDD /* 6-18-2026 Implement Review Items for Notifications.md */,
-				E117D3C62FEB2C2900C02ADC /* 6-23-2026 Search Discussion.md */,
-				E167A80530070FAF007F7098 /* 6-23-2026 Plan Search Improvements.md */,
-				E117D4592FEB342D00C02ADC /* 6-23-2026 Implement Search Improvements.md */,
-				E117D57E2FEB389E00C02ADC /* 6-23-2026 Add Additional UI Tests.md */,
-				E117D5802FEC40CD00C02ADC /* 6-23-2026 Implement Watchlist Discovery.md */,
-				E167A80630071025007F7098 /* 6-23-2026 Review and Watchlist Planning.md */,
-				E167A8073007105D007F7098 /* 6-24-2026 Add Accessibility Details.md */,
-				E117D58D2FEC85ED00C02ADC /* 6-24-2026 Implement Watchlist Redesign.md */,
-				E1F2592C2FECA491006D0E58 /* 6-24-2026 Implement Visual and UI Polish.md */,
-				E1F25DCF2FEDB3D8006D0E58 /* 6-24-2026 Implement First Run Experience.md */,
-				E167A808300710A5007F7098 /* 6-25-2026 Update Release Readiness for Feedback and Analytics.md */,
-				E1F25DD82FEDC3D6006D0E58 /* 6-25-2026 Implement Analytics.md */,
-				E1F25F392FEDC87B006D0E58 /* 6-25-2026 Fix Search Keyboard Bug.md */,
-				E1F260B22FEDD75E006D0E58 /* 6-25-2026 Implement Color Theme Switcher.md */,
-				E1F2680C2FEDDC26006D0E58 /* 6-25-2026 Move Target iOS Version to 18.md */,
-				E1F268CD2FEDF477006D0E58 /* 6-25-2026 Improve App Icon.md */,
-				E167A809300710E8007F7098 /* 6-25-2026 Code Review and Analytics Discussion.md */,
-				E1F26A542FEE1B3A006D0E58 /* 6-25-2026 Implement Additional Analytics.md */,
-				E1F26BE52FEE285B006D0E58 /* 6-25-2026 Discuss Fix for Genre Breaking Before Separator.md */,
-				E197EC972FF06ED800D34A28 /* 6-27-2026 Fix UI Test Failure.md */,
-				E197EF202FF31C0B00D34A28 /* 6-28-2026 Instruments Report Stage 1.md */,
-				E167A80A3008155B007F7098 /* 6-28-2026 Instruments Discussion.md */,
-				E167A80B300815C4007F7098 /* 6-29-2026 Instruments Post-Report Discussion.md */,
-				E197EF212FF31C3B00D34A28 /* 6-29-2026 Instruments Report Stage 2.md */,
-				E197F2762FF39B3B00D34A28 /* 6-29-2026 Plan for Fixing Watchlist Refresh Crash.md */,
-				E197F2752FF39AF100D34A28 /* 6-29-2026 Fix Watchlist Refresh Crash.md */,
-				E197F4242FF43B5000D34A28 /* 6-30-2026 Discuss Potential ModelContainer Init Failures.md */,
-				E197F4302FF48AA200D34A28 /* 6-30-2026 Improve Theme Switcher.md */,
-				E197F5E72FF48E4100D34A28 /* 6-30-2026 Add Notification Options to Diagnostics Menu.md */,
-				E167A80C30081624007F7098 /* 7-2-2026 Diagnostics Work with ChatGPT.md */,
-				E167A80D300816BF007F7098 /* 7-2-2026 Discussion of Upcoming Tasks.md */,
-				E197008E2FF72BFF00D34A28 /* 7-2-2026 Diagnostics Work with Cursor.md */,
-				E167A80E30081700007F7098 /* 7-3-2026 Update Diagrams.md */,
-				E1E24A552FF8393B00E5FD11 /* 7-3-2026 Clean up Scripts.md */,
-				E1E24C242FF84A2300E5FD11 /* 7-3-2026 Add to Diagnostics View.md */,
-				E167A80F3008176C007F7098 /* 7-3-2026 Discuss Search Change.md */,
-				E1E24DF42FF86FEB00E5FD11 /* 7-3-2026 Implement Search Change.md */,
-				E1E24FD42FFC30DA00E5FD11 /* 7-6-2026 Improve VoiceOver.md */,
-				E167A810300817AA007F7098 /* 7-6-2026 Accessibility and Notification Discussion.md */,
-				E1678D3C2FFC5604007F7098 /* 7-6-2026 Add Notification Settings to About.md */,
-				E1678D412FFC650E007F7098 /* 7-6-2026 Refresh Time and Notification Improvements.md */,
-				E167A811300817EE007F7098 /* 7-7-2026 Final Review.md */,
-				E167A8123008181C007F7098 /* 7-8-2026 Indepth Code Review.md */,
-				E16797C12FFEE58C007F7098 /* 7-8-2026 Implement Items from Indepth Code Review.md */,
-				E16799C930004ACC007F7098 /* 7-9-2026 Bug fixes.md */,
-				E1679BD1300549E5007F7098 /* 7-13-2026 Fix Dark Mode bugs.md */,
-				E1679DD9300551EC007F7098 /* 7-13-2026 Launch on non-empty Watchlist.md */,
-				E1679DDA300561BD007F7098 /* 7-13-2026 Improve Notifications.md */,
-				E167A3ED30058305007F7098 /* 7-13-2026 Remove Example Button.md */,
-				E167D73A301170C6007F7098 /* 7-13-2026 Watchlist vs Search Design.md */,
-				E167AA1C30093F55007F7098 /* 7-16-2026 Fix Notification Bug.md */,
-				E167AC23300941D9007F7098 /* 7-16-2026 Feature Removal Discussion.md */,
-				E167AC2430094782007F7098 /* 7-16-2026 Implement Removal of Tappable Actor Names.md */,
-				E167AE2F30099758007F7098 /* 7-16-2026 Product MVP Discussion.md */,
-				E167AE3130099B9C007F7098 /* 7-16-2026 Implement Watchlist Search.md */,
-				E167B03B3009D883007F7098 /* 7-16-2026 Add Note about Notification Reliability.md */,
-				E167BDBF300ADE10007F7098 /* 7-16-2026 Clean up duplicated code paths.md */,
-				E167BFD8300D5DE7007F7098 /* 7-19-2026 Remove Code Duplication Part 1.md */,
-				E167BFDD300D61D5007F7098 /* 7-19-2026 Remove Code Duplication Part 2.md */,
-				E167BFE2300D67DF007F7098 /* 7-19-2026 Remove Code Duplication Part 3.md */,
-				E167CAF1300ED865007F7098 /* 7-20-2026 Implement Code Review Findings.md */,
-				E167CC0E300EDAEA007F7098 /* 7-20-2026 Set Theme to Teal and Hide Switcher.md */,
-				E167CE47300EE881007F7098 /* 7-20-2026 Project Code and Documentation Review.md */,
-				E167D73B30117162007F7098 /* 7-20-2026 MVP vs App Store Roadmap.md */,
-				E167D73F3011732D007F7098 /* 7-21-2026 MVP Completion Checklist.md */,
-				E167D2C13011533D007F7098 /* 7-22-2026 Watchlist Improvement Discussion.md */,
-				E167D2C330115406007F7098 /* 7-22-2026 Watchlist Improvement Implementation.md */,
-				E167D2C230115379007F7098 /* 7-22-2026 Watchlist Bug Fixes.md */,
-				E167DDF53012B34E007F7098 /* 7-23-2026 Transcript Comparison and Edits.md */,
-				E167E0323017F0C9007F7098 /* 7-27-2026 HIG and Liquid Glass Audit.md */,
-				E167E0333017F0D7007F7098 /* 7-27-2026 UI Audit Implementation.md */,
-				E167E27030180120007F7098 /* 7-27-2026 Fix Watchlist Reload Bug.md */,
-				E167ED91301A8BB1007F7098 /* 7-29-2026 App Icon Discussion.md */,
-				E167ED92301A8BDC007F7098 /* 7-29-2026 Refactor theming and colors.md */,
-				E167F330301D2F41007F7098 /* 7-29-2026 Documentation Review and Cleanup.md */,
-				E167FE83301D42A3007F7098 /* 7-31-2026 Remove soak test code.md */,
-				E16713F6302512D0007F7098 /* 7-31-2026 Post-MVP Documentation Review and Cleanup.md */,
-				E167043A30230010007F7098 /* 8-4-2026 Human Code Review - Questions and Cleanup.md */,
-				E167068F3023BA77007F7098 /* 8-4-2026 Discuss Analytics Counters.md */,
-				E16706903023BA77007F7098 /* 8-4-2026 Remove unused files.md */,
-				E167187630253A2C007F7098 /* 8-4-2026 Discuss ProfileFlow Implementation.md */,
-				E167068D3023BA77007F7098 /* 8-4-2026 Add diagnostics cleanup to pre-App Store Roadmap.md */,
-				E167068E3023BA77007F7098 /* 8-4-2026 Add fatalError to pre-App Store Roadmap.md */,
-				E16708CD3023CB86007F7098 /* 8-5-2026 Set up swift-format.md */,
-				E1670B083023D507007F7098 /* 8-5-2026 Fix Empty Watchlist Alignment.md */,
-				E1670D433023D83E007F7098 /* 8-5-2026 Fix Text Color on Empty Result Views.md */,
-				E1670F7E30240FE5007F7098 /* 8-5-2026 Discuss Adding Swipe-to-Delete to Watchlist.md */,
-				E1670F7F30241008007F7098 /* 8-5-2026 Implement Swipe-to-Delete.md */,
-				E16711BA302415B5007F7098 /* 8-5-2026 Discussion of Platform Support.md */,
-				E16713F730251340007F7098 /* 8-6-2026 Discuss Floating Section Header Fix.md */,
-				E16713F930251376007F7098 /* 8-6-2026 Implement Floating Section Header Fix.md */,
-				E167187730253A58007F7098 /* 8-6-2026 Improve ProfileFlow Implementation.md */,
-				E167187830255850007F7098 /* 8-6-2026 Review Changes to ProfileFlow Implementation.md */,
-				E1671AB930255D9C007F7098 /* 8-6-2026 Discuss Making Undo Toast More Visible.md */,
-				E1671ABA30256106007F7098 /* 8-6-2026 Implement Visibility Improvements to Undo Toast.md */,
-				E1671CF93025678A007F7098 /* 8-6-2026 Decision to Not Consolidate Duplicated Code For Tracking Button.md */,
-				E1671F3B302595B1007F7098 /* 8-6-2026 Discuss String Extraction.md */,
-				E1671F3C3025960B007F7098 /* 8-6-2026 Implement String Extraction (by Cursor).md */,
-				E1671F3A30259521007F7098 /* 8-6-2026 Review String Extraction.md */,
-				E16722A6302693BA007F7098 /* 8-7-2026 Discuss Overly Complex Undo Toast.md */,
-				E16722A7302693F7007F7098 /* 8-7-2026 Implement Simplifying Undo Toast.md */,
-				E16724EE30269D54007F7098 /* 8-7-2026 Discuss Watchlist Search Bar.md */,
-				E16724EF30269D7B007F7098 /* 8-7-2026 Implement Watchlist Search Changes.md */,
-				E167285930291CC5007F7098 /* 8-9-2026 Discuss Placement of Info Button.md */,
-				E167285A30291D09007F7098 /* 8-9-2026 DIscuss and Implement About Footer.md */,
-				E1672AA23029988F007F7098 /* 8-9-2026 Fix Undo Toast Bug.md */,
-			);
-			path = "AI Transcripts";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */

@@ -12,15 +12,15 @@ NextSeason is developed by [Trial by Fyre, LLC](https://trialbyfyre.com).
 <tr>
 <td align="center">
 <strong>Search</strong><br><br>
-<img src="Documentation/Post-MVP/Screenshots/Search-Results.png" width="220">
+<img src="Documentation/Post-MVP/Readme%20Screenshots/Search-Results.png" width="220">
 </td>
 <td align="center">
 <strong>Show Details</strong><br><br>
-<img src="Documentation/Post-MVP/Screenshots/Show-Detail.png" width="220">
+<img src="Documentation/Post-MVP/Readme%20Screenshots/Show-Detail.png" width="220">
 </td>
 <td align="center">
 <strong>Watchlist</strong><br><br>
-<img src="Documentation/Post-MVP/Screenshots/Watchlist.png" width="220">
+<img src="Documentation/Post-MVP/Readme%20Screenshots/Watchlist.png" width="220">
 </td>
 </tr>
 </table>

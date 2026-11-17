@@ -268,10 +268,10 @@ A full run is estimated at 25–40 minutes (about 8 minutes per iOS version on i
 
 **Reading the summary:** the first line answers whether the run passed. It also gives the revision (full commit hash, branch, and subject), the Xcode and macOS versions, and each iOS version's runtime build, elapsed time, pass/fail/skip counts, and whether the screen was locked when that version's tests started. Each failing test is marked one of two ways:
 
-- *Listed known failure*: its test identifier, iOS version, and device match a line in `Scripts/nightly-known-failures.txt`. The match is by name and environment only, so confirm the message matches the symptom recorded in `Documentation/Reviews/Known-Test-Failures.md`.
+- *Listed known failure*: its test identifier, iOS version, and device match a line in `Scripts/nightly-known-failures.txt`. The match is by name and environment only, so confirm the message matches the symptom recorded in the linked GitHub Issue.
 - *Possibly new*: everything else. Each failure also says whether it failed in the previous run. That is context, not proof it is known.
 
-Add a line to `nightly-known-failures.txt` only for a failure confirmed and recorded in `Known-Test-Failures.md`, and remove it when the issue is fixed. The runner reads the file from the main working copy, so the current list applies whichever revision is tested. The summary also notes a listed failure that did not fail.
+Add a line to `nightly-known-failures.txt` only for a failure confirmed and recorded in a GitHub Issue, and remove it when the issue is fixed. The runner reads the file from the main working copy, so the current list applies whichever revision is tested. The summary also notes a listed failure that did not fail.
 
 **Exit status:** 0 passed (or a run skipped for a late start or detached HEAD), 1 test or build failure, 2 setup error, 75 another run still holding the lock, 130/143 interrupted.
 

@@ -100,6 +100,8 @@ More information is available in the [NextSeason Privacy Policy](https://getnext
 
 I built NextSeason with AI assistance for research, implementation, debugging, and review. I defined the product behavior, evaluated designs and code, tested the app, and made release decisions.
 
+Read [Building NextSeason TV with AI](Documentation/AI-Assisted%20Development%20Retrospective.md) for the development approach, lessons learned, and changes planned for V2.
+
 ## Testing
 
 NextSeason includes unit and UI tests covering areas such as:

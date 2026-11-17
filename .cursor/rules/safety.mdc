@@ -1,8 +1,6 @@
 ---
-description: Repository instructions and safe editing rules
+description: NextSeason repository instructions
 alwaysApply: true
 ---
 
-Read and follow the root [AGENTS.md](../../AGENTS.md) before working in this
-repository. It is the authoritative source for collaboration, scope, editing,
-learning, and engineering rules.
+Read and follow the root [AGENTS.md](../../AGENTS.md).

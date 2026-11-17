@@ -1,8 +1,0 @@
----
-description: Swift and SwiftUI conventions
-globs: ["**/*.swift"]
----
-
-Before writing Swift, read and follow the Swift and iOS guidance, coding style,
-and NextSeason requirements in the root [AGENTS.md](../../AGENTS.md), including
-its requirement to read the relevant Swift skills.

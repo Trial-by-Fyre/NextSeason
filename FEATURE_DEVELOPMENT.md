@@ -114,7 +114,7 @@ Maintain acceptance evidence in working notes or an appropriate review artifact 
 - Remaining assumptions, limitations, and risks
 - Any product decisions still needed and review exceptions explicitly agreed by the product owner
 
-Give the product owner a concise outcome summary following COLLABORATION.md (default
+Give the product owner a concise outcome summary following AGENTS.md (default
 50–150 words). Summarize behavior, actual verification and independent review status;
 surface material gaps, risks, decisions, and agreed review exceptions. Link supporting
 evidence when useful rather than repeating the full acceptance record in chat. The

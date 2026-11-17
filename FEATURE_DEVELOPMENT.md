@@ -10,24 +10,23 @@ context: the implementer must not be the sole acceptance reviewer, and the autho
 the proposed specification must not be its sole design reviewer. A different model
 can provide an additional perspective but is not required.
 
-Follow the repository's included collaboration and learning instructions for scope,
-explanations, durable decision notes, and reporting. This process supplements those
-instructions rather than duplicating them. If no such instructions exist, explain
-significant choices and retain meaningful decisions proportionally to the task.
-
+Follow [AGENTS.md](AGENTS.md) for collaboration, learning, documentation, and reporting.
+Keep scenarios, behavior matrices, investigation findings, and acceptance evidence in
+GitHub Issues or temporary uncommitted notes; avoid permanent Markdown files for routine work.
 
 ## 1. Classify the change
 
-Before coding, assess the risk level and record a brief rationale in working notes or
-the task checklist. Surface it to the product owner when it affects a decision,
+Before coding, assess the risk level and record a brief rationale in the Issue or
+temporary uncommitted notes. Surface it to the product owner when it affects a decision,
 required review, or process exception:
 
 - **Low:** Copy, styling, or isolated adjustments with well-understood behavior and
   little consequence if incorrect. Implement and verify appropriately.
 - **Medium:** New or changed behavior using familiar APIs and existing architecture,
   with bounded consequences. Write a short scenario checklist with expected results
-  and verification plans; implement and review behavior afterward. Self-review is
-  sufficient unless the change's risks call for independent review.
+  and verification plans; implement and review behavior afterward. Consider independent
+  review based on integration complexity, uncertainty,
+  and potential consequences; use self-review when that assessment supports it.
 - **High:** Changes with material risk of data loss, incorrect access or payments,
   privacy/security failures, or significant lifecycle and recovery omissions; also
   unfamiliar platform behavior with consequential effects. Follow all stages below.
@@ -64,7 +63,7 @@ For **high-risk** features:
 5. Separate **platform rules**, **product decisions**, and **unverified assumptions**. Ask the product owner to resolve product decisions; research platform rules instead of guessing.
 6. Define what is explicitly **out of scope**.
 
-Create a concise **behavior matrix** in working notes or an appropriate review artifact with: scenario/trigger, expected result, source or decision owner, and planned verification. Include both normal paths and important edge cases.
+Create a concise **behavior matrix** in the Issue or temporary uncommitted notes with: scenario/trigger, expected result, source or decision owner, and planned verification. Include both normal paths and important edge cases.
 
 **Stop gate:** Do not implement high-risk behavior until material unresolved product decisions are answered. If the user explicitly wants a prototype, label assumptions and limitations.
 
@@ -91,7 +90,7 @@ and keep full process completion pending.
 - Associate each matrix row with an automated test, manual/sandbox test, or an explicit reason it cannot reasonably be tested.
 - Cover state transitions and interactions, not only individual API methods.
 - Use test doubles for deterministic failure and timing scenarios, and real platform/sandbox testing where mocks cannot validate integration.
-- Apply the included collaboration and learning instructions when explaining choices and recording non-obvious architectural decisions.
+- Follow AGENTS.md when explaining choices and recording non-obvious architectural decisions.
 
 ## 5. Verify and challenge again
 
@@ -104,7 +103,7 @@ and keep full process completion pending.
 ## 6. Definition of done
 
 Do not declare a high-risk feature complete solely because code builds or tests pass.
-Maintain acceptance evidence in working notes or an appropriate review artifact covering:
+Maintain acceptance evidence in the Issue or temporary uncommitted notes covering:
 
 - Intended behavior and key invariants
 - Platform documentation reviewed (or gaps)
@@ -114,8 +113,8 @@ Maintain acceptance evidence in working notes or an appropriate review artifact 
 - Remaining assumptions, limitations, and risks
 - Any product decisions still needed and review exceptions explicitly agreed by the product owner
 
-Give the product owner a concise outcome summary following AGENTS.md (default
-50–150 words). Summarize behavior, actual verification and independent review status;
+Give the product owner a concise outcome summary following AGENTS.md. Summarize
+behavior, actual verification and independent review status;
 surface material gaps, risks, decisions, and agreed review exceptions. Link supporting
 evidence when useful rather than repeating the full acceptance record in chat. The
 shorter report does not reduce any required research, matrix checks, tests, or review.
@@ -139,6 +138,13 @@ Use **“implemented, pending verification”** or **“implemented with known l
 >
 > **Acceptance:** Obtain independent behavioral review for high-risk work; report actual test results, gaps, and limitations. Do not call the feature complete just because tests pass.
 
-## 8. Keep it lightweight
+## 8. Milestone integration review
 
-The behavior matrix can live in the task description or a short Markdown file; it need not become permanent documentation for every feature. Retain only meaningful decisions and constraints in the repository. Prefer a few high-value scenarios and explicit unknowns over a huge generic checklist. Revisit the process after a few features and remove steps that do not catch real problems.
+After a meaningful group of related changes or at development milestones, review
+the application as a whole. Examine recently changed features together, including
+user workflows, accessibility, state transitions, and regression risks. Scale depth
+to the changes and their risks; a comprehensive audit is not required for every feature.
+
+## 9. Keep it lightweight
+
+Prefer a few high-value scenarios and explicit unknowns over a huge generic checklist. Revisit the process after a few features and remove steps that do not catch real problems.

@@ -98,17 +98,7 @@ More information is available in the [NextSeason Privacy Policy](https://getnext
 
 ## AI-Assisted Development
 
-NextSeason was developed using an AI-assisted engineering workflow.
-
-AI has been used throughout development for implementation, code review, research, debugging, testing, architectural discussion, and documentation. ChatGPT and coding agents have served as engineering collaborators rather than autonomous owners of the project.
-
-I remain responsible for the product and engineering decisions: defining behavior, choosing architecture, evaluating proposed solutions, reviewing generated code, testing the application, and deciding what ultimately ships.
-
-One reason this repository is public is to make that process visible rather than presenting AI-assisted software development as a black box.
-
-The repository therefore includes design documents, decision history, planning material, and AI development transcripts in addition to the application source.
-
-For more detail, see [AI-Assisted Development Workflow](Documentation/AI-Assisted%20Development%20Workflow.md).
+I built NextSeason with AI assistance for research, implementation, debugging, and review. I defined the product behavior, evaluated designs and code, tested the app, and made release decisions.
 
 ## Testing
 
@@ -131,29 +121,14 @@ NextSeason includes unit and UI tests covering areas such as:
 
 The repository also contains scripts used for profiling, diagnostics, release checks, and build safeguards.
 
-## Repository Documentation
+## Developer Documentation
 
-The repository intentionally preserves more of the development process than a typical application repository.
-
-Useful starting points include:
-
-- [MVP Documentation](Documentation/MVP)
-- [Post-MVP Documentation](Documentation/Post-MVP)
-- [Diagrams](Documentation/MVP/Diagrams)
-- [AI Transcripts](Documentation/MVP/AI%20Transcripts)
-- [AI-Assisted Development Workflow](Documentation/AI-Assisted%20Development%20Workflow.md)
-- [App Store Readiness Roadmap](Documentation/Post-MVP/NextSeason%20-%20App%20Store%20Readiness%20Roadmap.md)
-- [Product Evolution Roadmap](Documentation/Post-MVP/NextSeason%20-%20Product%20Evolution%20Roadmap.md)
-
-The historical material is intentionally retained. It shows not only what decisions were made, but how requirements, architecture, and implementation evolved over the course of development. Historical documents and transcripts may therefore describe features or implementation details that are no longer part of the current app.
-
-## Status
-
-NextSeason is currently being prepared for its initial App Store release.
-
-The first release is deliberately focused: it aims to do one thing well — remember the shows a user cares about and quietly let them know when something worth knowing changes.
-
-Future work is documented in the [Product Evolution Roadmap](Documentation/Post-MVP/NextSeason%20-%20Product%20Evolution%20Roadmap.md).
+- [App architecture and component map](NextSeason/Documentation.docc/Documentation.md)
+- [Build, diagnostics, and test scripts](Scripts/README.md)
+- [Beta regression coverage](Documentation/Post-MVP/NextSeason-Beta-Regression-Test.md)
+- [StoreKit manual verification](Documentation/Post-MVP/NextSeason-StoreKit-Manual-Test-Script.md)
+- [Repository instructions](AGENTS.md)
+- [Issues and ongoing work](https://github.com/Trial-by-Fyre/NextSeason/issues)
 
 ## About
 
